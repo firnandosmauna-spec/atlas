@@ -158,67 +158,156 @@ const GlobalSearch = () => {
     }
   };
 
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const mobileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isMobileOpen && mobileInputRef.current) {
+      mobileInputRef.current.focus();
+    }
+  }, [isMobileOpen]);
+
   return (
-    <div className="relative w-96" ref={searchRef}>
-      <div className="relative flex items-center">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search size={18} className="text-gray-400" />
-        </div>
-        <input
-          type="text"
-          className="w-full bg-gray-100 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-atlas-blue focus:bg-white transition-all outline-none"
-          placeholder="Cari worksheet, klien, akun, risiko (Ctrl+K)..."
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setIsOpen(true);
-          }}
-          onFocus={() => query.length >= 2 && setIsOpen(true)}
-        />
-        {query && (
-          <button 
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-            onClick={() => { setQuery(''); setIsOpen(false); }}
-          >
-            &times;
-          </button>
-        )}
+    <>
+      {/* Mobile Search Trigger Button */}
+      <div className="sm:hidden">
+        <button
+          type="button"
+          onClick={() => setIsMobileOpen(true)}
+          aria-label="Cari di aplikasi"
+          className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+        >
+          <Search size={20} />
+        </button>
       </div>
 
-      {isOpen && query.length >= 2 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
-          <div className="p-2">
-            {results.length === 0 ? (
-              <div className="text-center py-6 text-sm text-gray-500">
-                Tidak ada hasil ditemukan untuk "{query}"
+      {/* Mobile Search Overlay */}
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs sm:hidden flex flex-col p-3">
+          <div className="bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="p-3 border-b border-gray-200 flex items-center space-x-2">
+              <Search size={18} className="text-gray-400 shrink-0" />
+              <input
+                ref={mobileInputRef}
+                type="text"
+                className="flex-1 bg-transparent text-sm outline-none text-gray-900"
+                placeholder="Cari worksheet, klien, akun..."
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setIsOpen(true);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileOpen(false);
+                  setIsOpen(false);
+                }}
+                className="text-gray-500 hover:text-gray-900 p-2 min-h-[44px] min-w-[44px] flex items-center justify-center text-lg font-bold"
+              >
+                &times;
+              </button>
+            </div>
+
+            {query.length >= 2 && (
+              <div className="overflow-y-auto p-2 flex-1">
+                {results.length === 0 ? (
+                  <div className="text-center py-6 text-sm text-gray-500">
+                    Tidak ada hasil untuk "{query}"
+                  </div>
+                ) : (
+                  <ul className="space-y-1">
+                    {results.map((res) => (
+                      <li key={res.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleSelect(res.link);
+                            setIsMobileOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-blue-50 flex items-start space-x-3 transition-colors group min-h-[44px]"
+                        >
+                          <div className="mt-0.5 bg-gray-100 group-hover:bg-white p-1.5 rounded text-gray-500 shadow-sm shrink-0">
+                            {getIcon(res.type)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-bold text-gray-800 truncate">{res.title}</div>
+                            <div className="text-xs text-gray-500 capitalize truncate">{res.type} • {res.subtitle}</div>
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            ) : (
-              <ul className="space-y-1">
-                {results.map((res) => (
-                  <li key={res.id}>
-                    <button
-                      onClick={() => handleSelect(res.link)}
-                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 flex items-start space-x-3 transition-colors group"
-                    >
-                      <div className="mt-1 bg-gray-100 group-hover:bg-white p-1.5 rounded text-gray-500 shadow-sm">
-                        {getIcon(res.type)}
-                      </div>
-                      <div>
-                        <div className="text-sm font-bold text-gray-800">{res.title}</div>
-                        <div className="text-xs text-gray-500 capitalize">{res.type} • {res.subtitle}</div>
-                      </div>
-                    </button>
-                  </li>
-                ))}
-              </ul>
             )}
-          </div>
-          <div className="bg-gray-50 p-2 text-center border-t border-gray-100">
-            <span className="text-xs text-gray-500">Tekan ESC untuk menutup</span>
           </div>
         </div>
       )}
-    </div>
+
+      {/* Desktop Search Bar */}
+      <div className="hidden sm:block relative w-48 md:w-72 lg:w-96" ref={searchRef}>
+        <div className="relative flex items-center">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search size={18} className="text-gray-400" />
+          </div>
+          <input
+            type="text"
+            className="w-full bg-gray-100 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-atlas-blue focus:bg-white transition-all outline-none"
+            placeholder="Cari worksheet, klien, akun (Ctrl+K)..."
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setIsOpen(true);
+            }}
+            onFocus={() => query.length >= 2 && setIsOpen(true)}
+          />
+          {query && (
+            <button 
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              onClick={() => { setQuery(''); setIsOpen(false); }}
+            >
+              &times;
+            </button>
+          )}
+        </div>
+
+        {isOpen && query.length >= 2 && (
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+            <div className="p-2 max-h-80 overflow-y-auto">
+              {results.length === 0 ? (
+                <div className="text-center py-6 text-sm text-gray-500">
+                  Tidak ada hasil ditemukan untuk "{query}"
+                </div>
+              ) : (
+                <ul className="space-y-1">
+                  {results.map((res) => (
+                    <li key={res.id}>
+                      <button
+                        onClick={() => handleSelect(res.link)}
+                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 flex items-start space-x-3 transition-colors group"
+                      >
+                        <div className="mt-1 bg-gray-100 group-hover:bg-white p-1.5 rounded text-gray-500 shadow-sm">
+                          {getIcon(res.type)}
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-gray-800">{res.title}</div>
+                          <div className="text-xs text-gray-500 capitalize">{res.type} • {res.subtitle}</div>
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="bg-gray-50 p-2 text-center border-t border-gray-100">
+              <span className="text-xs text-gray-500">Tekan ESC untuk menutup</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

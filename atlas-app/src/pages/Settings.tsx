@@ -28,13 +28,13 @@ const Settings = () => {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto font-sans">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 uppercase tracking-tight">Pengaturan Aplikasi</h1>
-        <p className="text-sm text-gray-500 mt-1">Kelola profil pengguna, identitas lisensi KAP, dan keamanan sesi Anda di sini.</p>
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto font-sans">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800 uppercase tracking-tight">Pengaturan Aplikasi</h1>
+        <p className="text-xs sm:text-sm text-gray-500 mt-1">Kelola profil pengguna, identitas lisensi KAP, dan keamanan sesi Anda di sini.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
         
         {/* Left Column (Navigation/Info) */}
         <div className="md:col-span-1 space-y-6">
@@ -55,7 +55,7 @@ const Settings = () => {
             <div className="mt-8 border-t border-gray-100 pt-6">
               <button 
                 onClick={logout}
-                className="w-full flex items-center justify-center px-4 py-2 bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-colors rounded border border-red-200"
+                className="w-full flex items-center justify-center px-4 py-2.5 min-h-[44px] bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-colors rounded border border-red-200"
               >
                 <LogOut size={16} className="mr-2" />
                 Keluar Aplikasi (Logout)
@@ -69,28 +69,28 @@ const Settings = () => {
           
           {/* Profile Form */}
           <div className="bg-white rounded shadow-sm border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center">
+            <div className="px-5 py-4 border-b border-gray-200 flex items-center">
               <User size={18} className="text-atlas-blue mr-2" />
               <h2 className="font-bold text-gray-800 uppercase text-sm tracking-wider">Profil Auditor & Lisensi</h2>
             </div>
-            <div className="p-6">
+            <div className="p-5 sm:p-6">
               <form onSubmit={handleSaveProfile} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nama Lengkap</label>
                   <input 
                     type="text"
-                    className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm"
+                    className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm rounded-none"
                     value={fullName}
                     onChange={e => setFullName(e.target.value)}
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nomor Ijin Akuntan Publik (AP)</label>
                     <input 
                       type="text"
-                      className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm"
+                      className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm rounded-none"
                       placeholder="Contoh: 0001"
                       value={noAp}
                       onChange={e => setNoAp(e.target.value)}
@@ -101,7 +101,7 @@ const Settings = () => {
                     <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nomor Induk KAP</label>
                     <input 
                       type="text"
-                      className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm"
+                      className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm rounded-none"
                       placeholder="Contoh: 26.2.1974"
                       value={noIndukKap}
                       onChange={e => setNoIndukKap(e.target.value)}
@@ -113,7 +113,7 @@ const Settings = () => {
                 <div className="pt-4 flex items-center justify-end">
                   <button 
                     type="submit"
-                    className="flex items-center px-6 py-2.5 bg-atlas-blue text-white font-bold hover:bg-blue-800 transition-colors shadow-sm text-sm"
+                    className="w-full sm:w-auto flex items-center justify-center px-6 py-2.5 min-h-[44px] bg-atlas-blue text-white font-bold hover:bg-blue-800 transition-colors shadow-sm text-sm"
                   >
                     {isSaved ? <Save size={16} className="mr-2" /> : <Save size={16} className="mr-2" />}
                     {isSaved ? 'Tersimpan!' : 'Simpan Profil'}
@@ -154,7 +154,7 @@ const Settings = () => {
                 <div className="pt-4">
                   <button 
                     type="submit"
-                    className="flex items-center px-6 py-2.5 border border-gray-800 text-gray-800 font-bold hover:bg-gray-100 transition-colors shadow-sm text-sm"
+                    className="w-full sm:w-auto flex items-center justify-center px-6 py-2.5 min-h-[44px] border border-gray-800 text-gray-800 font-bold hover:bg-gray-100 transition-colors shadow-sm text-sm"
                   >
                     Perbarui Password
                   </button>

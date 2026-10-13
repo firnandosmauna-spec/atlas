@@ -1,16 +1,18 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Briefcase, AlertTriangle, CheckSquare, FileText, Settings, ShieldAlert, FolderOpen, LogOut } from 'lucide-react';
+import { Home, Briefcase, AlertTriangle, CheckSquare, FileText, Settings, ShieldAlert, FolderOpen, LogOut, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
 interface SidebarProps {
   isOpen?: boolean;
+  onClose?: () => void;
 }
 
-const Sidebar = ({ isOpen = true }: SidebarProps = {}) => {
+const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
   const { hasPermission, logout } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
+    onClose?.();
     await logout();
     navigate('/login');
   };
@@ -22,8 +24,14 @@ const Sidebar = ({ isOpen = true }: SidebarProps = {}) => {
   ];
 
   return (
-    <aside className={`bg-atlas-blue text-white flex flex-col transition-all duration-300 ease-in-out shrink-0 ${isOpen ? 'w-64' : 'w-20'}`}>
-      <div className="h-16 flex items-center justify-center border-b border-blue-800">
+    <aside 
+      className={`bg-atlas-blue text-white flex flex-col transition-all duration-300 ease-in-out shrink-0 z-50
+        fixed inset-y-0 left-0 shadow-2xl lg:shadow-none lg:static
+        ${isOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0'}
+        ${isOpen ? 'lg:w-64' : 'lg:w-20'}
+      `}
+    >
+      <div className="h-16 flex items-center justify-between px-4 border-b border-blue-800">
         <h1 className="text-2xl font-bold tracking-wider overflow-hidden">
           {isOpen ? (
             <>ATLAS<span className="text-atlas-accent font-light">WEB</span></>
@@ -31,6 +39,15 @@ const Sidebar = ({ isOpen = true }: SidebarProps = {}) => {
             <>A<span className="text-atlas-accent font-light">W</span></>
           )}
         </h1>
+        {/* Mobile close button */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Tutup navigasi"
+          className="lg:hidden text-blue-200 hover:text-white p-2 rounded-lg hover:bg-blue-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white min-h-[44px] min-w-[44px] flex items-center justify-center"
+        >
+          <X size={20} />
+        </button>
       </div>
       
       <nav className="flex-1 py-6 px-3 space-y-2 overflow-x-hidden">
@@ -38,6 +55,7 @@ const Sidebar = ({ isOpen = true }: SidebarProps = {}) => {
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={() => onClose?.()}
             className={({ isActive }) =>
               `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                 isActive ? 'bg-blue-800 text-white font-medium' : 'text-blue-200 hover:bg-blue-800 hover:text-white'
@@ -57,6 +75,7 @@ const Sidebar = ({ isOpen = true }: SidebarProps = {}) => {
           </p>
             <NavLink
               to="/admin"
+              onClick={() => onClose?.()}
               className={({ isActive }) =>
                 `flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors overflow-hidden ${
                   isActive ? 'bg-indigo-700 text-white font-medium' : 'text-indigo-200 hover:bg-indigo-800 hover:text-white'
@@ -74,6 +93,7 @@ const Sidebar = ({ isOpen = true }: SidebarProps = {}) => {
       <div className="p-3 border-t border-blue-800 space-y-1">
         <NavLink 
           to="/settings"
+          onClick={() => onClose?.()}
           className={({ isActive }) =>
             `flex items-center space-x-3 w-full px-3 py-2.5 rounded-lg transition-colors overflow-hidden min-h-[44px] ${
               isActive ? 'bg-blue-800 text-white font-medium' : 'text-blue-200 hover:text-white hover:bg-blue-800'

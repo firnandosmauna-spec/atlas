@@ -40,15 +40,15 @@ const Engagements = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Manajemen Engagement</h1>
-          <p className="text-gray-500">Kelola seluruh perikatan audit, klien, dan tim dalam satu tempat.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Manajemen Engagement</h1>
+          <p className="text-xs sm:text-sm text-gray-500">Kelola seluruh perikatan audit, klien, dan tim dalam satu tempat.</p>
         </div>
         {hasPermission('create_engagement') && (
           <button 
             onClick={() => { setEditingEngagement(null); setIsModalOpen(true); }}
-            className="bg-atlas-blue hover:bg-blue-800 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm flex items-center"
+            className="w-full sm:w-auto bg-atlas-blue hover:bg-blue-800 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center justify-center min-h-[44px]"
           >
             <Plus size={18} className="mr-2" /> Buat Engagement
           </button>
@@ -58,18 +58,18 @@ const Engagements = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         
         {/* Toolbar */}
-        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-          <div className="relative w-72">
+        <div className="p-3 sm:p-4 border-b border-gray-100 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center bg-gray-50">
+          <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
               placeholder="Cari ID atau Klien..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-atlas-blue focus:border-atlas-blue outline-none"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-atlas-blue focus:border-atlas-blue outline-none"
             />
           </div>
-          <button className="flex items-center text-gray-600 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 transition-colors">
+          <button className="flex items-center justify-center text-gray-600 px-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 transition-colors min-h-[44px]">
             <Filter size={16} className="mr-2" /> Filter
           </button>
         </div>

@@ -86,8 +86,9 @@ const WorkspaceLayout = () => {
               key={item.to}
               to={item.to}
               end={item.end}
+              onClick={() => { if (window.innerWidth < 1024) setIsSidebarOpen(false); }}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+                `flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors rounded min-h-[44px] ${
                   isActive
                     ? 'bg-slate-700 text-white font-semibold'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
@@ -109,8 +110,9 @@ const WorkspaceLayout = () => {
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={() => { if (window.innerWidth < 1024) setIsSidebarOpen(false); }}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 text-sm transition-colors group ${
+                `flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors group rounded min-h-[44px] ${
                   isActive
                     ? 'bg-blue-600 text-white font-semibold border-l-2 border-white'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800 border-l-2 border-transparent'
@@ -155,24 +157,25 @@ const WorkspaceLayout = () => {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
         <Header onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
         {/* Breadcrumb */}
-        <div className="bg-white px-6 py-2.5 border-b border-gray-200 flex items-center text-xs z-10">
+        <div className="bg-white px-3 sm:px-6 py-2.5 border-b border-gray-200 flex items-center text-xs z-10">
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="lg:hidden mr-4 p-1 text-gray-500 hover:text-gray-800"
+            aria-label="Buka menu navigasi"
+            className="lg:hidden mr-3 p-1.5 text-gray-500 hover:text-gray-800 rounded min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <Menu size={18} />
           </button>
           <span className="text-gray-400 font-medium">Workspace</span>
           <span className="mx-1.5 text-gray-300">/</span>
-          <span className="text-gray-700 font-semibold truncate max-w-xs">{engagement.clientName}</span>
+          <span className="text-gray-700 font-semibold truncate max-w-[200px] sm:max-w-xs">{engagement.clientName}</span>
         </div>
 
-        <main className="flex-1 overflow-y-auto p-8 relative scroll-smooth flex flex-col">
-          <div className="flex-1">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 relative scroll-smooth flex flex-col">
+          <div className="flex-1 w-full max-w-full">
             <Outlet context={{ engagement }} />
           </div>
           <footer className="mt-12 pt-6 border-t border-gray-200 text-center text-xs text-gray-400 pb-2">

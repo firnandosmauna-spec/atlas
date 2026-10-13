@@ -12,9 +12,9 @@ const Portofolio = () => {
   const aktif = totalPerikatan - selesai;
 
   return (
-    <div className="w-full h-full p-6 flex flex-col space-y-6">
+    <div className="w-full flex flex-col space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end pb-4 border-b border-gray-200">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end pb-4 border-b border-gray-200 gap-2">
         <div>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight">Portofolio Klien & Perikatan</h1>
           <p className="text-xs text-gray-600 mt-0.5">Ringkasan seluruh aktivitas perikatan KAP Anda.</p>

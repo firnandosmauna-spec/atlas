@@ -129,7 +129,7 @@ const EngagementFormModal = ({ isOpen, onClose, initialData }: EngagementFormMod
             <div className="space-y-4">
               <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">Informasi Perikatan</h3>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Periode Audit</label>
                   <input 
@@ -148,7 +148,7 @@ const EngagementFormModal = ({ isOpen, onClose, initialData }: EngagementFormMod
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Jenis Perikatan</label>
                   <select 
@@ -174,7 +174,7 @@ const EngagementFormModal = ({ isOpen, onClose, initialData }: EngagementFormMod
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider">Mata Uang</label>
                   <select 
@@ -246,17 +246,17 @@ const EngagementFormModal = ({ isOpen, onClose, initialData }: EngagementFormMod
           </div>
 
           {/* Footer Actions */}
-          <div className="pt-6 border-t border-gray-200 flex justify-end gap-2">
+          <div className="pt-6 border-t border-gray-200 flex flex-col-reverse sm:flex-row justify-end gap-2.5">
             <button 
               type="button" 
               onClick={onClose} 
-              className="px-4 py-2 text-xs font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 text-xs font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors min-h-[44px] flex items-center justify-center rounded"
             >
               Batal
             </button>
             <button 
               type="submit" 
-              className="px-6 py-2 text-xs font-semibold bg-gray-900 text-white hover:bg-gray-800 transition-colors"
+              className="px-6 py-2 text-xs font-semibold bg-gray-900 text-white hover:bg-gray-800 transition-colors min-h-[44px] flex items-center justify-center rounded"
             >
               {initialData ? 'Simpan Perubahan' : 'Buat Engagement'}
             </button>

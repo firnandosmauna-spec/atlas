@@ -67,13 +67,13 @@ const Dashboard = () => {
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-8 pb-6 border-b border-gray-300">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight uppercase">Dashboard Utama</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight uppercase">Dashboard Utama</h1>
           <p className="text-sm text-gray-600 mt-2 max-w-lg leading-relaxed">
             Pemantauan seluruh perikatan dan aktivitas tim. Saat ini terdapat <strong className="text-gray-900">12 perikatan aktif</strong> dan <strong className="text-red-600">2 terlambat</strong> (overdue).
           </p>
         </div>
-        <div className="flex gap-4">
-          <div className="flex items-center gap-6 pr-6 border-r border-gray-300">
+        <div className="flex flex-wrap sm:flex-nowrap gap-4 items-center w-full lg:w-auto justify-between lg:justify-end">
+          <div className="flex items-center gap-4 sm:gap-6 pr-4 sm:pr-6 border-r border-gray-300">
             <div>
               <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Menunggu Review</p>
               <p className="text-2xl font-bold text-gray-900">5</p>
@@ -86,7 +86,7 @@ const Dashboard = () => {
           {hasPermission('create_engagement') && (
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="bg-atlas-blue hover:bg-blue-800 text-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors shadow-sm whitespace-nowrap"
+              className="bg-atlas-blue hover:bg-blue-800 text-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors shadow-sm whitespace-nowrap min-h-[44px] flex items-center justify-center rounded"
             >
               + Buat Engagement
             </button>
@@ -96,7 +96,7 @@ const Dashboard = () => {
 
       {/* ── Progress Perjalanan Audit / Siklus Audit (Stepper) ── */}
       <div className="mb-10">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
           <div>
             <p className="text-[11px] font-bold text-gray-500 uppercase tracking-widest">Siklus & Metodologi Audit (ATLAS)</p>
             <p className="text-xs text-gray-400 mt-1">Klik pada tahapan di bawah ini untuk memfilter daftar perikatan.</p>
@@ -118,10 +118,10 @@ const Dashboard = () => {
         </div>
         
         <div className="relative">
-          {/* Background Line */}
-          <div className="absolute top-5 left-4 right-4 w-[calc(100%-32px)] h-1 bg-gray-200 rounded-full" />
+          {/* Background Line - hidden on mobile when stacked */}
+          <div className="hidden lg:block absolute top-5 left-4 right-4 w-[calc(100%-32px)] h-1 bg-gray-200 rounded-full" />
           
-          <div className="relative z-10 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { 
                 id: 'pra', code: 'A.1', name: 'Pra-Perikatan', desc: 'Client Acceptance & Independence', color: 'bg-blue-600', icon: ShieldCheck, count: engagements.filter(e => e.phase === 'A.1').length,

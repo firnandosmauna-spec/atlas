@@ -60,21 +60,22 @@ const Header = ({ onToggleSidebar }: HeaderProps = {}) => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 z-40 relative">
-      <div className="flex items-center space-x-6">
-        <div className="flex items-center space-x-4">
-          <button 
-            onClick={onToggleSidebar}
-            className="text-gray-500 hover:text-gray-900 focus:outline-none bg-gray-50 p-1.5 rounded border border-gray-200 hover:bg-gray-100 transition-colors"
-          >
-            <Menu size={20} />
-          </button>
-          <h2 className="text-lg font-semibold text-gray-800 shrink-0">ATLAS</h2>
-        </div>
+    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-6 z-40 relative">
+      <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
+        <button 
+          onClick={onToggleSidebar}
+          aria-label="Menu navigasi"
+          className="text-gray-500 hover:text-gray-900 focus:outline-none bg-gray-50 p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
+        >
+          <Menu size={20} />
+        </button>
+        <h2 className="text-lg font-bold text-gray-800 shrink-0 tracking-tight">ATLAS</h2>
         <GlobalSearch />
       </div>
-      <div className="flex items-center space-x-4">
-        <div className="flex items-center bg-gray-50 border border-gray-200 rounded-lg px-3 py-1">
+
+      <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
+        {/* Simulate Role on Desktop / Tablet */}
+        <div className="hidden md:flex items-center bg-gray-50 border border-gray-200 rounded-lg px-3 py-1">
           <span className="text-xs text-gray-500 mr-2 uppercase font-bold tracking-wider">Simulate Role:</span>
           <select 
             value={user?.role || ''} 
@@ -89,21 +90,23 @@ const Header = ({ onToggleSidebar }: HeaderProps = {}) => {
           </select>
         </div>
 
+        {/* Notifications */}
         <div className="relative">
           <button 
-            className={`p-2 rounded-full transition-colors relative ${showNotifications ? 'bg-blue-50 text-atlas-blue' : 'text-gray-500 hover:bg-gray-100'}`}
+            aria-label="Notifikasi"
+            className={`p-2 rounded-full transition-colors relative min-h-[44px] min-w-[44px] flex items-center justify-center ${showNotifications ? 'bg-blue-50 text-atlas-blue' : 'text-gray-500 hover:bg-gray-100'}`}
             onClick={() => setShowNotifications(!showNotifications)}
           >
             <BellIcon size={20} />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
             )}
           </button>
 
           {showNotifications && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)}></div>
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
+              <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
                 <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-slate-50">
                   <h3 className="font-bold text-gray-800 text-sm">Notifications</h3>
                   {unreadCount > 0 && <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">{unreadCount} New</span>}
@@ -184,6 +187,24 @@ const Header = ({ onToggleSidebar }: HeaderProps = {}) => {
                   <p className="text-[11px] text-gray-500 font-medium">Masuk sebagai</p>
                   <p className="font-semibold text-gray-900 truncate mt-0.5">{user?.name || 'User'}</p>
                   <p className="text-xs text-gray-500 truncate">{user?.email || 'user@example.com'}</p>
+                </div>
+
+                {/* Mobile Role Switcher */}
+                <div className="px-4 py-2.5 border-b border-gray-100 md:hidden bg-blue-50/30">
+                  <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">
+                    Simulasi Role:
+                  </label>
+                  <select 
+                    value={user?.role || ''} 
+                    onChange={handleRoleChange}
+                    className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 text-xs font-semibold text-atlas-blue outline-none"
+                  >
+                    <option value="Admin">Admin</option>
+                    <option value="Partner">Partner / Signing Partner</option>
+                    <option value="Manager">Manager / Reviewer</option>
+                    <option value="Auditor">Auditor / Team Member</option>
+                    <option value="Viewer">Viewer</option>
+                  </select>
                 </div>
 
                 <div className="py-1">

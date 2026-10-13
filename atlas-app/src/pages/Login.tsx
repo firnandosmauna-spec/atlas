@@ -114,28 +114,28 @@ const Login: React.FC = () => {
       </div>
 
       {/* Form Section (Right Panel) */}
-      <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-32 bg-white">
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-8 md:px-16 lg:px-32 py-8 bg-white">
         <div className="max-w-sm w-full mx-auto lg:mx-0">
           
-          <div className="lg:hidden mb-12 flex items-center space-x-3 border-b border-gray-200 pb-4">
+          <div className="lg:hidden mb-8 sm:mb-12 flex items-center space-x-3 border-b border-gray-200 pb-4">
             <div className="w-8 h-8 bg-gray-950 flex items-center justify-center">
               <Building2 className="text-white" size={16} />
             </div>
             <span className="text-lg font-bold tracking-tight text-gray-900 uppercase">ATLAS Web</span>
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight uppercase mb-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight uppercase mb-1">
             {isLogin ? 'Autentikasi Sistem' : 'Pendaftaran Akun'}
           </h2>
-          <p className="text-sm text-gray-500 mb-8 font-medium">
+          <p className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 font-medium">
             {isLogin ? 'Akses sistem membutuhkan kredensial valid.' : 'Masukkan data untuk pembuatan akun.'}
           </p>
 
           {/* Toggle Login/Register (Sharp Tabs) */}
-          <div className="flex border-b border-gray-200 mb-8">
+          <div className="flex border-b border-gray-200 mb-6 sm:mb-8">
             <button 
               type="button"
-              className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider transition-colors ${
+              className={`flex-1 py-3 min-h-[44px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-colors ${
                 isLogin ? 'border-b-2 border-gray-900 text-gray-900' : 'text-gray-400 hover:text-gray-900'
               }`}
               onClick={() => { setIsLogin(true); setErrorMsg(''); }}
@@ -144,7 +144,7 @@ const Login: React.FC = () => {
             </button>
             <button 
               type="button"
-              className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider transition-colors ${
+              className={`flex-1 py-3 min-h-[44px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-colors ${
                 !isLogin ? 'border-b-2 border-gray-900 text-gray-900' : 'text-gray-400 hover:text-gray-900'
               }`}
               onClick={() => { setIsLogin(false); setErrorMsg(''); }}
