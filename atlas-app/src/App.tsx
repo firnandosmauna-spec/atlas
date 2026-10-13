@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
+import { useAppConfigStore } from './store/appConfigStore';
 import MainLayout from './layouts/MainLayout';
 import WorkspaceLayout from './layouts/WorkspaceLayout';
 import Login from './pages/Login';
@@ -22,10 +23,17 @@ import { Building2 } from 'lucide-react';
 
 function App() {
   const { initialize, isLoading } = useAuthStore();
+  const { appName, tagline } = useAppConfigStore();
 
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  useEffect(() => {
+    if (appName) {
+      document.title = tagline ? `${appName} - ${tagline}` : appName;
+    }
+  }, [appName, tagline]);
 
   if (isLoading) {
     return (

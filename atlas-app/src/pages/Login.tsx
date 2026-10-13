@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Building2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuthStore } from '../store/authStore';
+import { useAppConfigStore } from '../store/appConfigStore';
 
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,6 +15,7 @@ const Login: React.FC = () => {
   
   const navigate = useNavigate();
   const login = useAuthStore(state => state.login);
+  const { appName, tagline, institutionName, version } = useAppConfigStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,18 +100,18 @@ const Login: React.FC = () => {
             <div className="w-10 h-10 bg-white flex items-center justify-center">
               <Building2 className="text-gray-950" size={20} />
             </div>
-            <span className="text-xl font-bold tracking-tight uppercase">ATLAS Web</span>
+            <span className="text-xl font-bold tracking-tight uppercase">{appName}</span>
           </div>
-          <h1 className="text-5xl font-bold leading-tight tracking-tight max-w-lg uppercase">
-            Audit Tool <br/> & Linked Archive System
+          <h1 className="text-4xl lg:text-5xl font-bold leading-tight tracking-tight max-w-lg uppercase">
+            {tagline}
           </h1>
-          <p className="mt-6 text-lg text-gray-400 max-w-md leading-relaxed border-l-2 border-gray-700 pl-4">
-            Sistem informasi operasional dan pendokumentasian proses audit independen berdasarkan kerangka kerja P2PK Kementerian Keuangan.
+          <p className="mt-6 text-sm lg:text-lg text-gray-400 max-w-md leading-relaxed border-l-2 border-gray-700 pl-4">
+            Sistem informasi operasional dan pendokumentasian proses audit independen berdasarkan kerangka kerja {institutionName}.
           </p>
         </div>
         
         <div className="text-xs text-gray-500 font-bold tracking-widest uppercase">
-          VER 1.0.0-PROTOTYPE / SECURE AUTH
+          VER {version} / SECURE AUTH
         </div>
       </div>
 
@@ -121,7 +123,7 @@ const Login: React.FC = () => {
             <div className="w-8 h-8 bg-gray-950 flex items-center justify-center">
               <Building2 className="text-white" size={16} />
             </div>
-            <span className="text-lg font-bold tracking-tight text-gray-900 uppercase">ATLAS Web</span>
+            <span className="text-lg font-bold tracking-tight text-gray-900 uppercase">{appName}</span>
           </div>
 
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight uppercase mb-1">

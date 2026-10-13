@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell as BellIcon, User as UserIcon, ChevronDown, Menu, LogOut, Settings } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useEngagementStore } from '../store/engagementStore';
+import { useAppConfigStore } from '../store/appConfigStore';
 import type { Role, User } from '../store/authStore';
 import GlobalSearch from './GlobalSearch';
 
@@ -12,6 +13,7 @@ interface HeaderProps {
 
 const Header = ({ onToggleSidebar }: HeaderProps = {}) => {
   const { user, login, logout } = useAuthStore();
+  const { appName, appShortName } = useAppConfigStore();
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -69,7 +71,9 @@ const Header = ({ onToggleSidebar }: HeaderProps = {}) => {
         >
           <Menu size={20} />
         </button>
-        <h2 className="text-lg font-bold text-gray-800 shrink-0 tracking-tight">ATLAS</h2>
+        <h2 className="text-lg font-bold text-gray-800 shrink-0 tracking-tight" title={appName}>
+          {appShortName || appName}
+        </h2>
         <GlobalSearch />
       </div>
 

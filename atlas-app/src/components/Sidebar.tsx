@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, Briefcase, AlertTriangle, CheckSquare, FileText, Settings, ShieldAlert, FolderOpen, LogOut, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { useAppConfigStore } from '../store/appConfigStore';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -9,6 +10,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
   const { hasPermission, logout } = useAuthStore();
+  const { appName, appShortName } = useAppConfigStore();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -32,11 +34,11 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
       `}
     >
       <div className="h-16 flex items-center justify-between px-4 border-b border-blue-800">
-        <h1 className="text-2xl font-bold tracking-wider overflow-hidden">
+        <h1 className="text-xl font-bold tracking-wider overflow-hidden truncate pr-2 uppercase" title={appName}>
           {isOpen ? (
-            <>ATLAS<span className="text-atlas-accent font-light">WEB</span></>
+            appName
           ) : (
-            <>A<span className="text-atlas-accent font-light">W</span></>
+            appShortName?.slice(0, 3) || 'AW'
           )}
         </h1>
         {/* Mobile close button */}
