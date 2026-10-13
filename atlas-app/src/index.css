@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --color-atlas-blue: #1e3a8a;
+  --color-atlas-light: #e0e7ff;
+  --color-atlas-accent: #fbbf24;
+  --color-atlas-gray: #f3f4f6;
+  --color-atlas-dark: #1f2937;
+}
+
+body {
+  @apply bg-atlas-gray text-atlas-dark antialiased;
+}

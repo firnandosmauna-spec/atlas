@@ -1,0 +1,13 @@
+{
+  "name": "atlas-root",
+  "version": "1.0.0",
+  "description": "Root package for forwarding to atlas-app",
+  "scripts": {
+    "dev": "npm run dev --prefix atlas-app",
+    "install": "npm install --prefix atlas-app",
+    "build": "npm run build --prefix atlas-app"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2"
+  }
+}

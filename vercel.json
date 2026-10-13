@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm run build --prefix atlas-app",
+  "outputDirectory": "atlas-app/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
+}
