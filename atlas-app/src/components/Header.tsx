@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell as BellIcon, User as UserIcon, ChevronDown, Menu, LogOut, Settings } from 'lucide-react';
+import { Bell as BellIcon, User as UserIcon, ChevronDown, Menu, LogOut, Settings, Home, FolderOpen } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useEngagementStore } from '../store/engagementStore';
 import { useAppConfigStore } from '../store/appConfigStore';
@@ -212,6 +212,32 @@ const Header = ({ onToggleSidebar }: HeaderProps = {}) => {
                 </div>
 
                 <div className="py-1">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      navigate('/dashboard');
+                    }}
+                    className="flex items-center w-full px-4 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-left"
+                  >
+                    <Home size={16} className="mr-3 text-blue-600" />
+                    <span className="font-medium">Dashboard Utama</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      navigate('/engagements');
+                    }}
+                    className="flex items-center w-full px-4 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-left"
+                  >
+                    <FolderOpen size={16} className="mr-3 text-amber-500" />
+                    <span>Daftar Perikatan</span>
+                  </button>
+
                   <button
                     type="button"
                     role="menuitem"
