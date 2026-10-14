@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Calculator, Users, DollarSign, ShieldAlert, 
   FileText, Copy, Printer, Check, RotateCcw,
@@ -65,35 +65,99 @@ const FeeCalculator: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'calculator' | 'matrix' | 'adjustments' | 'rates' | 'guideline' | 'proposal'>('calculator');
 
   // =========================================================
-  // INPUT DATA CALON KLIEN (IMAGE 1)
+  // INPUT DATA CALON KLIEN (IMAGE 1) DENGAN PERMANENT STORAGE
   // =========================================================
-  const [clientName, setClientName] = useState('');
-  const [fiscalYear, setFiscalYear] = useState<number>(2026);
-  const [annualRevenue, setAnnualRevenue] = useState<number>(0);
-  const [totalAssets, setTotalAssets] = useState<number>(0);
-  const [transactionVolume, setTransactionVolume] = useState<number>(0);
-  const [branchCount, setBranchCount] = useState<number>(1);
+  const getSavedDraft = () => {
+    try {
+      const saved = localStorage.getItem('atlas_fee_calc_draft');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  };
+  const initialDraft = getSavedDraft();
+
+  const [clientName, setClientName] = useState<string>(initialDraft?.clientName ?? '');
+  const [fiscalYear, setFiscalYear] = useState<number>(initialDraft?.fiscalYear ?? 2026);
+  const [annualRevenue, setAnnualRevenue] = useState<number>(initialDraft?.annualRevenue ?? 0);
+  const [totalAssets, setTotalAssets] = useState<number>(initialDraft?.totalAssets ?? 0);
+  const [transactionVolume, setTransactionVolume] = useState<number>(initialDraft?.transactionVolume ?? 0);
+  const [branchCount, setBranchCount] = useState<number>(initialDraft?.branchCount ?? 1);
   
   // Dropdown Conditions (Image 3)
-  const [inventoryCondition, setInventoryCondition] = useState<string>('Tidak material / tidak ada');
-  const [industryComplexity, setIndustryComplexity] = useState<string>('Rendah');
-  const [bookkeepingQuality, setBookkeepingQuality] = useState<string>('Normal');
-  const [engagementRisk, setEngagementRisk] = useState<string>('Rendah');
-  const [firstYearAudit, setFirstYearAudit] = useState<string>('Tidak');
-  const [deadlineDays, setDeadlineDays] = useState<number>(60);
+  const [inventoryCondition, setInventoryCondition] = useState<string>(initialDraft?.inventoryCondition ?? 'Tidak material / tidak ada');
+  const [industryComplexity, setIndustryComplexity] = useState<string>(initialDraft?.industryComplexity ?? 'Rendah');
+  const [bookkeepingQuality, setBookkeepingQuality] = useState<string>(initialDraft?.bookkeepingQuality ?? 'Normal');
+  const [engagementRisk, setEngagementRisk] = useState<string>(initialDraft?.engagementRisk ?? 'Rendah');
+  const [firstYearAudit, setFirstYearAudit] = useState<string>(initialDraft?.firstYearAudit ?? 'Tidak');
+  const [deadlineDays, setDeadlineDays] = useState<number>(initialDraft?.deadlineDays ?? 60);
   
   // Pricing Parameters
-  const [hbrZone, setHbrZone] = useState<'Jabodetabek' | 'Luar Jabodetabek'>('Luar Jabodetabek');
-  const [bufferPercent, setBufferPercent] = useState<number>(10); // default 10%
-  const [vatPercent, setVatPercent] = useState<number>(0); // 0%, 11%, 12%
-  const [outOfPocketExpenses, setOutOfPocketExpenses] = useState<number>(0);
+  const [hbrZone, setHbrZone] = useState<'Jabodetabek' | 'Luar Jabodetabek'>(initialDraft?.hbrZone ?? 'Luar Jabodetabek');
+  const [bufferPercent, setBufferPercent] = useState<number>(initialDraft?.bufferPercent ?? 10);
+  const [vatPercent, setVatPercent] = useState<number>(initialDraft?.vatPercent ?? 0);
+  const [outOfPocketExpenses, setOutOfPocketExpenses] = useState<number>(initialDraft?.outOfPocketExpenses ?? 0);
 
-  // Editable Rates & Allocation Settings (Image 4)
-  const [teamRates, setTeamRates] = useState<TeamRateDefinition[]>(DEFAULT_TEAM_RATES);
-  const [internalCostFactor, setInternalCostFactor] = useState<number>(60); // default 60%
+  // Editable Rates & Allocation Settings (Image 4) - Tersimpan Permanen di Browser
+  const [teamRates, setTeamRates] = useState<TeamRateDefinition[]>(() => {
+    try {
+      const saved = localStorage.getItem('atlas_fee_calc_team_rates');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULT_TEAM_RATES;
+  });
+  const [internalCostFactor, setInternalCostFactor] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('atlas_fee_calc_internal_factor');
+      if (saved) return Number(saved) || 60;
+    } catch {}
+    return 60;
+  });
 
   // UI Feedback
   const [isCopied, setIsCopied] = useState(false);
+
+  // Auto-save rates ke localStorage secara permanen
+  useEffect(() => {
+    try {
+      localStorage.setItem('atlas_fee_calc_team_rates', JSON.stringify(teamRates));
+    } catch {}
+  }, [teamRates]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('atlas_fee_calc_internal_factor', internalCostFactor.toString());
+    } catch {}
+  }, [internalCostFactor]);
+
+  // Auto-save formulir aktif
+  useEffect(() => {
+    try {
+      const draft = {
+        clientName,
+        fiscalYear,
+        annualRevenue,
+        totalAssets,
+        transactionVolume,
+        branchCount,
+        inventoryCondition,
+        industryComplexity,
+        bookkeepingQuality,
+        engagementRisk,
+        firstYearAudit,
+        deadlineDays,
+        hbrZone,
+        bufferPercent,
+        vatPercent,
+        outOfPocketExpenses,
+      };
+      localStorage.setItem('atlas_fee_calc_draft', JSON.stringify(draft));
+    } catch {}
+  }, [
+    clientName, fiscalYear, annualRevenue, totalAssets, transactionVolume,
+    branchCount, inventoryCondition, industryComplexity, bookkeepingQuality,
+    engagementRisk, firstYearAudit, deadlineDays, hbrZone, bufferPercent,
+    vatPercent, outOfPocketExpenses
+  ]);
 
   // =========================================================
   // RESET & LOAD EXAMPLE (DEMO / VERIFIKASI DARI IMAGE 1)
@@ -115,8 +179,18 @@ const FeeCalculator: React.FC = () => {
     setBufferPercent(10);
     setVatPercent(0);
     setOutOfPocketExpenses(0);
-    setInternalCostFactor(60);
+    try {
+      localStorage.removeItem('atlas_fee_calc_draft');
+    } catch {}
+  };
+
+  const handleResetRates = () => {
     setTeamRates(DEFAULT_TEAM_RATES);
+    setInternalCostFactor(60);
+    try {
+      localStorage.removeItem('atlas_fee_calc_team_rates');
+      localStorage.removeItem('atlas_fee_calc_internal_factor');
+    } catch {}
   };
 
   const handleLoadExample = () => {
@@ -1206,17 +1280,27 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
               <h2 className="text-base font-bold">Tarif Per Jam & Alokasi Tim (PDP IAPI No. 3 Tahun 2024)</h2>
               <p className="text-xs text-slate-300 mt-0.5">Benchmark minimum imbalan jasa audit menurut regulasi dewan pengurus IAPI.</p>
             </div>
-            <div className="flex items-center gap-2 text-xs">
-              <span>Faktor Biaya Internal:</span>
-              <input
-                type="number"
-                min="30"
-                max="90"
-                value={internalCostFactor}
-                onChange={(e) => setInternalCostFactor(Number(e.target.value) || 60)}
-                className="w-16 px-2 py-1 bg-white text-slate-900 rounded font-mono font-bold"
-              />
-              <span>%</span>
+            <div className="flex items-center flex-wrap gap-3 text-xs">
+              <button
+                type="button"
+                onClick={handleResetRates}
+                className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded border border-slate-600 transition-colors"
+                title="Kembalikan tarif ke standar PDP IAPI No. 3 Tahun 2024"
+              >
+                Reset ke Standar IAPI
+              </button>
+              <div className="flex items-center gap-1.5">
+                <span>Faktor Biaya Internal:</span>
+                <input
+                  type="number"
+                  min="30"
+                  max="90"
+                  value={internalCostFactor}
+                  onChange={(e) => setInternalCostFactor(Number(e.target.value) || 60)}
+                  className="w-16 px-2 py-1 bg-white text-slate-900 rounded font-mono font-bold"
+                />
+                <span>%</span>
+              </div>
             </div>
           </div>
 
