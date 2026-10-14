@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
 import { useAppConfigStore } from './store/appConfigStore';
 import MainLayout from './layouts/MainLayout';
@@ -20,14 +20,20 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Settings from './pages/Settings';
 import FeeCalculator from './pages/FeeCalculator';
-import { Building2 } from 'lucide-react';
+import SquareSnake from './components/ui/square-snake';
+import SquareSnakeDemo from './components/ui/demo';
 
 function App() {
   const { initialize, isLoading } = useAuthStore();
   const { appName, tagline } = useAppConfigStore();
+  const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
     initialize();
+    const timer = setTimeout(() => {
+      setAppReady(true);
+    }, 600);
+    return () => clearTimeout(timer);
   }, [initialize]);
 
   useEffect(() => {
@@ -36,14 +42,13 @@ function App() {
     }
   }, [appName, tagline]);
 
-  if (isLoading) {
+  if (isLoading || !appReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-center">
-          <div className="w-12 h-12 bg-white rounded flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <Building2 className="text-gray-950" size={24} />
-          </div>
-          <p className="text-white font-medium animate-pulse">Mengautentikasi...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white select-none dark">
+        <SquareSnake />
+        <div className="mt-5 text-center space-y-1">
+          <p className="text-sm font-semibold tracking-wide text-slate-200">{appName || 'ATLAS'}</p>
+          <p className="text-xs text-slate-500 font-medium">Memuat aplikasi...</p>
         </div>
       </div>
     );
@@ -54,6 +59,7 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/demo/square-snake" element={<SquareSnakeDemo />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Protected Routes */}
