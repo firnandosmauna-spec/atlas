@@ -27,9 +27,6 @@ const MainLayout = () => {
           <div className="flex-1 w-full max-w-full">
             <Outlet />
           </div>
-          <footer className="mt-8 pt-4 border-t border-gray-200 text-center text-xs text-gray-400 pb-2">
-            Aplikasi ini adalah implementasi web independen berdasarkan dokumentasi ATLAS dan bukan merupakan produk resmi P2PK Kementerian Keuangan.
-          </footer>
         </main>
       </div>
     </div>
