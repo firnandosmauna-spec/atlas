@@ -3,7 +3,7 @@ import { useAuthStore } from '../store/authStore';
 import { useAppConfigStore } from '../store/appConfigStore';
 import { 
   User, Lock, Save, LogOut, ShieldCheck, Mail, 
-  Building2, RotateCcw, CheckCircle2, Sliders
+  Building2, RotateCcw, Check, Sparkles
 } from 'lucide-react';
 
 const Settings = () => {
@@ -12,20 +12,20 @@ const Settings = () => {
 
   const [activeTab, setActiveTab] = useState<'branding' | 'profile' | 'security'>('branding');
 
-  // App Branding Form States
+  // App Branding States
   const [appNameInput, setAppNameInput] = useState(config.appName);
   const [appShortNameInput, setAppShortNameInput] = useState(config.appShortName);
   const [taglineInput, setTaglineInput] = useState(config.tagline);
   const [institutionInput, setInstitutionInput] = useState(config.institutionName);
   const [isBrandingSaved, setIsBrandingSaved] = useState(false);
 
-  // Profile Form States
+  // Profile States
   const [fullName, setFullName] = useState(user?.name || '');
   const [noAp, setNoAp] = useState('');
   const [noIndukKap, setNoIndukKap] = useState('');
   const [isProfileSaved, setIsProfileSaved] = useState(false);
 
-  // Password Form States
+  // Password States
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [isPasswordSaved, setIsPasswordSaved] = useState(false);
@@ -50,7 +50,7 @@ const Settings = () => {
     setInstitutionInput(finalInstitution);
 
     setIsBrandingSaved(true);
-    setTimeout(() => setIsBrandingSaved(false), 3000);
+    setTimeout(() => setIsBrandingSaved(false), 2500);
   };
 
   const handleResetBranding = () => {
@@ -61,13 +61,13 @@ const Settings = () => {
     setInstitutionInput('P2PK Kementerian Keuangan');
 
     setIsBrandingSaved(true);
-    setTimeout(() => setIsBrandingSaved(false), 3000);
+    setTimeout(() => setIsBrandingSaved(false), 2500);
   };
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     setIsProfileSaved(true);
-    setTimeout(() => setIsProfileSaved(false), 3000);
+    setTimeout(() => setIsProfileSaved(false), 2500);
   };
 
   const handleUpdatePassword = (e: React.FormEvent) => {
@@ -75,30 +75,30 @@ const Settings = () => {
     setIsPasswordSaved(true);
     setCurrentPassword('');
     setNewPassword('');
-    setTimeout(() => setIsPasswordSaved(false), 3000);
+    setTimeout(() => setIsPasswordSaved(false), 2500);
   };
 
   const tabs = [
-    { id: 'branding' as const, label: 'Nama & Identitas Aplikasi', icon: <Building2 size={18} /> },
-    { id: 'profile' as const, label: 'Profil Auditor & Lisensi', icon: <User size={18} /> },
-    { id: 'security' as const, label: 'Keamanan Akun', icon: <Lock size={18} /> },
+    { id: 'branding' as const, label: 'Nama Aplikasi', icon: <Building2 size={16} /> },
+    { id: 'profile' as const, label: 'Profil Auditor', icon: <User size={16} /> },
+    { id: 'security' as const, label: 'Keamanan Akun', icon: <Lock size={16} /> },
   ];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto font-sans min-w-0">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto font-sans min-w-0">
       
       {/* Page Header */}
-      <div className="mb-6 sm:mb-8 border-b border-gray-200 pb-4">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-800 uppercase tracking-tight">
-          Pengaturan Aplikasi
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 tracking-tight">
+          Pengaturan
         </h1>
-        <p className="text-xs sm:text-sm text-gray-500 mt-1">
-          Konfigurasi nama aplikasi, identitas KAP, profil auditor, dan kredensial keamanan sistem Anda.
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          Kelola identitas aplikasi, profil lisensi KAP, dan akses keamanan akun Anda.
         </p>
       </div>
 
-      {/* Tabs Navigation */}
-      <div className="flex border-b border-gray-200 mb-6 sm:mb-8 overflow-x-auto scrollbar-none gap-2">
+      {/* Modern Minimalist Segmented Tabs */}
+      <div className="flex p-1 bg-slate-100 rounded-xl mb-6 sm:mb-8 overflow-x-auto scrollbar-none border border-slate-200/60 max-w-full sm:max-w-fit">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -106,13 +106,13 @@ const Settings = () => {
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 py-3 px-4 border-b-2 font-bold text-xs sm:text-sm uppercase tracking-wider transition-colors whitespace-nowrap min-h-[44px] ${
+              className={`flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all min-h-[44px] whitespace-nowrap ${
                 isActive
-                  ? 'border-atlas-blue text-atlas-blue bg-blue-50/50'
-                  : 'border-transparent text-gray-500 hover:text-gray-900 hover:border-gray-300'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/40'
               }`}
             >
-              <span className={isActive ? 'text-atlas-blue' : 'text-gray-400'}>
+              <span className={isActive ? 'text-blue-600' : 'text-slate-400'}>
                 {tab.icon}
               </span>
               <span>{tab.label}</span>
@@ -121,213 +121,204 @@ const Settings = () => {
         })}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
         
-        {/* Left Column: Account Card & Quick Info */}
-        <div className="md:col-span-1 space-y-6">
-          <div className="bg-white p-6 rounded shadow-sm border border-gray-200">
-            <div className="flex items-center justify-center w-16 h-16 bg-atlas-blue text-white rounded-full mx-auto mb-4 text-2xl font-bold shadow-sm">
-              {user?.name?.charAt(0).toUpperCase() || 'A'}
-            </div>
-            <div className="text-center">
-              <div className="font-bold text-gray-800 text-lg">{user?.name || 'Auditor'}</div>
-              <div className="text-sm text-gray-500 flex items-center justify-center mt-1">
-                <ShieldCheck size={14} className="mr-1 text-green-600" /> {user?.role || 'Auditor'}
+        {/* Left Column: Minimal Profile & System State (4 cols) */}
+        <div className="lg:col-span-4 space-y-4">
+          
+          {/* User Summary Card */}
+          <div className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-xs">
+            <div className="flex items-center space-x-3.5">
+              <div className="w-11 h-11 bg-slate-100 text-slate-800 rounded-full flex items-center justify-center font-bold text-base border border-slate-200 shrink-0">
+                {user?.name?.charAt(0).toUpperCase() || 'A'}
               </div>
-              <div className="text-xs text-gray-400 flex items-center justify-center mt-1">
-                <Mail size={12} className="mr-1" /> {user?.email || '-'}
-              </div>
-            </div>
-
-            {/* Application Branding Summary */}
-            <div className="mt-6 pt-5 border-t border-gray-100 space-y-2">
-              <div className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-2">Status Aplikasi Aktif</div>
-              <div className="bg-gray-50 p-3 rounded border border-gray-200 text-xs space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Nama:</span>
-                  <span className="font-bold text-gray-800 uppercase">{config.appName}</span>
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-slate-900 text-sm truncate">
+                  {user?.name || 'Auditor'}
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Singkatan:</span>
-                  <span className="font-mono font-semibold text-atlas-blue">{config.appShortName}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">Versi:</span>
-                  <span className="text-gray-700">{config.version}</span>
+                <div className="text-xs text-slate-500 truncate mt-0.5">
+                  {user?.email || 'auditor@kap.com'}
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 border-t border-gray-100 pt-5">
+            <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span className="text-slate-500">Peran Sistem:</span>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">
+                <ShieldCheck size={12} className="mr-1 text-emerald-600" />
+                {user?.role || 'Auditor'}
+              </span>
+            </div>
+
+            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span className="text-slate-500">Nama Aplikasi:</span>
+              <span className="font-medium text-slate-800 truncate max-w-[140px]" title={config.appName}>
+                {config.appName}
+              </span>
+            </div>
+
+            <div className="mt-5 pt-4 border-t border-slate-100">
               <button 
+                type="button"
                 onClick={logout}
-                className="w-full flex items-center justify-center px-4 py-2.5 min-h-[44px] bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-colors rounded border border-red-200 text-sm"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2.5 min-h-[44px] text-xs sm:text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50/60 rounded-lg border border-red-200/80 transition-colors"
               >
-                <LogOut size={16} className="mr-2" />
-                Keluar Aplikasi (Logout)
+                <LogOut size={15} />
+                Keluar Aplikasi
               </button>
             </div>
           </div>
+
         </div>
 
-        {/* Right Column: Active Tab Content */}
-        <div className="md:col-span-2 space-y-6">
+        {/* Right Column: Active Tab Content (8 cols) */}
+        <div className="lg:col-span-8">
           
-          {/* TAB 1: BRANDING & APP NAME */}
+          {/* TAB 1: NAMA APLIKASI (BRANDING) */}
           {activeTab === 'branding' && (
-            <div className="bg-white rounded shadow-sm border border-gray-200">
-              <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
-                <div className="flex items-center">
-                  <Building2 size={18} className="text-atlas-blue mr-2 shrink-0" />
-                  <h2 className="font-bold text-gray-800 uppercase text-sm tracking-wider">
-                    Pengaturan Nama & Identitas Aplikasi
+            <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold text-slate-900 text-sm">
+                    Identitas & Nama Aplikasi
                   </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Sesuaikan nama yang ditampilkan di bilah samping, bilah atas, dan judul tab.
+                  </p>
                 </div>
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded bg-blue-100 text-atlas-blue">
-                  Branding
-                </span>
               </div>
 
               <div className="p-5 sm:p-6">
                 {isBrandingSaved && (
-                  <div className="bg-green-50 border-l-4 border-green-600 text-green-800 px-4 py-3 mb-6 text-sm font-medium flex items-center shadow-sm">
-                    <CheckCircle2 size={18} className="text-green-600 mr-2 shrink-0" />
-                    Pengaturan nama aplikasi berhasil disimpan dan diterapkan ke seluruh sistem!
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg mb-6 text-xs sm:text-sm font-medium flex items-center gap-2">
+                    <Check size={16} className="text-emerald-600 shrink-0" />
+                    Perubahan nama aplikasi berhasil disimpan dan diterapkan seketika.
                   </div>
                 )}
 
                 <form onSubmit={handleSaveBranding} className="space-y-5">
                   
-                  {/* Nama Aplikasi */}
+                  {/* Nama Aplikasi Utama */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                      Nama Aplikasi Utama <span className="text-red-500">*</span>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Nama Aplikasi Utama <span className="text-rose-500">*</span>
                     </label>
                     <input 
                       type="text"
                       required
-                      className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm rounded-none focus:bg-white bg-gray-50 transition-colors"
+                      className="w-full px-3.5 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
                       value={appNameInput}
                       onChange={e => setAppNameInput(e.target.value)}
                       placeholder="Contoh: ATLAS Web atau SMART AUDIT KAP"
                     />
-                    <p className="text-[11px] text-gray-500 mt-1">
-                      Nama ini tampil pada bilah samping (sidebar), bilah atas, halaman login, dan judul tab peramban.
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Nama utama pada bilah navigasi kiri, tab peramban, dan halaman masuk.
                     </p>
                   </div>
 
-                  {/* Nama Singkat / Singkatan */}
+                  {/* Singkatan & Instansi */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                        Singkatan / Kode Nama Pendek <span className="text-red-500">*</span>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Singkatan / Kode Pendek <span className="text-rose-500">*</span>
                       </label>
                       <input 
                         type="text"
                         required
-                        maxLength={12}
-                        className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm rounded-none focus:bg-white bg-gray-50 transition-colors"
+                        maxLength={10}
+                        className="w-full px-3.5 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
                         value={appShortNameInput}
                         onChange={e => setAppShortNameInput(e.target.value)}
                         placeholder="Contoh: ATLAS"
                       />
-                      <p className="text-[11px] text-gray-500 mt-1">
-                        Digunakan saat sidebar diminimalkan dan pada header perangkat seluler.
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Digunakan pada bilah samping ringkas dan perangkat seluler.
                       </p>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                        Nama Instansi / Kantor Akuntan Publik
+                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Instansi / KAP
                       </label>
                       <input 
                         type="text"
-                        className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm rounded-none focus:bg-white bg-gray-50 transition-colors"
+                        className="w-full px-3.5 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
                         value={institutionInput}
                         onChange={e => setInstitutionInput(e.target.value)}
-                        placeholder="Contoh: P2PK Kementerian Keuangan / KAP Rekan"
+                        placeholder="Contoh: P2PK Kementerian Keuangan"
                       />
-                      <p className="text-[11px] text-gray-500 mt-1">
-                        Menyesuaikan nama instansi pembuat atau KAP pengguna.
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Nama KAP atau otoritas kerangka kerja audit.
                       </p>
                     </div>
                   </div>
 
-                  {/* Slogan / Deskripsi */}
+                  {/* Slogan */}
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                       Subjudul / Slogan Aplikasi
                     </label>
                     <input 
                       type="text"
-                      className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm rounded-none focus:bg-white bg-gray-50 transition-colors"
+                      className="w-full px-3.5 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
                       value={taglineInput}
                       onChange={e => setTaglineInput(e.target.value)}
                       placeholder="Contoh: Audit Tool & Linked Archive System"
                     />
-                    <p className="text-[11px] text-gray-500 mt-1">
-                      Ditampilkan di panel perkenalan login dan keterangan judul dokumen.
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Deskripsi pelengkap yang tampil di halaman masuk dan judul dokumen.
                     </p>
                   </div>
 
-                  {/* Live Preview Card */}
-                  <div className="mt-6 p-4 bg-slate-900 text-white rounded border border-slate-800 space-y-3">
-                    <div className="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800 pb-2">
-                      <span className="flex items-center">
-                        <Sliders size={14} className="mr-1.5 text-blue-400" />
-                        Pratinjau Langsung (Live Preview)
-                      </span>
-                      <span className="text-[10px] bg-blue-600/30 text-blue-300 px-2 py-0.5 rounded font-mono">
-                        Real-time
-                      </span>
+                  {/* Minimalist Live Preview */}
+                  <div className="pt-2">
+                    <div className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2 flex items-center justify-between">
+                      <span>Pratinjau Langsung</span>
+                      <span className="text-[11px] text-slate-400 font-normal">Pembaruan otomatis</span>
                     </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {/* Sidebar Preview */}
-                      <div className="bg-atlas-blue p-3.5 rounded border border-blue-700/60 shadow-inner">
-                        <div className="text-[10px] text-blue-200 uppercase font-bold tracking-wider mb-1">
-                          Header Bilah Samping (Sidebar)
-                        </div>
-                        <div className="text-base font-bold text-white uppercase tracking-wider truncate">
+                      <div className="bg-slate-900 text-white p-3.5 rounded-lg border border-slate-800">
+                        <div className="text-[10px] text-slate-400 uppercase font-medium">Bilah Samping</div>
+                        <div className="text-sm font-bold tracking-wide mt-1 truncate uppercase">
                           {appNameInput || 'ATLAS Web'}
                         </div>
-                        <div className="text-[10px] text-blue-200 mt-1.5 truncate">
-                          Mode Ringkas: <span className="font-mono bg-blue-900/60 px-1.5 py-0.5 rounded text-white font-bold">{appShortNameInput || 'ATLAS'}</span>
+                        <div className="text-[10px] text-slate-400 mt-1">
+                          Singkatan: <span className="font-mono text-white font-semibold">{appShortNameInput || 'ATLAS'}</span>
                         </div>
                       </div>
 
-                      {/* Header & Tab Preview */}
-                      <div className="bg-slate-800 p-3.5 rounded border border-slate-700 shadow-inner">
-                        <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-1">
-                          Judul Tab Peramban & Topbar
+                      {/* Header Preview */}
+                      <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+                        <div className="text-[10px] text-slate-500 uppercase font-medium">Tab Dokumen</div>
+                        <div className="text-sm font-semibold text-slate-900 mt-1 truncate">
+                          {appNameInput || 'ATLAS Web'} · {taglineInput || 'Audit System'}
                         </div>
-                        <div className="text-sm font-semibold text-white truncate">
-                          {appNameInput || 'ATLAS Web'} - {taglineInput || 'Audit System'}
-                        </div>
-                        <div className="text-[10px] text-slate-400 mt-1.5 truncate">
-                          Instansi: <span className="text-slate-200">{institutionInput || 'P2PK Kemenkeu'}</span>
+                        <div className="text-[10px] text-slate-500 mt-1 truncate">
+                          {institutionInput || 'P2PK Kementerian Keuangan'}
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="pt-4 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-gray-100">
+                  {/* Form Actions */}
+                  <div className="pt-4 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3">
                     <button 
                       type="button"
                       onClick={handleResetBranding}
-                      className="flex items-center justify-center px-4 py-2.5 min-h-[44px] border border-gray-300 text-gray-700 font-semibold hover:bg-gray-100 transition-colors text-sm rounded-none"
+                      className="flex items-center justify-center gap-1.5 px-4 py-2.5 min-h-[44px] bg-white hover:bg-slate-50 text-slate-600 font-medium text-xs sm:text-sm rounded-lg border border-slate-200 transition-colors"
                     >
-                      <RotateCcw size={16} className="mr-2 text-gray-500" />
+                      <RotateCcw size={14} className="text-slate-400" />
                       Kembalikan ke Default
                     </button>
 
                     <button 
                       type="submit"
-                      className="flex items-center justify-center px-6 py-2.5 min-h-[44px] bg-atlas-blue text-white font-bold hover:bg-blue-800 transition-colors shadow-sm text-sm rounded-none"
+                      className="flex items-center justify-center gap-1.5 px-5 py-2.5 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
                     >
-                      <Save size={16} className="mr-2" />
-                      {isBrandingSaved ? 'Tersimpan!' : 'Simpan Nama Aplikasi'}
+                      <Save size={15} />
+                      {isBrandingSaved ? 'Tersimpan' : 'Simpan Nama Aplikasi'}
                     </button>
                   </div>
 
@@ -336,27 +327,34 @@ const Settings = () => {
             </div>
           )}
 
-          {/* TAB 2: AUDITOR PROFILE */}
+          {/* TAB 2: PROFIL AUDITOR */}
           {activeTab === 'profile' && (
-            <div className="bg-white rounded shadow-sm border border-gray-200">
-              <div className="px-5 py-4 border-b border-gray-200 flex items-center">
-                <User size={18} className="text-atlas-blue mr-2" />
-                <h2 className="font-bold text-gray-800 uppercase text-sm tracking-wider">Profil Auditor & Lisensi</h2>
+            <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100">
+                <h2 className="font-semibold text-slate-900 text-sm">
+                  Profil Auditor & Lisensi KAP
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Informasi data lisensi resmi untuk sinkronisasi otomatis ke kertas kerja audit.
+                </p>
               </div>
+
               <div className="p-5 sm:p-6">
                 {isProfileSaved && (
-                  <div className="bg-green-50 border-l-4 border-green-600 text-green-800 px-4 py-3 mb-6 text-sm font-medium flex items-center shadow-sm">
-                    <CheckCircle2 size={18} className="text-green-600 mr-2 shrink-0" />
-                    Profil auditor berhasil disimpan!
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg mb-6 text-xs sm:text-sm font-medium flex items-center gap-2">
+                    <Check size={16} className="text-emerald-600 shrink-0" />
+                    Profil auditor berhasil disimpan.
                   </div>
                 )}
 
                 <form onSubmit={handleSaveProfile} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nama Lengkap</label>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Nama Lengkap Auditor
+                    </label>
                     <input 
                       type="text"
-                      className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm rounded-none"
+                      className="w-full px-3.5 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
                       value={fullName}
                       onChange={e => setFullName(e.target.value)}
                     />
@@ -364,36 +362,45 @@ const Settings = () => {
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nomor Ijin Akuntan Publik (AP)</label>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Nomor Ijin Akuntan Publik (AP)
+                      </label>
                       <input 
                         type="text"
-                        className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm rounded-none"
+                        className="w-full px-3.5 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
                         placeholder="Contoh: 0001"
                         value={noAp}
                         onChange={e => setNoAp(e.target.value)}
                       />
-                      <p className="text-[10px] text-gray-500 mt-1">Diisi tanpa tanda kutip, akan disinkronkan ke Kertas Kerja C.530</p>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Akan disinkronkan ke Kertas Kerja C.530.
+                      </p>
                     </div>
+
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Nomor Induk KAP</label>
+                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Nomor Induk KAP
+                      </label>
                       <input 
                         type="text"
-                        className="w-full border border-gray-300 p-2.5 outline-none focus:border-atlas-blue text-sm rounded-none"
+                        className="w-full px-3.5 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
                         placeholder="Contoh: 26.2.1974"
                         value={noIndukKap}
                         onChange={e => setNoIndukKap(e.target.value)}
                       />
-                      <p className="text-[10px] text-gray-500 mt-1">Sesuai data resmi PPPK Kementerian Keuangan</p>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Sesuai data resmi di situs PPPK Kementerian Keuangan.
+                      </p>
                     </div>
                   </div>
 
-                  <div className="pt-4 flex items-center justify-end">
+                  <div className="pt-4 border-t border-slate-100 flex justify-end">
                     <button 
                       type="submit"
-                      className="w-full sm:w-auto flex items-center justify-center px-6 py-2.5 min-h-[44px] bg-atlas-blue text-white font-bold hover:bg-blue-800 transition-colors shadow-sm text-sm rounded-none"
+                      className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 min-h-[44px] bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
                     >
-                      <Save size={16} className="mr-2" />
-                      {isProfileSaved ? 'Tersimpan!' : 'Simpan Profil'}
+                      <Save size={15} />
+                      {isProfileSaved ? 'Tersimpan' : 'Simpan Profil'}
                     </button>
                   </div>
                 </form>
@@ -401,51 +408,62 @@ const Settings = () => {
             </div>
           )}
 
-          {/* TAB 3: ACCOUNT SECURITY */}
+          {/* TAB 3: KEAMANAN AKUN */}
           {activeTab === 'security' && (
-            <div className="bg-white rounded shadow-sm border border-gray-200">
-              <div className="px-5 py-4 border-b border-gray-200 flex items-center">
-                <Lock size={18} className="text-gray-600 mr-2" />
-                <h2 className="font-bold text-gray-800 uppercase text-sm tracking-wider">Keamanan Akun</h2>
+            <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100">
+                <h2 className="font-semibold text-slate-900 text-sm">
+                  Keamanan & Kata Sandi
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Perbarui kata sandi secara berkala untuk menjaga keamanan akses akun audit Anda.
+                </p>
               </div>
+
               <div className="p-5 sm:p-6">
                 {isPasswordSaved && (
-                  <div className="bg-green-50 border-l-4 border-green-600 text-green-800 px-4 py-3 mb-6 text-sm font-medium flex items-center shadow-sm">
-                    <CheckCircle2 size={18} className="text-green-600 mr-2 shrink-0" />
-                    Permintaan pembaruan kata sandi berhasil diproses.
+                  <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg mb-6 text-xs sm:text-sm font-medium flex items-center gap-2">
+                    <Check size={16} className="text-emerald-600 shrink-0" />
+                    Kata sandi berhasil diperbarui.
                   </div>
                 )}
 
                 <form onSubmit={handleUpdatePassword} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Password Saat Ini</label>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Kata Sandi Saat Ini
+                    </label>
                     <input 
                       type="password"
                       required
-                      className="w-full border border-gray-300 p-2.5 outline-none focus:border-gray-800 text-sm rounded-none"
+                      className="w-full px-3.5 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
                       value={currentPassword}
                       onChange={e => setCurrentPassword(e.target.value)}
                       placeholder="••••••••"
                     />
                   </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Password Baru</label>
+                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                      Kata Sandi Baru
+                    </label>
                     <input 
                       type="password"
                       required
-                      className="w-full border border-gray-300 p-2.5 outline-none focus:border-gray-800 text-sm rounded-none"
+                      className="w-full px-3.5 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
                       placeholder="••••••••"
                     />
                   </div>
-                  <div className="pt-4 flex items-center justify-end">
+
+                  <div className="pt-4 border-t border-slate-100 flex justify-end">
                     <button 
                       type="submit"
-                      className="w-full sm:w-auto flex items-center justify-center px-6 py-2.5 min-h-[44px] border border-gray-800 text-gray-800 font-bold hover:bg-gray-100 transition-colors shadow-sm text-sm rounded-none"
+                      className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-5 py-2.5 min-h-[44px] bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs sm:text-sm rounded-lg shadow-xs transition-colors"
                     >
-                      <Save size={16} className="mr-2" />
-                      Perbarui Password
+                      <Save size={15} />
+                      Perbarui Kata Sandi
                     </button>
                   </div>
                 </form>
