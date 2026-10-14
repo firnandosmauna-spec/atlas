@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Calculator, Users, Briefcase, DollarSign, ShieldAlert, 
+  Calculator, Users, DollarSign, ShieldAlert, 
   FileText, Copy, Printer, Check, RotateCcw, Plus, Trash2, 
-  Building2, Percent, TrendingUp, Sparkles, ChevronRight, HelpCircle
+  Building2, TrendingUp, HelpCircle
 } from 'lucide-react';
 import { useAppConfigStore } from '../store/appConfigStore';
 import { useEngagementStore } from '../store/engagementStore';
@@ -23,103 +23,58 @@ interface OperationalExpense {
   amount: number;
 }
 
-const DEFAULT_TEAM: TeamMemberRate[] = [
-  { id: '1', role: 'Partner / Penanggung Jawab', ratePerHour: 2000000, planningHours: 6, testingHours: 8, reportingHours: 10 },
-  { id: '2', role: 'Manajer / Reviewer', ratePerHour: 1200000, planningHours: 14, testingHours: 24, reportingHours: 16 },
-  { id: '3', role: 'Senior Auditor / Ketua Tim', ratePerHour: 600000, planningHours: 24, testingHours: 60, reportingHours: 26 },
-  { id: '4', role: 'Junior Auditor / Anggota', ratePerHour: 300000, planningHours: 20, testingHours: 80, reportingHours: 20 },
-];
-
-const DEFAULT_EXPENSES: OperationalExpense[] = [
-  { id: '1', category: 'Transportasi & Lapangan', description: 'Kunjungan fisik & stock opname persediaan', amount: 3500000 },
-  { id: '2', category: 'Konfirmasi Pihak Ketiga', description: 'Biaya kirim & administrasi konfirmasi bank/piutang', amount: 1500000 },
-  { id: '3', category: 'Dokumentasi & Administrasi', description: 'Penyusunan berkas & pengarsipan kertas kerja', amount: 1000000 },
-];
-
-const PRESETS = [
-  {
-    id: 'ukm',
-    name: 'Entitas Kecil / UKM',
-    desc: 'Omset < Rp 10 Miliar, perikatan sederhana',
-    team: [
-      { id: '1', role: 'Partner / Penanggung Jawab', ratePerHour: 1500000, planningHours: 4, testingHours: 4, reportingHours: 6 },
-      { id: '2', role: 'Manajer / Reviewer', ratePerHour: 900000, planningHours: 8, testingHours: 14, reportingHours: 10 },
-      { id: '3', role: 'Senior Auditor / Ketua Tim', ratePerHour: 450000, planningHours: 14, testingHours: 35, reportingHours: 15 },
-      { id: '4', role: 'Junior Auditor / Anggota', ratePerHour: 250000, planningHours: 10, testingHours: 45, reportingHours: 15 },
-    ],
-    expenses: 3000000,
-    risk: 1.0,
-    accountingStandard: 'SAK ETAP / EP',
-  },
-  {
-    id: 'menengah',
-    name: 'Perusahaan Menengah',
-    desc: 'Omset Rp 10 M s/d Rp 50 M, multi-lokasi / persediaan',
-    team: DEFAULT_TEAM,
-    expenses: 6000000,
-    risk: 1.1,
-    accountingStandard: 'SAK Umum',
-  },
-  {
-    id: 'korporasi',
-    name: 'Korporasi Besar & Manufaktur',
-    desc: 'Omset > Rp 50 Miliar, proses bisnis kompleks',
-    team: [
-      { id: '1', role: 'Partner / Penanggung Jawab', ratePerHour: 2500000, planningHours: 12, testingHours: 16, reportingHours: 18 },
-      { id: '2', role: 'Manajer / Reviewer', ratePerHour: 1500000, planningHours: 24, testingHours: 45, reportingHours: 28 },
-      { id: '3', role: 'Senior Auditor / Ketua Tim', ratePerHour: 800000, planningHours: 40, testingHours: 100, reportingHours: 40 },
-      { id: '4', role: 'Junior Auditor / Anggota', ratePerHour: 400000, planningHours: 35, testingHours: 130, reportingHours: 35 },
-    ],
-    expenses: 12000000,
-    risk: 1.25,
-    accountingStandard: 'SAK Umum / PSAK',
-  },
-  {
-    id: 'emiten',
-    name: 'Emiten / Perusahaan Terbuka (Tbk)',
-    desc: 'Akuntabilitas publik, regulasi OJK & IDX ketat',
-    team: [
-      { id: '1', role: 'Partner / Penanggung Jawab', ratePerHour: 3500000, planningHours: 20, testingHours: 25, reportingHours: 30 },
-      { id: '2', role: 'Manajer / Reviewer', ratePerHour: 2000000, planningHours: 35, testingHours: 65, reportingHours: 40 },
-      { id: '3', role: 'Senior Auditor / Ketua Tim', ratePerHour: 1000000, planningHours: 55, testingHours: 140, reportingHours: 55 },
-      { id: '4', role: 'Junior Auditor / Anggota', ratePerHour: 500000, planningHours: 50, testingHours: 180, reportingHours: 50 },
-    ],
-    expenses: 25000000,
-    risk: 1.4,
-    accountingStandard: 'IFRS / PSAK Lengkap',
-  }
+const INITIAL_TEAM: TeamMemberRate[] = [
+  { id: '1', role: 'Partner / Penanggung Jawab', ratePerHour: 0, planningHours: 0, testingHours: 0, reportingHours: 0 },
+  { id: '2', role: 'Manajer / Reviewer', ratePerHour: 0, planningHours: 0, testingHours: 0, reportingHours: 0 },
+  { id: '3', role: 'Senior Auditor / Ketua Tim', ratePerHour: 0, planningHours: 0, testingHours: 0, reportingHours: 0 },
+  { id: '4', role: 'Junior Auditor / Anggota', ratePerHour: 0, planningHours: 0, testingHours: 0, reportingHours: 0 },
 ];
 
 const FeeCalculator: React.FC = () => {
   const { appName, institutionName } = useAppConfigStore();
   const { engagements } = useEngagementStore();
 
-  // General Client & Engagement Information
-  const [clientName, setClientName] = useState('PT Cahaya Gemilang Nusantara');
+  // General Client & Engagement Information (tanpa data mock)
+  const [clientName, setClientName] = useState('');
   const [engagementType, setEngagementType] = useState<'Tahun Pertama' | 'Perikatan Berulang'>('Perikatan Berulang');
   const [accountingStandard, setAccountingStandard] = useState('SAK Umum');
-  const [annualRevenue, setAnnualRevenue] = useState<number>(25000000000);
-  const [totalAssets, setTotalAssets] = useState<number>(35000000000);
+  const [annualRevenue, setAnnualRevenue] = useState<number>(0);
+  const [totalAssets, setTotalAssets] = useState<number>(0);
 
   // Active Tab: team, benchmark, expenses, proposal
   const [activeTab, setActiveTab] = useState<'team' | 'benchmark' | 'expenses' | 'proposal'>('team');
 
   // Team & Billing Rates
-  const [teamMembers, setTeamMembers] = useState<TeamMemberRate[]>(DEFAULT_TEAM);
+  const [teamMembers, setTeamMembers] = useState<TeamMemberRate[]>(INITIAL_TEAM);
 
-  // Operational Expenses (OPE)
-  const [expenses, setExpenses] = useState<OperationalExpense[]>(DEFAULT_EXPENSES);
+  // Operational Expenses (OPE) - kosong tanpa mock data
+  const [expenses, setExpenses] = useState<OperationalExpense[]>([]);
 
-  // Risk Multipliers
-  const [inherentRiskLevel, setInherentRiskLevel] = useState<'low' | 'medium' | 'high'>('medium');
-  const [internalControlQuality, setInternalControlQuality] = useState<'good' | 'moderate' | 'weak'>('moderate');
+  // Risk Multipliers & Tax
+  const [inherentRiskLevel, setInherentRiskLevel] = useState<'low' | 'medium' | 'high'>('low');
+  const [internalControlQuality, setInternalControlQuality] = useState<'good' | 'moderate' | 'weak'>('good');
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [vatRate, setVatRate] = useState<number>(11); // 11% or 12%
   const [applyWht23, setApplyWht23] = useState<boolean>(true); // PPh 23 (2%)
 
   // UI States
   const [isCopied, setIsCopied] = useState(false);
-  const [selectedPresetId, setSelectedPresetId] = useState<string>('menengah');
+
+  // Reset form to clean state
+  const handleReset = () => {
+    setClientName('');
+    setEngagementType('Perikatan Berulang');
+    setAccountingStandard('SAK Umum');
+    setAnnualRevenue(0);
+    setTotalAssets(0);
+    setTeamMembers(INITIAL_TEAM.map(m => ({ ...m })));
+    setExpenses([]);
+    setInherentRiskLevel('low');
+    setInternalControlQuality('good');
+    setDiscountPercent(0);
+    setVatRate(11);
+    setApplyWht23(true);
+  };
 
   // Risk multiplier factor calculation
   const riskMultiplier = useMemo(() => {
@@ -134,7 +89,6 @@ const FeeCalculator: React.FC = () => {
 
   // Calculations
   const calculations = useMemo(() => {
-    // Total hours per phase & total personnel cost
     let totalPlanningHours = 0;
     let totalTestingHours = 0;
     let totalReportingHours = 0;
@@ -179,26 +133,28 @@ const FeeCalculator: React.FC = () => {
     let benchmarkRec = 0;
     let benchmarkMax = 0;
 
-    if (benchmarkBase < 10000000000) {
-      // < 10M
-      benchmarkMin = 20000000;
-      benchmarkRec = 35000000;
-      benchmarkMax = 55000000;
-    } else if (benchmarkBase < 50000000000) {
-      // 10M - 50M
-      benchmarkMin = 45000000;
-      benchmarkRec = 75000000;
-      benchmarkMax = 120000000;
-    } else if (benchmarkBase < 250000000000) {
-      // 50M - 250M
-      benchmarkMin = 90000000;
-      benchmarkRec = 160000000;
-      benchmarkMax = 250000000;
-    } else {
-      // > 250M
-      benchmarkMin = 180000000;
-      benchmarkRec = 320000000;
-      benchmarkMax = 650000000;
+    if (benchmarkBase > 0) {
+      if (benchmarkBase < 10000000000) {
+        // < 10M
+        benchmarkMin = 20000000;
+        benchmarkRec = 35000000;
+        benchmarkMax = 55000000;
+      } else if (benchmarkBase < 50000000000) {
+        // 10M - 50M
+        benchmarkMin = 45000000;
+        benchmarkRec = 75000000;
+        benchmarkMax = 120000000;
+      } else if (benchmarkBase < 250000000000) {
+        // 50M - 250M
+        benchmarkMin = 90000000;
+        benchmarkRec = 160000000;
+        benchmarkMax = 250000000;
+      } else {
+        // > 250M
+        benchmarkMin = 180000000;
+        benchmarkRec = 320000000;
+        benchmarkMax = 650000000;
+      }
     }
 
     return {
@@ -216,6 +172,7 @@ const FeeCalculator: React.FC = () => {
       wht23Amount,
       totalInvoice,
       cashReceived,
+      benchmarkBase,
       benchmarkMin,
       benchmarkRec,
       benchmarkMax,
@@ -226,29 +183,14 @@ const FeeCalculator: React.FC = () => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val);
   };
 
-  const handleApplyPreset = (presetId: string) => {
-    const preset = PRESETS.find(p => p.id === presetId);
-    if (!preset) return;
-
-    setSelectedPresetId(presetId);
-    setTeamMembers(preset.team);
-    setAccountingStandard(preset.accountingStandard);
-    
-    // Set first expense
-    setExpenses([
-      { id: '1', category: 'Biaya Lapangan & Perjalanan', description: 'Transportasi tim dan inspeksi fisik', amount: preset.expenses * 0.6 },
-      { id: '2', category: 'Administrasi & Konfirmasi', description: 'Surat konfirmasi bank & cetak laporan', amount: preset.expenses * 0.4 },
-    ]);
-  };
-
   const handleAddMember = () => {
     const newMember: TeamMemberRate = {
       id: Date.now().toString(),
       role: 'Auditor Tambahan / Spesialis',
-      ratePerHour: 500000,
-      planningHours: 10,
-      testingHours: 20,
-      reportingHours: 10
+      ratePerHour: 0,
+      planningHours: 0,
+      testingHours: 0,
+      reportingHours: 0
     };
     setTeamMembers([...teamMembers, newMember]);
   };
@@ -265,9 +207,9 @@ const FeeCalculator: React.FC = () => {
   const handleAddExpense = () => {
     const newExp: OperationalExpense = {
       id: Date.now().toString(),
-      category: 'Biaya Tambahan',
-      description: 'Keterangan pengeluaran operasional',
-      amount: 1000000
+      category: 'Biaya Lapangan / Transportasi',
+      description: '',
+      amount: 0
     };
     setExpenses([...expenses, newExp]);
   };
@@ -284,7 +226,7 @@ const FeeCalculator: React.FC = () => {
     const text = `
 RINGKASAN PENAWARAN IMBALAN JASA (FEE) AUDIT
 Kantor Akuntan Publik: ${institutionName || 'KAP Independen'}
-Klien: ${clientName}
+Klien: ${clientName.trim() ? clientName : '[Belum Diisi]'}
 Tipe Perikatan: ${engagementType} (${accountingStandard})
 
 RINCIAN PERHITUNGAN:
@@ -332,12 +274,22 @@ Termin Pembayaran:
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Simulasi imbalan jasa audit profesional berdasarkan panduan IAPI, jam kerja tim, dan profil risiko klien.
+            Kalkulator perhitungan imbalan jasa audit independen berdasarkan jam kerja tim, alokasi risiko, dan regulasi IAPI.
           </p>
         </div>
 
         {/* Action button header */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center flex-wrap gap-2.5">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-xs transition-colors min-h-[44px]"
+            title="Bersihkan seluruh isian form ke nilai awal"
+          >
+            <RotateCcw size={15} />
+            <span>Reset Form</span>
+          </button>
+
           <button
             type="button"
             onClick={handleCopyProposal}
@@ -356,38 +308,6 @@ Termin Pembayaran:
             <Printer size={16} />
             <span>Cetak Proposal</span>
           </button>
-        </div>
-      </div>
-
-      {/* Preset Selector Card */}
-      <div className="mb-6 bg-white p-4 sm:p-5 rounded-xl border border-slate-200/80 shadow-xs">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-            <Sparkles size={14} className="text-blue-600" />
-            Template Penawaran Cepat
-          </span>
-          <span className="text-[11px] text-slate-400">Pilih profil klien untuk memuat simulasi standar</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {PRESETS.map((preset) => {
-            const isSelected = selectedPresetId === preset.id;
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => handleApplyPreset(preset.id)}
-                className={`p-3 text-left rounded-lg border transition-all min-h-[44px] ${
-                  isSelected 
-                    ? 'border-blue-600 bg-blue-50/50 shadow-xs ring-1 ring-blue-600/20' 
-                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'
-                }`}
-              >
-                <div className="font-semibold text-xs text-slate-900">{preset.name}</div>
-                <div className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{preset.desc}</div>
-              </button>
-            );
-          })}
         </div>
       </div>
 
@@ -414,7 +334,7 @@ Termin Pembayaran:
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50/60 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
-                  placeholder="Nama Klien"
+                  placeholder="Masukkan nama klien / perusahaan..."
                 />
               </div>
 
@@ -449,20 +369,25 @@ Termin Pembayaran:
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Pilih dari Perikatan Aktif (Opsional)
+                  Muat dari Perikatan Aktif (Opsional)
                 </label>
                 <select
                   onChange={(e) => {
                     const found = engagements.find(eng => eng.id === e.target.value);
                     if (found) {
                       setClientName(found.clientName);
-                      setEngagementType(found.engagementType as any || 'Perikatan Berulang');
+                      if (found.engagementType) {
+                        setEngagementType(found.engagementType as any);
+                      }
+                      if (found.accountingStandard) {
+                        setAccountingStandard(found.accountingStandard);
+                      }
                     }
                   }}
                   className="w-full px-3 py-2 bg-slate-50/60 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
                   defaultValue=""
                 >
-                  <option value="" disabled>-- Muat dari data perikatan --</option>
+                  <option value="" disabled>-- Pilih perikatan yang tersimpan --</option>
                   {engagements.map(eng => (
                     <option key={eng.id} value={eng.id}>{eng.clientName} ({eng.id})</option>
                   ))}
@@ -521,7 +446,7 @@ Termin Pembayaran:
           {/* TAB 1: TEAM & HOURS */}
           {activeTab === 'team' && (
             <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
-              <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between">
+              <div className="p-5 border-b border-slate-200/80 flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold text-slate-900 text-sm">Alokasi Waktu & Tarif Tim Audit</h3>
                   <p className="text-xs text-slate-500 mt-0.5">Rincian jam kerja per tahapan audit dan tarif penagihan per jam (*billing rate*).</p>
@@ -563,13 +488,15 @@ Termin Pembayaran:
                               value={member.role}
                               onChange={(e) => handleUpdateMember(member.id, 'role', e.target.value)}
                               className="w-full bg-transparent font-medium text-slate-900 border-b border-transparent hover:border-slate-300 focus:border-blue-600 focus:outline-none"
+                              placeholder="Nama peran / posisi"
                             />
                           </td>
                           <td className="py-2.5 px-2 text-right">
                             <input
                               type="number"
                               step="50000"
-                              value={member.ratePerHour}
+                              placeholder="0"
+                              value={member.ratePerHour || ''}
                               onChange={(e) => handleUpdateMember(member.id, 'ratePerHour', Number(e.target.value) || 0)}
                               className="w-24 text-right bg-slate-50 px-2 py-1 rounded border border-slate-200 text-xs font-mono focus:bg-white focus:outline-none"
                             />
@@ -578,7 +505,8 @@ Termin Pembayaran:
                             <input
                               type="number"
                               min="0"
-                              value={member.planningHours}
+                              placeholder="0"
+                              value={member.planningHours || ''}
                               onChange={(e) => handleUpdateMember(member.id, 'planningHours', Number(e.target.value) || 0)}
                               className="w-14 text-center bg-slate-50 px-1.5 py-1 rounded border border-slate-200 text-xs font-mono focus:bg-white focus:outline-none"
                             />
@@ -587,7 +515,8 @@ Termin Pembayaran:
                             <input
                               type="number"
                               min="0"
-                              value={member.testingHours}
+                              placeholder="0"
+                              value={member.testingHours || ''}
                               onChange={(e) => handleUpdateMember(member.id, 'testingHours', Number(e.target.value) || 0)}
                               className="w-14 text-center bg-slate-50 px-1.5 py-1 rounded border border-slate-200 text-xs font-mono focus:bg-white focus:outline-none"
                             />
@@ -596,7 +525,8 @@ Termin Pembayaran:
                             <input
                               type="number"
                               min="0"
-                              value={member.reportingHours}
+                              placeholder="0"
+                              value={member.reportingHours || ''}
                               onChange={(e) => handleUpdateMember(member.id, 'reportingHours', Number(e.target.value) || 0)}
                               className="w-14 text-center bg-slate-50 px-1.5 py-1 rounded border border-slate-200 text-xs font-mono focus:bg-white focus:outline-none"
                             />
@@ -666,7 +596,8 @@ Termin Pembayaran:
                   </label>
                   <input
                     type="number"
-                    value={annualRevenue}
+                    placeholder="0"
+                    value={annualRevenue || ''}
                     onChange={(e) => setAnnualRevenue(Number(e.target.value) || 0)}
                     className="w-full px-3 py-2 bg-slate-50/60 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 font-mono focus:outline-none"
                   />
@@ -679,7 +610,8 @@ Termin Pembayaran:
                   </label>
                   <input
                     type="number"
-                    value={totalAssets}
+                    placeholder="0"
+                    value={totalAssets || ''}
                     onChange={(e) => setTotalAssets(Number(e.target.value) || 0)}
                     className="w-full px-3 py-2 bg-slate-50/60 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 font-mono focus:outline-none"
                   />
@@ -688,42 +620,53 @@ Termin Pembayaran:
               </div>
 
               {/* Benchmark Indicator Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-                  <div className="text-[11px] text-slate-500 uppercase font-semibold">Batas Minimum (Floor)</div>
-                  <div className="text-base font-bold text-slate-900 mt-1">{formatRupiah(calculations.benchmarkMin)}</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Batas aman terendah SPM 1</div>
-                </div>
+              {calculations.benchmarkBase > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                      <div className="text-[11px] text-slate-500 uppercase font-semibold">Batas Minimum (Floor)</div>
+                      <div className="text-base font-bold text-slate-900 mt-1">{formatRupiah(calculations.benchmarkMin)}</div>
+                      <div className="text-[10px] text-slate-400 mt-1">Batas aman terendah SPM 1</div>
+                    </div>
 
-                <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/60 ring-1 ring-blue-500/20">
-                  <div className="text-[11px] text-blue-700 uppercase font-semibold">Rekomendasi Wajar</div>
-                  <div className="text-base font-bold text-blue-900 mt-1">{formatRupiah(calculations.benchmarkRec)}</div>
-                  <div className="text-[10px] text-blue-700/70 mt-1">Estimasi pasar kompetitif</div>
-                </div>
+                    <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/60 ring-1 ring-blue-500/20">
+                      <div className="text-[11px] text-blue-700 uppercase font-semibold">Rekomendasi Wajar</div>
+                      <div className="text-base font-bold text-blue-900 mt-1">{formatRupiah(calculations.benchmarkRec)}</div>
+                      <div className="text-[10px] text-blue-700/70 mt-1">Estimasi pasar kompetitif</div>
+                    </div>
 
-                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-                  <div className="text-[11px] text-slate-500 uppercase font-semibold">Kompleksitas Tinggi</div>
-                  <div className="text-base font-bold text-slate-900 mt-1">{formatRupiah(calculations.benchmarkMax)}</div>
-                  <div className="text-[10px] text-slate-400 mt-1">Audit multi-cabang/restrukturisasi</div>
-                </div>
-              </div>
+                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                      <div className="text-[11px] text-slate-500 uppercase font-semibold">Kompleksitas Tinggi</div>
+                      <div className="text-base font-bold text-slate-900 mt-1">{formatRupiah(calculations.benchmarkMax)}</div>
+                      <div className="text-[10px] text-slate-400 mt-1">Audit multi-cabang/restrukturisasi</div>
+                    </div>
+                  </div>
 
-              <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl text-xs space-y-1">
-                <div className="font-semibold flex items-center gap-1.5">
-                  <HelpCircle size={15} />
-                  Kesesuaian Tarif Tim Saat Ini
+                  <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-xl text-xs space-y-1">
+                    <div className="font-semibold flex items-center gap-1.5">
+                      <HelpCircle size={15} />
+                      Kesesuaian Tarif Tim Saat Ini
+                    </div>
+                    <p>
+                      Perhitungan berbasis jam kerja Anda menghasilkan estimasi fee netto <span className="font-bold">{formatRupiah(calculations.netAuditFee)}</span>. 
+                      {calculations.netAuditFee === 0 ? (
+                        <span className="text-slate-600 ml-1">Silakan isi alokasi jam dan tarif tim pada tab pertama untuk membandingkan.</span>
+                      ) : calculations.netAuditFee < calculations.benchmarkMin ? (
+                        <span className="text-rose-700 font-semibold ml-1">Peringatan: Nilai ini berada di bawah batas minimum wajar IAPI.</span>
+                      ) : calculations.netAuditFee > calculations.benchmarkMax ? (
+                        <span className="text-amber-800 font-semibold ml-1">Nilai ini termasuk segmen premium / kompleksitas tinggi.</span>
+                      ) : (
+                        <span className="text-emerald-700 font-semibold ml-1">Nilai ini sangat seimbang dan berada di rentang wajar standar pasar audit.</span>
+                      )}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="p-6 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center text-xs text-slate-500 space-y-1">
+                  <div className="font-medium text-slate-700">Data Ukuran Entitas Belum Diisi</div>
+                  <p>Silakan isi nilai omset tahunan atau total aset entitas klien pada kolom di atas untuk mengaktifkan perhitungan benchmark IAPI.</p>
                 </div>
-                <p>
-                  Perhitungan berbasis jam kerja Anda menghasilkan estimasi fee netto <span className="font-bold">{formatRupiah(calculations.netAuditFee)}</span>. 
-                  {calculations.netAuditFee < calculations.benchmarkMin ? (
-                    <span className="text-rose-700 font-semibold ml-1">Peringatan: Nilai ini berada di bawah batas minimum wajar IAPI.</span>
-                  ) : calculations.netAuditFee > calculations.benchmarkMax ? (
-                    <span className="text-amber-800 font-semibold ml-1">Nilai ini termasuk segmen premium / kompleksitas tinggi.</span>
-                  ) : (
-                    <span className="text-emerald-700 font-semibold ml-1">Nilai ini sangat seimbang dan berada di rentang wajar standar pasar audit.</span>
-                  )}
-                </p>
-              </div>
+              )}
             </div>
           )}
 
@@ -746,46 +689,54 @@ Termin Pembayaran:
                   </button>
                 </div>
 
-                <div className="space-y-3">
-                  {expenses.map((exp) => (
-                    <div key={exp.id} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2.5 rounded-lg border border-slate-200/70 bg-slate-50/40">
-                      <div className="w-full sm:w-1/3">
-                        <input
-                          type="text"
-                          value={exp.category}
-                          onChange={(e) => handleUpdateExpense(exp.id, 'category', e.target.value)}
-                          className="w-full text-xs font-semibold text-slate-800 bg-white px-2.5 py-1.5 rounded border border-slate-200 focus:outline-none"
-                          placeholder="Kategori Biaya"
-                        />
+                {expenses.length === 0 ? (
+                  <div className="p-6 text-center text-xs text-slate-500 border border-dashed border-slate-200 rounded-lg bg-slate-50/50">
+                    Belum ada rincian biaya operasional (OPE). Klik tombol "Tambah Biaya" di atas jika terdapat biaya perjalanan dinas lapangan, transportasi, atau konfirmasi pihak ketiga.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {expenses.map((exp) => (
+                      <div key={exp.id} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 p-2.5 rounded-lg border border-slate-200/70 bg-slate-50/40">
+                        <div className="w-full sm:w-1/3">
+                          <input
+                            type="text"
+                            value={exp.category}
+                            onChange={(e) => handleUpdateExpense(exp.id, 'category', e.target.value)}
+                            className="w-full text-xs font-semibold text-slate-800 bg-white px-2.5 py-1.5 rounded border border-slate-200 focus:outline-none"
+                            placeholder="Kategori Biaya"
+                          />
+                        </div>
+                        <div className="w-full sm:w-1/2">
+                          <input
+                            type="text"
+                            value={exp.description}
+                            onChange={(e) => handleUpdateExpense(exp.id, 'description', e.target.value)}
+                            className="w-full text-xs text-slate-600 bg-white px-2.5 py-1.5 rounded border border-slate-200 focus:outline-none"
+                            placeholder="Deskripsi pengeluaran..."
+                          />
+                        </div>
+                        <div className="w-full sm:w-36">
+                          <input
+                            type="number"
+                            step="100000"
+                            placeholder="0"
+                            value={exp.amount || ''}
+                            onChange={(e) => handleUpdateExpense(exp.id, 'amount', Number(e.target.value) || 0)}
+                            className="w-full text-xs text-right font-mono font-medium text-slate-900 bg-white px-2.5 py-1.5 rounded border border-slate-200 focus:outline-none"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveExpense(exp.id)}
+                          className="text-slate-400 hover:text-rose-600 p-1.5 self-center"
+                          title="Hapus"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </div>
-                      <div className="w-full sm:w-1/2">
-                        <input
-                          type="text"
-                          value={exp.description}
-                          onChange={(e) => handleUpdateExpense(exp.id, 'description', e.target.value)}
-                          className="w-full text-xs text-slate-600 bg-white px-2.5 py-1.5 rounded border border-slate-200 focus:outline-none"
-                          placeholder="Deskripsi"
-                        />
-                      </div>
-                      <div className="w-full sm:w-36">
-                        <input
-                          type="number"
-                          step="100000"
-                          value={exp.amount}
-                          onChange={(e) => handleUpdateExpense(exp.id, 'amount', Number(e.target.value) || 0)}
-                          className="w-full text-xs text-right font-mono font-medium text-slate-900 bg-white px-2.5 py-1.5 rounded border border-slate-200 focus:outline-none"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveExpense(exp.id)}
-                        className="text-slate-400 hover:text-rose-600 p-1.5 self-center"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs font-semibold text-slate-800">
                   <span>Total Biaya Operasional (OPE):</span>
@@ -837,10 +788,10 @@ Termin Pembayaran:
                         type="number"
                         min="0"
                         max="50"
-                        value={discountPercent}
+                        placeholder="0"
+                        value={discountPercent || ''}
                         onChange={(e) => setDiscountPercent(Number(e.target.value) || 0)}
                         className="w-full px-3 py-2 bg-slate-50/60 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none"
-                        placeholder="0"
                       />
                       <span className="absolute right-3 top-2 text-xs text-slate-400">%</span>
                     </div>
@@ -891,7 +842,9 @@ Termin Pembayaran:
               <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
                   <span className="text-slate-400 block font-medium">Kepada Yth:</span>
-                  <span className="font-bold text-slate-900 text-sm">{clientName}</span>
+                  <span className="font-bold text-slate-900 text-sm">
+                    {clientName.trim() ? clientName : '[Nama Klien Belum Diisi]'}
+                  </span>
                 </div>
                 <div className="text-right">
                   <span className="text-slate-400 block font-medium">Kerangka Audit:</span>
