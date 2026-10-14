@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import type { Engagement } from '../../../store/engagementStore';
-import { Calculator, DollarSign, AlertTriangle, CalendarDays, Users, BarChart3 } from 'lucide-react';
+import { Calculator, DollarSign, AlertTriangle, CalendarDays, Users, BarChart3, ExternalLink } from 'lucide-react';
 import WorksheetContainer from '../../../components/WorksheetContainer';
 
 interface PhaseHours {
@@ -363,10 +363,20 @@ const A120 = () => {
 
         {/* KALKULASI ANGGARAN */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 bg-slate-50 flex justify-between items-center">
+          <div className="p-6 border-b border-gray-100 bg-slate-50 flex flex-wrap justify-between items-center gap-3">
             <h2 className="text-lg font-bold text-gray-800 flex items-center">
               <Calculator className="mr-2 text-atlas-blue" size={20} /> 4. Kalkulasi Anggaran Biaya
             </h2>
+            <a
+              href="/fee-calculator"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-atlas-blue bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors shadow-sm"
+              title="Buka modul kalkulator fee audit lengkap dengan simulasi IAPI & proposal formal"
+            >
+              <ExternalLink size={13} />
+              <span>Buka Kalkulator Fee Audit Lengkap</span>
+            </a>
           </div>
 
           <div className="p-6">

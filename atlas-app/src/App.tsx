@@ -19,6 +19,7 @@ import WorksheetView from './pages/workspace/worksheets/WorksheetView';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Settings from './pages/Settings';
+import FeeCalculator from './pages/FeeCalculator';
 import { Building2 } from 'lucide-react';
 
 function App() {
@@ -65,6 +66,7 @@ function App() {
           <Route path="/" element={<MainLayout />}>
             <Route path="engagements" element={<Engagements />} />
             <Route path="portofolio" element={<Portofolio />} />
+            <Route path="fee-calculator" element={<FeeCalculator />} />
             
             {/* Admin Routes */}
             <Route path="admin" element={<AdminDashboard />} />

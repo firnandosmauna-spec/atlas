@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Briefcase, AlertTriangle, CheckSquare, FileText, Settings, ShieldAlert, FolderOpen, LogOut, X } from 'lucide-react';
+import { Home, Briefcase, AlertTriangle, CheckSquare, FileText, Settings, ShieldAlert, FolderOpen, LogOut, X, Calculator } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useAppConfigStore } from '../store/appConfigStore';
 
@@ -23,6 +23,7 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
     { to: '/dashboard', icon: <Home size={20} />, label: 'Beranda' },
     { to: '/portofolio', icon: <FileText size={20} />, label: 'Portofolio Klien' },
     { to: '/engagements', icon: <FolderOpen size={20} />, label: 'Manajemen Engagement' },
+    { to: '/fee-calculator', icon: <Calculator size={20} />, label: 'Kalkulator Fee Audit' },
   ];
 
   return (
