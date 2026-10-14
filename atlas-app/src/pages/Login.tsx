@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2 } from 'lucide-react';
+import { Building2, Mail, Lock, User, Eye, EyeOff, AlertCircle, ShieldCheck } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuthStore } from '../store/authStore';
 import { useAppConfigStore } from '../store/appConfigStore';
@@ -10,6 +10,7 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   
@@ -26,7 +27,7 @@ const Login: React.FC = () => {
       if (isLogin) {
         // LOGIN
         const { data, error } = await supabase.auth.signInWithPassword({
-          email,
+          email: email.trim(),
           password
         });
         
@@ -44,7 +45,7 @@ const Login: React.FC = () => {
           login({
             id: data.user.id,
             email: data.user.email || '',
-            name: userData?.full_name || 'User',
+            name: userData?.full_name || 'Auditor',
             role: (userData?.roles?.name as any) || 'Auditor',
             organizationId: 'kap-123'
           });
@@ -53,7 +54,7 @@ const Login: React.FC = () => {
       } else {
         // REGISTER
         const { data: authData, error: authError } = await supabase.auth.signUp({
-          email,
+          email: email.trim(),
           password
         });
         
@@ -63,8 +64,8 @@ const Login: React.FC = () => {
           const { data: roleData } = await supabase.from('roles').select('id').eq('name', 'Admin').maybeSingle();
           const { error: insertError } = await supabase.from('users').insert({
             id: authData.user.id,
-            email: email,
-            full_name: fullName || email.split('@')[0],
+            email: email.trim(),
+            full_name: fullName.trim() || email.split('@')[0],
             role_id: roleData?.id || null
           });
           
@@ -76,7 +77,7 @@ const Login: React.FC = () => {
           login({
             id: authData.user.id,
             email: authData.user.email || '',
-            name: fullName || email.split('@')[0],
+            name: fullName.trim() || email.split('@')[0],
             role: 'Admin',
             organizationId: 'kap-123'
           });
@@ -90,126 +91,228 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleFillDemo = () => {
+    setEmail('dwisafitriana99@gmail.com');
+    setPassword('dwisafitriana');
+    setIsLogin(true);
+    setErrorMsg('');
+  };
+
   return (
-    <div className="min-h-screen flex bg-gray-50 font-sans">
+    <div className="min-h-screen flex bg-slate-50 font-sans selection:bg-blue-100 selection:text-blue-900">
       
-      {/* Brand Section (Left Panel) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gray-950 p-12 flex-col justify-between text-white border-r border-gray-900">
+      {/* Brand Section (Left Panel on Desktop, hidden on mobile) */}
+      <div className="hidden lg:flex lg:w-5/12 xl:w-1/2 bg-slate-950 p-12 xl:p-16 flex-col justify-between text-white border-r border-slate-900 relative overflow-hidden">
+        
+        {/* Subtle background element */}
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
+        
         <div>
-          <div className="flex items-center space-x-3 mb-16">
-            <div className="w-10 h-10 bg-white flex items-center justify-center">
-              <Building2 className="text-gray-950" size={20} />
+          {/* Logo badge */}
+          <div className="flex items-center space-x-3 mb-12">
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-xs">
+              <Building2 className="text-slate-950" size={20} />
             </div>
-            <span className="text-xl font-bold tracking-tight uppercase">{appName}</span>
+            <span className="text-lg font-bold tracking-tight text-white uppercase">{appName}</span>
           </div>
-          <h1 className="text-4xl lg:text-5xl font-bold leading-tight tracking-tight max-w-lg uppercase">
+
+          <h1 className="text-3xl xl:text-4xl font-semibold leading-tight tracking-tight text-white">
             {tagline}
           </h1>
-          <p className="mt-6 text-sm lg:text-lg text-gray-400 max-w-md leading-relaxed border-l-2 border-gray-700 pl-4">
-            Sistem informasi operasional dan pendokumentasian proses audit independen berdasarkan kerangka kerja {institutionName}.
+
+          <p className="mt-5 text-sm xl:text-base text-slate-400 max-w-md leading-relaxed border-l border-slate-800 pl-4">
+            Platform operasional dan dokumentasi kertas kerja audit independen berbasis standar {institutionName}.
           </p>
+
+          <div className="mt-8 flex items-center gap-3 text-xs text-slate-400">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-300">
+              <ShieldCheck size={14} className="text-emerald-400" />
+              <span>Kepatuhan SA & SPM 1</span>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-300">
+              <span>Kerangka P2PK</span>
+            </div>
+          </div>
         </div>
         
-        <div className="text-xs text-gray-500 font-bold tracking-widest uppercase">
-          VER {version} / SECURE AUTH
+        <div className="text-xs text-slate-500 font-medium">
+          {appName} · Versi {version}
         </div>
       </div>
 
-      {/* Form Section (Right Panel) */}
-      <div className="flex-1 flex flex-col justify-center px-4 sm:px-8 md:px-16 lg:px-32 py-8 bg-white">
-        <div className="max-w-sm w-full mx-auto lg:mx-0">
+      {/* Form Section (Centered on Mobile HP, Right on Desktop) */}
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-12 xl:px-20 py-8 sm:py-12 min-w-0">
+        <div className="max-w-md w-full mx-auto">
           
-          <div className="lg:hidden mb-8 sm:mb-12 flex items-center space-x-3 border-b border-gray-200 pb-4">
-            <div className="w-8 h-8 bg-gray-950 flex items-center justify-center">
-              <Building2 className="text-white" size={16} />
+          {/* Mobile Brand Header */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm">
+              <Building2 size={24} />
             </div>
-            <span className="text-lg font-bold tracking-tight text-gray-900 uppercase">{appName}</span>
+            <h1 className="text-xl font-bold tracking-tight text-slate-900 uppercase">
+              {appName}
+            </h1>
+            <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+              {tagline}
+            </p>
           </div>
 
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight uppercase mb-1">
-            {isLogin ? 'Autentikasi Sistem' : 'Pendaftaran Akun'}
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8 font-medium">
-            {isLogin ? 'Akses sistem membutuhkan kredensial valid.' : 'Masukkan data untuk pembuatan akun.'}
-          </p>
-
-          {/* Toggle Login/Register (Sharp Tabs) */}
-          <div className="flex border-b border-gray-200 mb-6 sm:mb-8">
-            <button 
-              type="button"
-              className={`flex-1 py-3 min-h-[44px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-colors ${
-                isLogin ? 'border-b-2 border-gray-900 text-gray-900' : 'text-gray-400 hover:text-gray-900'
-              }`}
-              onClick={() => { setIsLogin(true); setErrorMsg(''); }}
-            >
-              Log In
-            </button>
-            <button 
-              type="button"
-              className={`flex-1 py-3 min-h-[44px] text-xs sm:text-sm font-bold uppercase tracking-wider transition-colors ${
-                !isLogin ? 'border-b-2 border-gray-900 text-gray-900' : 'text-gray-400 hover:text-gray-900'
-              }`}
-              onClick={() => { setIsLogin(false); setErrorMsg(''); }}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          {errorMsg && (
-            <div className="bg-white border-l-4 border-red-600 text-red-700 px-4 py-3 mb-6 text-sm font-medium shadow-sm">
-              {errorMsg}
-            </div>
-          )}
-
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          {/* Card Container for Form */}
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200/80 shadow-xs">
             
-            {!isLogin && (
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">Nama Lengkap</label>
-                <input
-                  type="text"
-                  required={!isLogin}
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-300 focus:outline-none focus:border-gray-900 focus:bg-white transition-colors text-sm text-gray-900 rounded-none"
-                  placeholder="Nama sesuai KTP/Identitas"
-                />
+            {/* Title & subtitle */}
+            <div className="mb-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-slate-900 tracking-tight">
+                {isLogin ? 'Selamat Datang Kembali' : 'Pendaftaran Akun Baru'}
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                {isLogin 
+                  ? 'Masukkan kredensial akun auditor Anda untuk masuk.' 
+                  : 'Lengkapi formulir berikut untuk registrasi akun sistem.'}
+              </p>
+            </div>
+
+            {/* Modern Segmented Control Pills */}
+            <div className="flex p-1 bg-slate-100 rounded-xl mb-6 border border-slate-200/60">
+              <button 
+                type="button"
+                className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all min-h-[44px] ${
+                  isLogin ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                }`}
+                onClick={() => { setIsLogin(true); setErrorMsg(''); }}
+              >
+                Masuk
+              </button>
+              <button 
+                type="button"
+                className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all min-h-[44px] ${
+                  !isLogin ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                }`}
+                onClick={() => { setIsLogin(false); setErrorMsg(''); }}
+              >
+                Daftar
+              </button>
+            </div>
+
+            {/* Error Message */}
+            {errorMsg && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-800 px-3.5 py-3 rounded-lg mb-6 text-xs sm:text-sm flex items-start gap-2.5">
+                <AlertCircle size={16} className="text-rose-600 mt-0.5 shrink-0" />
+                <span className="leading-snug">{errorMsg}</span>
               </div>
             )}
 
-            <div className="space-y-1">
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">Alamat Email</label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 focus:outline-none focus:border-gray-900 focus:bg-white transition-colors text-sm text-gray-900 rounded-none"
-                placeholder="email@kap.com"
-              />
+            <form className="space-y-4" onSubmit={handleSubmit}>
+              
+              {/* Full Name (Sign Up only) */}
+              {!isLogin && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Nama Lengkap <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <User size={16} />
+                    </div>
+                    <input
+                      type="text"
+                      required={!isLogin}
+                      autoComplete="name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
+                      placeholder="Nama lengkap sesuai KTP"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Email Address */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Alamat Email <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Mail size={16} />
+                  </div>
+                  <input
+                    type="email"
+                    required
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
+                    placeholder="nama@kap.com"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Kata Sandi <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Lock size={16} />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    autoComplete={isLogin ? 'current-password' : 'new-password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-10 pr-11 py-2.5 bg-slate-50/60 hover:bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600/15 focus:border-blue-600 transition-colors"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors min-h-[44px] min-w-[44px] justify-center"
+                    aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full mt-6 flex justify-center items-center py-2.5 px-4 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:ring-offset-2 transition-colors disabled:opacity-60 rounded-lg shadow-xs min-h-[44px]"
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Memproses...
+                  </span>
+                ) : (
+                  isLogin ? 'Masuk ke Aplikasi' : 'Daftar Akun Baru'
+                )}
+              </button>
+              
+            </form>
+
+            {/* Quick Demo Credentials Link */}
+            <div className="mt-6 pt-5 border-t border-slate-100 text-center">
+              <button
+                type="button"
+                onClick={handleFillDemo}
+                className="text-xs text-slate-500 hover:text-blue-600 font-medium transition-colors py-1 min-h-[44px] inline-flex items-center justify-center"
+              >
+                Isi Otomatis Kredensial Auditor Demo
+              </button>
             </div>
 
-            <div className="space-y-1">
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">Password</label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 border border-gray-300 focus:outline-none focus:border-gray-900 focus:bg-white transition-colors text-sm text-gray-900 rounded-none"
-                placeholder="••••••••"
-              />
-            </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center items-center py-3 px-4 text-sm font-bold text-white bg-gray-950 hover:bg-gray-800 active:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition-colors disabled:opacity-70 uppercase tracking-wider rounded-none mt-8"
-            >
-              {isLoading ? 'Memproses...' : (isLogin ? 'Masuk' : 'Buat Akun')}
-            </button>
-            
-          </form>
+          {/* Footer note on mobile */}
+          <div className="lg:hidden text-center mt-6 text-xs text-slate-400">
+            {appName} · Versi {version}
+          </div>
+
         </div>
       </div>
     </div>
