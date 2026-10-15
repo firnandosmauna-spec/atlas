@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Calculator, Users, DollarSign, ShieldAlert, 
+  Calculator, Users, ShieldAlert, 
   FileText, Copy, Printer, Check, RotateCcw,
-  Building2, TrendingUp, HelpCircle, Layers,
-  BookOpen, ChevronRight, Sliders, AlertCircle, ArrowUpRight
+  TrendingUp, Layers,
+  BookOpen, Sliders, ArrowUpRight
 } from 'lucide-react';
 import { useAppConfigStore } from '../store/appConfigStore';
-import { useEngagementStore } from '../store/engagementStore';
 
 // ==========================================
 // DATA MATRIKS BASE FEE (IMAGE 2)
@@ -53,13 +52,82 @@ const DEFAULT_TEAM_RATES: TeamRateDefinition[] = [
   { level: 'Partner', defaultAllocation: 8, hbrJabodetabek: 1850000, hbrLuarJabodetabek: 1480000 },
   { level: 'Manager', defaultAllocation: 10, hbrJabodetabek: 860000, hbrLuarJabodetabek: 615000 },
   { level: 'Supervisor', defaultAllocation: 12, hbrJabodetabek: 370000, hbrLuarJabodetabek: 245000 },
-  { level: 'Senior', defaultAllocation: 30, hbrJabodetabek: 1850000 ? 185000 : 185000, hbrLuarJabodetabek: 155000 },
+  { level: 'Senior', defaultAllocation: 30, hbrJabodetabek: 185000, hbrLuarJabodetabek: 155000 },
   { level: 'Junior', defaultAllocation: 40, hbrJabodetabek: 125000, hbrLuarJabodetabek: 87500 },
 ];
 
+const formatNumberWithDots = (val: number | string | undefined | null): string => {
+  if (val === undefined || val === null || val === '' || val === 0) return '';
+  const numStr = val.toString().replace(/\D/g, '');
+  if (!numStr) return '';
+  return new Intl.NumberFormat('id-ID').format(Number(numStr));
+};
+
+const parseNumberFromDots = (val: string): number => {
+  const cleanStr = val.replace(/\D/g, '');
+  return cleanStr ? parseInt(cleanStr, 10) : 0;
+};
+
+interface MoneyInputProps {
+  value: number;
+  onChange: (val: number) => void;
+  placeholder?: string;
+  className?: string;
+  id?: string;
+}
+
+const MoneyInput: React.FC<MoneyInputProps> = ({
+  value,
+  onChange,
+  placeholder = '0',
+  className,
+  id,
+}) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const rawCursor = input.selectionStart || 0;
+    const currentVal = input.value;
+    const digitsBeforeCursor = currentVal.slice(0, rawCursor).replace(/\D/g, '').length;
+    
+    const num = parseNumberFromDots(currentVal);
+    onChange(num);
+
+    const formatted = num ? formatNumberWithDots(num) : '';
+    requestAnimationFrame(() => {
+      if (document.activeElement !== input) return;
+      let newCursor = 0;
+      let digitCount = 0;
+      for (let i = 0; i < formatted.length; i++) {
+        if (/\d/.test(formatted[i])) {
+          digitCount++;
+        }
+        if (digitCount >= digitsBeforeCursor) {
+          newCursor = i + 1;
+          break;
+        }
+      }
+      if (digitCount < digitsBeforeCursor) {
+        newCursor = formatted.length;
+      }
+      input.setSelectionRange(newCursor, newCursor);
+    });
+  };
+
+  return (
+    <input
+      id={id}
+      type="text"
+      inputMode="numeric"
+      placeholder={placeholder}
+      value={value ? formatNumberWithDots(value) : ''}
+      onChange={handleChange}
+      className={className}
+    />
+  );
+};
+
 const FeeCalculator: React.FC = () => {
   const { appName, institutionName } = useAppConfigStore();
-  const { engagements } = useEngagementStore();
 
   // Active Navigation Tab
   const [activeTab, setActiveTab] = useState<'calculator' | 'matrix' | 'adjustments' | 'rates' | 'guideline' | 'proposal'>('calculator');
@@ -671,12 +739,10 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                       </span>
                     )}
                   </div>
-                  <input
-                    type="number"
-                    step="1000000"
+                  <MoneyInput
                     placeholder="0"
-                    value={annualRevenue || ''}
-                    onChange={(e) => setAnnualRevenue(Number(e.target.value) || 0)}
+                    value={annualRevenue}
+                    onChange={setAnnualRevenue}
                     className="w-full px-3 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs font-mono font-semibold focus:outline-none"
                   />
                   <span className="text-[11px] text-slate-500 mt-0.5 block">{formatRupiah(annualRevenue)}</span>
@@ -688,12 +754,10 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                     <label className="font-semibold text-slate-700">Total Aset (Rp)</label>
                     <span className="text-[10px] font-medium text-emerald-700">Adj: +{adjustments.assetAdj}%</span>
                   </div>
-                  <input
-                    type="number"
-                    step="1000000"
+                  <MoneyInput
                     placeholder="0"
-                    value={totalAssets || ''}
-                    onChange={(e) => setTotalAssets(Number(e.target.value) || 0)}
+                    value={totalAssets}
+                    onChange={setTotalAssets}
                     className="w-full px-3 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs font-mono font-semibold focus:outline-none"
                   />
                   <span className="text-[11px] text-slate-500 mt-0.5 block">{formatRupiah(totalAssets)}</span>
@@ -705,11 +769,10 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                     <label className="block font-semibold text-slate-700 mb-1">
                       Transaksi / Bulan <span className="text-[10px] font-normal text-emerald-700">(+{adjustments.transAdj}%)</span>
                     </label>
-                    <input
-                      type="number"
+                    <MoneyInput
                       placeholder="0"
-                      value={transactionVolume || ''}
-                      onChange={(e) => setTransactionVolume(Number(e.target.value) || 0)}
+                      value={transactionVolume}
+                      onChange={setTransactionVolume}
                       className="w-full px-3 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs font-mono focus:outline-none"
                     />
                   </div>
@@ -867,12 +930,10 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
 
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-700 mb-1">Out-of-Pocket</label>
-                    <input
-                      type="number"
-                      step="500000"
+                    <MoneyInput
                       placeholder="0"
-                      value={outOfPocketExpenses || ''}
-                      onChange={(e) => setOutOfPocketExpenses(Number(e.target.value) || 0)}
+                      value={outOfPocketExpenses}
+                      onChange={setOutOfPocketExpenses}
                       className="w-full px-2 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 rounded text-slate-900 text-xs font-mono focus:outline-none"
                     />
                   </div>
@@ -1334,24 +1395,18 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                       %
                     </td>
                     <td className="py-2.5 px-4 text-right">
-                      <input
-                        type="number"
-                        step="10000"
+                      <MoneyInput
                         value={row.hbrJabodetabek}
-                        onChange={(e) => {
-                          const val = Number(e.target.value) || 0;
+                        onChange={(val) => {
                           setTeamRates(prev => prev.map((r, i) => i === idx ? { ...r, hbrJabodetabek: val } : r));
                         }}
                         className="w-28 text-right bg-slate-50 border border-slate-300 rounded px-2 py-1 font-bold text-slate-900"
                       />
                     </td>
                     <td className="py-2.5 px-4 text-right">
-                      <input
-                        type="number"
-                        step="10000"
+                      <MoneyInput
                         value={row.hbrLuarJabodetabek}
-                        onChange={(e) => {
-                          const val = Number(e.target.value) || 0;
+                        onChange={(val) => {
                           setTeamRates(prev => prev.map((r, i) => i === idx ? { ...r, hbrLuarJabodetabek: val } : r));
                         }}
                         className="w-28 text-right bg-slate-50 border border-slate-300 rounded px-2 py-1 font-bold text-slate-900"
