@@ -32,8 +32,8 @@ const Settings = () => {
 
   const handleSaveBranding = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalAppName = appNameInput.trim() || 'ATLAS Web';
-    const finalAppShortName = appShortNameInput.trim() || 'ATLAS';
+    const finalAppName = appNameInput.trim() || 'SMART AUDIT PRO';
+    const finalAppShortName = appShortNameInput.trim() || 'SAP';
     const finalTagline = taglineInput.trim() || 'Audit Tool & Linked Archive System';
     const finalInstitution = institutionInput.trim() || 'P2PK Kementerian Keuangan';
 
@@ -55,8 +55,8 @@ const Settings = () => {
 
   const handleResetBranding = () => {
     config.resetConfig();
-    setAppNameInput('ATLAS Web');
-    setAppShortNameInput('ATLAS');
+    setAppNameInput('SMART AUDIT PRO');
+    setAppShortNameInput('SAP');
     setTaglineInput('Audit Tool & Linked Archive System');
     setInstitutionInput('P2PK Kementerian Keuangan');
 
@@ -282,10 +282,10 @@ const Settings = () => {
                       <div className="bg-slate-900 text-white p-3.5 rounded-lg border border-slate-800">
                         <div className="text-[10px] text-slate-400 uppercase font-medium">Bilah Samping</div>
                         <div className="text-sm font-bold tracking-wide mt-1 truncate uppercase">
-                          {appNameInput || 'ATLAS Web'}
+                          {appNameInput || 'SMART AUDIT PRO'}
                         </div>
                         <div className="text-[10px] text-slate-400 mt-1">
-                          Singkatan: <span className="font-mono text-white font-semibold">{appShortNameInput || 'ATLAS'}</span>
+                          Singkatan: <span className="font-mono text-white font-semibold">{appShortNameInput || 'SAP'}</span>
                         </div>
                       </div>
 
@@ -293,7 +293,7 @@ const Settings = () => {
                       <div className="bg-slate-50 p-3.5 rounded-lg border border-slate-200">
                         <div className="text-[10px] text-slate-500 uppercase font-medium">Tab Dokumen</div>
                         <div className="text-sm font-semibold text-slate-900 mt-1 truncate">
-                          {appNameInput || 'ATLAS Web'} · {taglineInput || 'Audit System'}
+                          {appNameInput || 'SMART AUDIT PRO'} · {taglineInput || 'Audit Tool & Linked Archive System'}
                         </div>
                         <div className="text-[10px] text-slate-500 mt-1 truncate">
                           {institutionInput || 'P2PK Kementerian Keuangan'}
