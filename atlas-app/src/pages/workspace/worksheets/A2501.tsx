@@ -175,7 +175,7 @@ const A2501 = () => {
 
         {/* Action Buttons */}
         <div className="flex justify-between items-center pt-6">
-          <button onClick={() => navigate('/workspace/ENG-2025-DEMO/worksheet/a250')} className="text-gray-500 hover:text-gray-800 flex items-center">
+          <button onClick={() => navigate(engagement?.id ? `/workspace/${engagement.id}/worksheet/a250` : -1 as any)} className="text-gray-500 hover:text-gray-800 flex items-center min-h-[44px]">
             <ArrowLeft size={14} className="mr-1" /> Kembali ke A.250
           </button>
           <button 

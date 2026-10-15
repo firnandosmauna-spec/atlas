@@ -171,8 +171,26 @@ const Engagements = () => {
               ))}
               {filteredEngagements.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                    Tidak ada engagement yang ditemukan.
+                  <td colSpan={7} className="px-6 py-16 text-center">
+                    <div className="max-w-sm mx-auto flex flex-col items-center">
+                      <div className="w-12 h-12 rounded-full bg-blue-50 text-atlas-blue flex items-center justify-center mb-3">
+                        <FolderOpen size={24} />
+                      </div>
+                      <p className="text-base font-semibold text-gray-800">Belum Ada Perikatan Audit</p>
+                      <p className="text-xs text-gray-500 mt-1 mb-4 leading-relaxed">
+                        {searchTerm 
+                          ? 'Tidak ada engagement yang sesuai dengan kata kunci pencarian.' 
+                          : 'Mulai dengan membuat perikatan audit baru untuk mengelola kertas kerja dan tim perikatan.'}
+                      </p>
+                      {!searchTerm && hasPermission('create_engagement') && (
+                        <button 
+                          onClick={() => { setEditingEngagement(null); setIsModalOpen(true); }}
+                          className="bg-atlas-blue hover:bg-blue-800 text-white px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors shadow-sm flex items-center justify-center min-h-[44px]"
+                        >
+                          <Plus size={16} className="mr-1.5" /> Buat Engagement Pertama
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )}

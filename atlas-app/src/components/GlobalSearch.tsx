@@ -125,13 +125,13 @@ const GlobalSearch = () => {
 
     staticWorksheets.forEach(ws => {
       if (ws.code.toLowerCase().includes(q) || ws.name.toLowerCase().includes(q)) {
-        const engId = engagements[0]?.id || 'ENG-2023-001';
+        const engId = engagements[0]?.id;
         found.push({
           id: `ws-${ws.code}`,
           title: `${ws.code} - ${ws.name}`,
           subtitle: `Worksheet Module`,
           type: 'worksheet',
-          link: `/workspace/${engId}/worksheet/${ws.code.replace(/\./g, '').toLowerCase()}`
+          link: engId ? `/workspace/${engId}/worksheet/${ws.code.replace(/\./g, '').toLowerCase()}` : '/engagements'
         });
       }
     });

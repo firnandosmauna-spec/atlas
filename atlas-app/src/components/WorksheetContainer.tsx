@@ -56,46 +56,42 @@ const WorksheetContainer: React.FC<WorksheetContainerProps> = ({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      addAttachment({
-        engagementId: engagementId || 'ENG-2023-001',
-        worksheetId: code,
-        fileName: file.name,
-        fileType: file.type || file.name.split('.').pop() || 'unknown',
-        size: file.size,
-        uploadedBy: 'Auditor A',
-        description: `Uploaded from ${code}`,
-        url: URL.createObjectURL(file) // Mock URL for preview
-      });
-      addAuditLog({
-        engagementId: engagementId || 'ENG-2023-001',
-        user: 'Auditor A',
-        action: 'Uploaded Evidence',
-        module: code,
-        record: file.name,
-      });
+      if (engagementId) {
+        addAttachment({
+          engagementId,
+          worksheetId: code,
+          fileName: file.name,
+          fileType: file.type || file.name.split('.').pop() || 'unknown',
+          size: file.size,
+          uploadedBy: 'Auditor',
+          description: `Uploaded from ${code}`,
+          url: URL.createObjectURL(file)
+        });
+        addAuditLog({
+          engagementId,
+          user: 'Auditor',
+          action: 'Uploaded Evidence',
+          module: code,
+          record: file.name,
+        });
+      }
     }
   };
   
-  const [notes, setNotes] = useState<ReviewNote[]>([
-    {
-      id: '1',
-      reviewer: 'Budi S. (Manager)',
-      date: '14:30',
-      comment: 'Tolong lampirkan bukti scan identitas manajemen untuk melengkapi form ini.',
-      status: 'Open'
-    }
-  ]);
+  const [notes, setNotes] = useState<ReviewNote[]>([]);
   const [newNoteText, setNewNoteText] = useState('');
 
   const handleSave = () => {
     setSaved(true);
-    addAuditLog({
-      engagementId: engagementId || 'ENG-2023-001',
-      user: 'Auditor A',
-      action: 'Saved Draft',
-      module: code,
-      record: name,
-    });
+    if (engagementId) {
+      addAuditLog({
+        engagementId,
+        user: 'Auditor',
+        action: 'Saved Draft',
+        module: code,
+        record: name,
+      });
+    }
     setTimeout(() => setSaved(false), 3000);
   };
 
@@ -107,15 +103,17 @@ const WorksheetContainer: React.FC<WorksheetContainerProps> = ({
         return;
       }
     }
-    addAuditLog({
-      engagementId: engagementId || 'ENG-2023-001',
-      user: 'Reviewer/Auditor',
-      action: 'Changed Status',
-      module: code,
-      record: name,
-      oldValue: worksheetStatus,
-      newValue: newStatus
-    });
+    if (engagementId) {
+      addAuditLog({
+        engagementId,
+        user: 'Reviewer/Auditor',
+        action: 'Changed Status',
+        module: code,
+        record: name,
+        oldValue: worksheetStatus,
+        newValue: newStatus
+      });
+    }
     setWorksheetStatus(newStatus);
   };
 

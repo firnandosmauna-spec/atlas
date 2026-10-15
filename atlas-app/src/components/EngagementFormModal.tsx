@@ -7,11 +7,11 @@ import type { Engagement } from '../store/engagementStore';
 interface EngagementFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialData: Engagement | null;
+  initialData?: Engagement | null;
 }
 
-const EngagementFormModal = ({ isOpen, onClose, initialData }: EngagementFormModalProps) => {
-  const { addEngagement, updateEngagement } = useEngagementStore();
+const EngagementFormModal = ({ isOpen, onClose, initialData = null }: EngagementFormModalProps) => {
+  const { addEngagement, updateEngagement, addAuditLog } = useEngagementStore();
   const [partners, setPartners] = useState<{name: string}[]>([]);
   const [managers, setManagers] = useState<{name: string}[]>([]);
   const [auditors, setAuditors] = useState<{name: string}[]>([]);
@@ -55,6 +55,13 @@ const EngagementFormModal = ({ isOpen, onClose, initialData }: EngagementFormMod
   const onSubmit = (data: Engagement) => {
     if (initialData) {
       updateEngagement(initialData.id, data);
+      addAuditLog({
+        engagementId: initialData.id,
+        user: data.partnerName || 'User',
+        action: 'Memperbarui Perikatan',
+        module: 'Engagement',
+        record: data.clientName,
+      });
     } else {
       // Create logic
       const newEng: Engagement = {
@@ -64,6 +71,14 @@ const EngagementFormModal = ({ isOpen, onClose, initialData }: EngagementFormMod
         progress: 0,
       };
       addEngagement(newEng);
+      addAuditLog({
+        engagementId: newEng.id,
+        user: newEng.partnerName || 'User',
+        action: 'Membuat Perikatan',
+        module: 'Engagement',
+        record: newEng.clientName,
+        newValue: 'Draft'
+      });
     }
     onClose();
   };
