@@ -22,7 +22,8 @@ import {
   AlertCircle,
   HelpCircle,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  BookOpen
 } from 'lucide-react';
 import type { PmpjClientRegister, PmpjTransactionMonitoring, PmpjSummaryMetrics } from '../types/pmpj';
 import { INITIAL_PMPJ_REGISTERS, INITIAL_PMPJ_MONITORING } from '../constants/initialPmpjData';
@@ -38,8 +39,58 @@ import {
 const STORAGE_KEY_PMPJ_REGISTERS = 'atlas_pmpj_registers';
 const STORAGE_KEY_PMPJ_MONITORING = 'atlas_pmpj_monitoring';
 
+const PMPJ_GUIDE_TOPICS = [
+  {
+    topik: 'Ruang lingkup',
+    panduan: 'Pilih jenis jasa. Ruang Lingkup bernilai Ya untuk lima jenis jasa yang tercantum dalam PMK dan bila jasa diberikan untuk kepentingan/atas nama pengguna jasa.'
+  },
+  {
+    topik: 'Pemicu',
+    panduan: 'Tandai hubungan usaha, transaksi keuangan minimal Rp100 juta atau ekuivalen, transaksi mencurigakan, atau keraguan atas informasi.'
+  },
+  {
+    topik: 'CDD',
+    panduan: 'Lengkapi identitas, alamat/kontak, pekerjaan/bidang usaha, sumber dana, tujuan, wakil, BO, dokumen, pertemuan awal, dan verifikasi. Isi sesuai jenis pengguna jasa.'
+  },
+  {
+    topik: 'Risiko',
+    panduan: 'Pilih Rendah, Menengah, atau Tinggi berdasarkan penilaian KAP. Kategori ini adalah keputusan internal, bukan skor/ambang yang ditetapkan PMK.'
+  },
+  {
+    topik: 'Pemantauan',
+    panduan: 'Catat karakteristik pembayaran, pelaku, nilai, tanggal, dan penyimpangan dari pola yang diketahui. Alert otomatis hanya membantu mengarahkan review.'
+  },
+  {
+    topik: 'Eskalasi',
+    panduan: 'Jika pengguna jasa menolak prosedur PMPJ atau informasi diragukan, eskalasi kepada reviewer dan ikuti kewajiban pada PMK serta prosedur pelaporan yang berlaku.'
+  },
+  {
+    topik: 'Retensi',
+    panduan: 'Tanggal simpan otomatis dihitung lima tahun setelah tanggal akhir hubungan usaha. Ketentuan KAP dapat menetapkan masa lebih panjang.'
+  }
+];
+
+const OFFICIAL_REFERENCES = [
+  {
+    label: 'PMK 55/PMK.01/2017',
+    url: 'https://jdih.kemenkeu.go.id/dok/55-pmk-01-2017'
+  },
+  {
+    label: 'PMK 155/PMK.01/2017',
+    url: 'https://jdih.kemenkeu.go.id/dok/155-pmk-01-2017'
+  },
+  {
+    label: 'PPATK - Pelaporan Profesi',
+    url: 'https://www.ppatk.go.id/pelaporan/read/50/'
+  },
+  {
+    label: 'PPATK - Penilaian Risiko',
+    url: 'https://www.ppatk.go.id/dalam_negeri/read/1397/publikasi-penilaian-risiko.html'
+  }
+];
+
 const Pmpj: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'ringkasan' | 'register' | 'pemantauan'>('ringkasan');
+  const [activeTab, setActiveTab] = useState<'ringkasan' | 'panduan' | 'register' | 'pemantauan'>('ringkasan');
   const [registers, setRegisters] = useState<PmpjClientRegister[]>([]);
   const [monitoringList, setMonitoringList] = useState<PmpjTransactionMonitoring[]>([]);
   
@@ -458,20 +509,33 @@ const Pmpj: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab('ringkasan')}
-          className={`flex items-center gap-2 py-1.5 px-4 rounded-lg whitespace-nowrap transition-all text-xs font-semibold ${
+          className={`flex items-center gap-2 py-1.5 px-3.5 rounded-lg whitespace-nowrap transition-all text-xs font-semibold ${
             activeTab === 'ringkasan'
               ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/60'
               : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
           }`}
         >
           <Info size={14} className={activeTab === 'ringkasan' ? 'text-blue-600' : 'text-slate-400'} />
-          <span>Ringkasan & Panduan</span>
+          <span>Ringkasan</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('panduan')}
+          className={`flex items-center gap-2 py-1.5 px-3.5 rounded-lg whitespace-nowrap transition-all text-xs font-semibold ${
+            activeTab === 'panduan'
+              ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/60'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
+          }`}
+        >
+          <BookOpen size={14} className={activeTab === 'panduan' ? 'text-blue-600' : 'text-slate-400'} />
+          <span>Panduan Singkat PMPJ</span>
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('register')}
-          className={`flex items-center gap-2 py-1.5 px-4 rounded-lg whitespace-nowrap transition-all text-xs font-semibold ${
+          className={`flex items-center gap-2 py-1.5 px-3.5 rounded-lg whitespace-nowrap transition-all text-xs font-semibold ${
             activeTab === 'register'
               ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/60'
               : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
@@ -484,14 +548,14 @@ const Pmpj: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveTab('pemantauan')}
-          className={`flex items-center gap-2 py-1.5 px-4 rounded-lg whitespace-nowrap transition-all text-xs font-semibold ${
+          className={`flex items-center gap-2 py-1.5 px-3.5 rounded-lg whitespace-nowrap transition-all text-xs font-semibold ${
             activeTab === 'pemantauan'
               ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/60'
               : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
           }`}
         >
           <ShieldCheck size={14} className={activeTab === 'pemantauan' ? 'text-rose-600' : 'text-slate-400'} />
-          <span>Pemantauan Transaksi & Tindak Lanjut ({monitoringList.length})</span>
+          <span>Pemantauan Transaksi ({monitoringList.length})</span>
           {summaryMetrics.openAlertsCount > 0 && (
             <span className="ml-1 px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-bold">
               {summaryMetrics.openAlertsCount} Alert
@@ -499,6 +563,92 @@ const Pmpj: React.FC = () => {
           )}
         </button>
       </div>
+
+      {/* ========================================================================= */}
+      {/* CARD: PANDUAN SINGKAT PMPJ (SESUAI GAMBAR PANDUAN) */}
+      {/* ========================================================================= */}
+      {/* Helper function to render Panduan Card */}
+      {activeTab === 'panduan' && (
+        <div className="space-y-3.5">
+          <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+            <div className="p-4 border-b border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm sm:text-base font-black text-[#1e3a6a] tracking-tight uppercase">
+                  PANDUAN SINGKAT PMPJ
+                </h2>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Pedoman operasional penerapan prinsip mengenali pengguna jasa bagi profesi Akuntan Publik.
+                </p>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                Dokumen Resmi KAP
+              </span>
+            </div>
+
+            {/* TABEL PANDUAN TOPIK PERSIS GAMBAR */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-[#1e3a6a] text-white border-b border-blue-900 text-xs font-bold">
+                    <th className="px-4 py-2.5 w-48 border-r border-blue-800 shrink-0">Topik</th>
+                    <th className="px-4 py-2.5">Panduan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 text-xs text-slate-800">
+                  {PMPJ_GUIDE_TOPICS.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-4 py-2.5 font-bold text-[#1e3a6a] bg-slate-50/50 border-r border-slate-200 align-top">
+                        {item.topik}
+                      </td>
+                      <td className="px-4 py-2.5 leading-relaxed text-slate-700">
+                        {item.panduan}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* SUBHEADER RUJUKAN RESMI */}
+            <div className="bg-[#d9e5f5] text-slate-900 px-4 py-2 text-xs font-bold border-t border-slate-300">
+              Rujukan resmi
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <tbody className="divide-y divide-slate-200">
+                  {OFFICIAL_REFERENCES.map((ref, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-2.5 font-bold text-slate-900 w-64 border-r border-slate-200">
+                        {ref.label}
+                      </td>
+                      <td className="px-4 py-2.5 font-mono text-[11px]">
+                        <a
+                          href={ref.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1.5"
+                        >
+                          <span>{ref.url}</span>
+                          <ExternalLink size={12} className="shrink-0 text-blue-500" />
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* YELLOW CALLOUT PERSIS GAMBAR */}
+            <div className="bg-[#fef3c7] text-[#92400e] px-4 py-3 text-xs leading-relaxed border-t border-amber-300 flex items-start gap-2.5 font-medium">
+              <Info size={16} className="text-amber-700 shrink-0 mt-0.5" />
+              <span>
+                <strong>Catatan:</strong> PMPJ untuk Akuntan dan Akuntan Publik berlaku pada jasa tertentu, bukan otomatis untuk setiap perikatan audit. Sesuaikan penggunaan workbook dengan ketentuan internal KAP dan rujukan terbaru.
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* TAB 1: RINGKASAN & PANDUAN PMPJ (SESUAI GAMBAR 1) */}
@@ -598,6 +748,87 @@ const Pmpj: React.FC = () => {
               </span>
             </div>
 
+          </div>
+
+          {/* CARD PANDUAN SINGKAT PMPJ JUGA TAMPIL DI TAB RINGKASAN */}
+          <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+            <div className="p-3.5 border-b border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
+              <div>
+                <h2 className="text-xs sm:text-sm font-black text-[#1e3a6a] tracking-tight uppercase">
+                  PANDUAN SINGKAT PMPJ
+                </h2>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  Ringkasan 7 topik operasional PMPJ & tautan rujukan resmi PMK / PPATK.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('panduan')}
+                className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+              >
+                <span>Buka Layar Penuh</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-[#1e3a6a] text-white border-b border-blue-900 text-xs font-bold">
+                    <th className="px-4 py-2 w-48 border-r border-blue-800 shrink-0">Topik</th>
+                    <th className="px-4 py-2">Panduan</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 text-xs text-slate-800">
+                  {PMPJ_GUIDE_TOPICS.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="px-4 py-2 font-bold text-[#1e3a6a] bg-slate-50/50 border-r border-slate-200 align-top">
+                        {item.topik}
+                      </td>
+                      <td className="px-4 py-2 leading-relaxed text-slate-700">
+                        {item.panduan}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="bg-[#d9e5f5] text-slate-900 px-4 py-1.5 text-xs font-bold border-t border-slate-300">
+              Rujukan resmi
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <tbody className="divide-y divide-slate-200">
+                  {OFFICIAL_REFERENCES.map((ref, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-2 font-bold text-slate-900 w-64 border-r border-slate-200">
+                        {ref.label}
+                      </td>
+                      <td className="px-4 py-2 font-mono text-[11px]">
+                        <a
+                          href={ref.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-1.5"
+                        >
+                          <span>{ref.url}</span>
+                          <ExternalLink size={12} className="shrink-0 text-blue-500" />
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="bg-[#fef3c7] text-[#92400e] px-4 py-2.5 text-xs leading-relaxed border-t border-amber-300 flex items-start gap-2 font-medium">
+              <Info size={15} className="text-amber-700 shrink-0 mt-0.5" />
+              <span>
+                <strong>Catatan:</strong> PMPJ untuk Akuntan dan Akuntan Publik berlaku pada jasa tertentu, bukan otomatis untuk setiap perikatan audit. Sesuaikan penggunaan workbook dengan ketentuan internal KAP dan rujukan terbaru.
+              </span>
+            </div>
           </div>
 
           {/* QUICK SHORTCUTS CARD */}
