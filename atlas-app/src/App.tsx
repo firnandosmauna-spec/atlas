@@ -20,6 +20,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Settings from './pages/Settings';
 import FeeCalculator from './pages/FeeCalculator';
+import Pmpj from './pages/Pmpj';
 import SquareSnake from './components/ui/square-snake';
 import SquareSnakeDemo from './components/ui/demo';
 
@@ -73,6 +74,7 @@ function App() {
             <Route path="engagements" element={<Engagements />} />
             <Route path="portofolio" element={<Portofolio />} />
             <Route path="fee-calculator" element={<FeeCalculator />} />
+            <Route path="pmpj" element={<Pmpj />} />
             
             {/* Admin Routes */}
             <Route path="admin" element={<AdminDashboard />} />
