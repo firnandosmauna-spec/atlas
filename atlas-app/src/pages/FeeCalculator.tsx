@@ -549,179 +549,152 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto font-sans min-w-0 space-y-6">
+    <div className="w-full font-sans min-w-0 space-y-3.5">
       
-      {/* HEADER UTAMA MODEL 2026 */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 text-white p-5 sm:p-6 rounded-2xl shadow-md border border-amber-900/40">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      {/* HEADER UTAMA: FULL FRAME & MODERN RAMPING */}
+      <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 sm:px-5 sm:py-3 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <Calculator size={16} className="text-amber-400" />
+          </div>
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold uppercase tracking-wider mb-2">
-              <Calculator size={14} />
-              <span>Model Resmi KAP Fridolinus Peno · 2026</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+                Kalkulator Fee Audit
+              </h1>
+              <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200/80">
+                Model KAP Fridolinus Peno · 2026
+              </span>
+              <span className="text-[10px] font-medium text-slate-400 hidden sm:inline">
+                PDP IAPI No. 3/2024
+              </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-              Kalkulator Fee Audit Berbasis Matriks Omzet & PDP IAPI No. 3/2024
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-3xl leading-relaxed italic">
-              "Gunakan sebagai estimasi awal. Fee final wajib mempertimbangkan ruang lingkup, risiko, jam kerja, kompetensi tim, standar profesi, dan professional judgment."
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Estimasi fee audit berbasis matriks omzet dan benchmark tarif jam kerja tim audit.
             </p>
           </div>
+        </div>
 
-          <div className="flex items-center flex-wrap gap-2.5 shrink-0">
-            <button
-              type="button"
-              onClick={handleLoadExample}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-semibold text-amber-200 bg-amber-900/50 hover:bg-amber-900/80 border border-amber-700/50 rounded-lg transition-colors min-h-[44px]"
-              title="Isi data sesuai contoh PT ABC pada spreadsheet untuk memverifikasi rumus"
-            >
-              <ArrowUpRight size={15} />
-              <span>Muat Contoh (PT ABC)</span>
-            </button>
+        <div className="flex items-center flex-wrap gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleLoadExample}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 hover:text-slate-900 border border-slate-200 rounded-lg transition-colors shadow-2xs"
+            title="Isi data sesuai contoh PT ABC pada spreadsheet untuk memverifikasi rumus"
+          >
+            <ArrowUpRight size={13} className="text-blue-600" />
+            <span>Contoh PT ABC</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={handleReset}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors min-h-[44px]"
-              title="Bersihkan seluruh isian form ke nilai awal"
-            >
-              <RotateCcw size={15} />
-              <span>Reset</span>
-            </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors shadow-2xs"
+            title="Bersihkan seluruh isian form ke nilai awal"
+          >
+            <RotateCcw size={13} />
+            <span>Reset</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={handleCopySummary}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-900 bg-amber-400 hover:bg-amber-300 rounded-lg shadow-sm transition-colors min-h-[44px]"
-            >
-              {isCopied ? <Check size={16} className="text-emerald-800" /> : <Copy size={16} />}
-              <span>{isCopied ? 'Tersalin' : 'Salin Rekap'}</span>
-            </button>
+          <button
+            type="button"
+            onClick={handleCopySummary}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-xs transition-colors"
+          >
+            {isCopied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+            <span>{isCopied ? 'Tersalin' : 'Salin Rekap'}</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-colors min-h-[44px]"
-            >
-              <Printer size={16} />
-              <span>Cetak</span>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors shadow-2xs"
+          >
+            <Printer size={13} />
+            <span>Cetak</span>
+          </button>
         </div>
       </div>
 
-      {/* TAB NAVIGATION: SPREADSHEET SHEETS */}
-      <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200 overflow-x-auto scrollbar-none text-xs sm:text-sm font-medium">
-        <button
-          type="button"
-          onClick={() => setActiveTab('calculator')}
-          className={`flex items-center gap-2 py-2 px-4 rounded-lg whitespace-nowrap transition-all min-h-[44px] ${
-            activeTab === 'calculator' ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Sliders size={16} className="text-blue-600" />
-          <span>Kalkulator & Rekapitulasi</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('matrix')}
-          className={`flex items-center gap-2 py-2 px-4 rounded-lg whitespace-nowrap transition-all min-h-[44px] ${
-            activeTab === 'matrix' ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Layers size={16} className="text-amber-600" />
-          <span>Matriks Base Fee (Omzet)</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('adjustments')}
-          className={`flex items-center gap-2 py-2 px-4 rounded-lg whitespace-nowrap transition-all min-h-[44px] ${
-            activeTab === 'adjustments' ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <TrendingUp size={16} className="text-emerald-600" />
-          <span>9 Faktor Penyesuaian</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('rates')}
-          className={`flex items-center gap-2 py-2 px-4 rounded-lg whitespace-nowrap transition-all min-h-[44px] ${
-            activeTab === 'rates' ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Users size={16} className="text-purple-600" />
-          <span>Tarif HBR & Alokasi Tim</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('guideline')}
-          className={`flex items-center gap-2 py-2 px-4 rounded-lg whitespace-nowrap transition-all min-h-[44px] ${
-            activeTab === 'guideline' ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <BookOpen size={16} className="text-rose-600" />
-          <span>Panduan & Kebijakan</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('proposal')}
-          className={`flex items-center gap-2 py-2 px-4 rounded-lg whitespace-nowrap transition-all min-h-[44px] ${
-            activeTab === 'proposal' ? 'bg-white text-slate-900 shadow-sm font-bold' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <FileText size={16} className="text-slate-600" />
-          <span>Format Surat Proposal</span>
-        </button>
+      {/* TAB NAVIGATION: SEGMENTED CONTROLS */}
+      <div className="flex p-1 bg-slate-200/50 rounded-xl border border-slate-200/70 overflow-x-auto scrollbar-none text-xs font-medium gap-1">
+        {[
+          { id: 'calculator', label: 'Kalkulator & Rekapitulasi', icon: Sliders, color: 'text-blue-600' },
+          { id: 'matrix', label: 'Matriks Base Fee (Omzet)', icon: Layers, color: 'text-amber-600' },
+          { id: 'adjustments', label: '9 Faktor Penyesuaian', icon: TrendingUp, color: 'text-emerald-600' },
+          { id: 'rates', label: 'Tarif HBR & Alokasi Tim', icon: Users, color: 'text-indigo-600' },
+          { id: 'guideline', label: 'Panduan & Kebijakan', icon: BookOpen, color: 'text-rose-600' },
+          { id: 'proposal', label: 'Format Surat Proposal', icon: FileText, color: 'text-slate-600' },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg whitespace-nowrap transition-all text-xs font-medium ${
+                isActive
+                  ? 'bg-white text-slate-900 shadow-2xs font-semibold border border-slate-200/60'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
+              }`}
+            >
+              <Icon size={14} className={isActive ? tab.color : 'text-slate-400'} />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* TAB 1: KALKULATOR UTAMA (IMAGE 1) */}
+      {/* TAB 1: KALKULATOR UTAMA */}
       {activeTab === 'calculator' && (
-        <div className="space-y-6">
+        <div className="space-y-3.5">
           
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
             
-            {/* KOLOM KIRI: INPUT DATA CALON KLIEN (5 COLS) */}
-            <div className="lg:col-span-5 bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
-              <div className="bg-amber-900 text-white px-4 py-3 font-semibold text-xs uppercase tracking-wider flex items-center justify-between">
-                <span>Input Data Calon Klien</span>
-                <span className="text-[11px] text-amber-200 font-normal">Sheet: Kalkulator Fee</span>
+            {/* KOLOM KIRI: INPUT DATA CALON KLIEN */}
+            <div className="lg:col-span-5 xl:col-span-4 bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+              <div className="bg-slate-50/90 border-b border-slate-200/80 px-3.5 py-2.5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-3.5 rounded-full bg-blue-600"></div>
+                  <span className="font-bold text-xs text-slate-800 tracking-tight">Input Data Calon Klien</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200/70">
+                  Parameter Audit
+                </span>
               </div>
 
-              <div className="p-4 sm:p-5 space-y-3.5 text-xs">
+              <div className="p-3.5 sm:p-4 space-y-3 text-xs">
                 
                 {/* Nama Entitas */}
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">Nama Entitas</label>
+                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">Nama Entitas</label>
                   <input
                     type="text"
                     value={clientName}
                     onChange={(e) => setClientName(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    className="w-full px-2.5 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all placeholder:text-slate-400"
                     placeholder="Contoh: PT ABC / Nama Calon Klien"
                   />
                 </div>
 
                 {/* Tahun Buku & Zona HBR */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Tahun Buku</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Tahun Buku</label>
                     <input
                       type="number"
                       value={fiscalYear}
                       onChange={(e) => setFiscalYear(Number(e.target.value) || 2026)}
-                      className="w-full px-3 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs font-mono focus:outline-none"
+                      className="w-full px-2.5 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Zona HBR</label>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Zona HBR</label>
                     <select
                       value={hbrZone}
                       onChange={(e: any) => setHbrZone(e.target.value)}
-                      className="w-full px-2.5 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none font-medium"
+                      className="w-full px-2 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 font-medium"
                     >
                       <option value="Luar Jabodetabek">Luar Jabodetabek</option>
                       <option value="Jabodetabek">Jabodetabek</option>
@@ -729,12 +702,17 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                   </div>
                 </div>
 
+                {/* Subheading: Skala Finansial */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span>Skala Finansial & Operasional</span>
+                </div>
+
                 {/* Omzet Tahunan */}
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className="font-semibold text-slate-700">Omzet Tahunan (Rp)</label>
+                    <label className="text-[11px] font-semibold text-slate-700">Omzet Tahunan (Rp)</label>
                     {baseFeeEvaluation.tier && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">
                         Tier {baseFeeEvaluation.tier.code}
                       </span>
                     )}
@@ -743,62 +721,70 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                     placeholder="0"
                     value={annualRevenue}
                     onChange={setAnnualRevenue}
-                    className="w-full px-3 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs font-mono font-semibold focus:outline-none"
+                    className="w-full px-2.5 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                   />
-                  <span className="text-[11px] text-slate-500 mt-0.5 block">{formatRupiah(annualRevenue)}</span>
+                  <span className="text-[10px] text-slate-400 mt-0.5 block font-mono">{formatRupiah(annualRevenue)}</span>
                 </div>
 
                 {/* Total Aset */}
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className="font-semibold text-slate-700">Total Aset (Rp)</label>
-                    <span className="text-[10px] font-medium text-emerald-700">Adj: +{adjustments.assetAdj}%</span>
+                    <label className="text-[11px] font-semibold text-slate-700">Total Aset (Rp)</label>
+                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 rounded">+{adjustments.assetAdj}%</span>
                   </div>
                   <MoneyInput
                     placeholder="0"
                     value={totalAssets}
                     onChange={setTotalAssets}
-                    className="w-full px-3 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs font-mono font-semibold focus:outline-none"
+                    className="w-full px-2.5 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs font-mono font-semibold focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                   />
-                  <span className="text-[11px] text-slate-500 mt-0.5 block">{formatRupiah(totalAssets)}</span>
+                  <span className="text-[10px] text-slate-400 mt-0.5 block font-mono">{formatRupiah(totalAssets)}</span>
                 </div>
 
                 {/* Volume Transaksi & Cabang */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
-                      Transaksi / Bulan <span className="text-[10px] font-normal text-emerald-700">(+{adjustments.transAdj}%)</span>
-                    </label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-[11px] font-semibold text-slate-700">Transaksi/Bln</label>
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 rounded">+{adjustments.transAdj}%</span>
+                    </div>
                     <MoneyInput
                       placeholder="0"
                       value={transactionVolume}
                       onChange={setTransactionVolume}
-                      className="w-full px-3 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs font-mono focus:outline-none"
+                      className="w-full px-2.5 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
-                      Lokasi / Cabang <span className="text-[10px] font-normal text-emerald-700">(+{adjustments.branchAdj}%)</span>
-                    </label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-[11px] font-semibold text-slate-700">Lokasi Cabang</label>
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 rounded">+{adjustments.branchAdj}%</span>
+                    </div>
                     <input
                       type="number"
                       min="1"
                       value={branchCount}
                       onChange={(e) => setBranchCount(Number(e.target.value) || 1)}
-                      className="w-full px-3 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs font-mono focus:outline-none"
+                      className="w-full px-2.5 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                     />
                   </div>
                 </div>
 
+                {/* Subheading: Kompleksitas & Risiko */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span>Kompleksitas & Risiko</span>
+                </div>
+
                 {/* Kondisi Persediaan */}
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Kondisi Persediaan <span className="text-[10px] font-normal text-emerald-700">(+{adjustments.invAdj}%)</span>
-                  </label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-[11px] font-semibold text-slate-700">Kondisi Persediaan</label>
+                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 rounded">+{adjustments.invAdj}%</span>
+                  </div>
                   <select
                     value={inventoryCondition}
                     onChange={(e) => setInventoryCondition(e.target.value)}
-                    className="w-full px-2.5 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none"
+                    className="w-full px-2 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                   >
                     <option value="Tidak material / tidak ada">Tidak material / tidak ada (0%)</option>
                     <option value="Material, 1 lokasi">Material, 1 lokasi (+5%)</option>
@@ -810,13 +796,14 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
 
                 {/* Kompleksitas Industri */}
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Kompleksitas Industri <span className="text-[10px] font-normal text-emerald-700">(+{adjustments.indAdj}%)</span>
-                  </label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-[11px] font-semibold text-slate-700">Kompleksitas Industri</label>
+                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 rounded">+{adjustments.indAdj}%</span>
+                  </div>
                   <select
                     value={industryComplexity}
                     onChange={(e) => setIndustryComplexity(e.target.value)}
-                    className="w-full px-2.5 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none"
+                    className="w-full px-2 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                   >
                     <option value="Rendah">Rendah - Jasa/perdagangan sederhana (0%)</option>
                     <option value="Menengah">Menengah - Distributor, travel, hotel, RS kecil (+10%)</option>
@@ -828,13 +815,16 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
 
                 {/* Kualitas Pembukuan */}
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">
-                    Kualitas Pembukuan <span className="text-[10px] font-normal text-emerald-700">({adjustments.bookAdj > 0 ? `+${adjustments.bookAdj}` : adjustments.bookAdj}%)</span>
-                  </label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-[11px] font-semibold text-slate-700">Kualitas Pembukuan</label>
+                    <span className={`text-[10px] font-semibold px-1 rounded ${adjustments.bookAdj < 0 ? 'text-blue-700 bg-blue-50' : 'text-emerald-700 bg-emerald-50'}`}>
+                      {adjustments.bookAdj > 0 ? `+${adjustments.bookAdj}` : adjustments.bookAdj}%
+                    </span>
+                  </div>
                   <select
                     value={bookkeepingQuality}
                     onChange={(e) => setBookkeepingQuality(e.target.value)}
-                    className="w-full px-2.5 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none"
+                    className="w-full px-2 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                   >
                     <option value="Sangat rapi">Sangat rapi - Closing & rekonsiliasi baik (-5%)</option>
                     <option value="Normal">Normal (0%)</option>
@@ -846,15 +836,16 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                 </div>
 
                 {/* Risiko Engagement & First-Year */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2.5">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
-                      Risiko Engagement <span className="text-[10px] font-normal text-emerald-700">(+{adjustments.riskAdj}%)</span>
-                    </label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-[11px] font-semibold text-slate-700">Risiko Perikatan</label>
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 rounded">+{adjustments.riskAdj}%</span>
+                    </div>
                     <select
                       value={engagementRisk}
                       onChange={(e) => setEngagementRisk(e.target.value)}
-                      className="w-full px-2.5 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none"
+                      className="w-full px-2 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                     >
                       <option value="Rendah">Rendah (0%)</option>
                       <option value="Moderate">Moderate (+10%)</option>
@@ -864,17 +855,18 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                     </select>
                   </div>
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
-                      First-Year Audit <span className="text-[10px] font-normal text-emerald-700">(+{adjustments.firstYearAdj}%)</span>
-                    </label>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-[11px] font-semibold text-slate-700">Tahun Pertama</label>
+                      <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 rounded">+{adjustments.firstYearAdj}%</span>
+                    </div>
                     <select
                       value={firstYearAudit}
                       onChange={(e) => setFirstYearAudit(e.target.value)}
-                      className="w-full px-2.5 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none"
+                      className="w-full px-2 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                     >
                       <option value="Tidak">Tidak - Klien Berulang (0%)</option>
-                      <option value="Ya">Ya - First Year Normal (+10%)</option>
-                      <option value="Ya - Saldo Awal Kompleks">Ya - Saldo Awal Kompleks (+20%)</option>
+                      <option value="Ya">Ya - First Year (+10%)</option>
+                      <option value="Ya - Saldo Awal Kompleks">Ya - Saldo Awal (+20%)</option>
                     </select>
                   </div>
                 </div>
@@ -882,8 +874,8 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                 {/* Deadline sejak data lengkap */}
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <label className="font-semibold text-slate-700">Deadline Sejak Data Lengkap</label>
-                    <span className="text-[10px] font-medium text-emerald-700">+{adjustments.deadlineAdj}%</span>
+                    <label className="text-[11px] font-semibold text-slate-700">Batas Waktu Sejak Data Lengkap</label>
+                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1 rounded">+{adjustments.deadlineAdj}%</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -891,36 +883,41 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                       min="1"
                       value={deadlineDays}
                       onChange={(e) => setDeadlineDays(Number(e.target.value) || 30)}
-                      className="w-24 px-3 py-2 bg-slate-50 focus:bg-white border border-slate-300 rounded-lg text-slate-900 text-xs font-mono focus:outline-none"
+                      className="w-20 px-2.5 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                     />
-                    <span className="text-slate-500 text-xs">Hari</span>
-                    <span className="text-[11px] text-slate-400">
-                      ({deadlineDays <= 7 ? '<7 hari (+45%)' : deadlineDays <= 13 ? '7-13 hari (+30%)' : deadlineDays <= 20 ? '14-20 hari (+20%)' : deadlineDays <= 30 ? '21-30 hari (+10%)' : deadlineDays <= 60 ? '31-60 hari (+5%)' : '>60 hari (0%)'})
+                    <span className="text-slate-500 text-xs font-medium">Hari</span>
+                    <span className="text-[10px] text-slate-400 font-mono truncate">
+                      ({deadlineDays <= 7 ? '<7 hari (+45%)' : deadlineDays <= 13 ? '7-13 hr (+30%)' : deadlineDays <= 20 ? '14-20 hr (+20%)' : deadlineDays <= 30 ? '21-30 hr (+10%)' : deadlineDays <= 60 ? '31-60 hr (+5%)' : '>60 hr (0%)'})
                     </span>
                   </div>
                 </div>
 
+                {/* Subheading: Parameter Penawaran */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <span>Parameter Penawaran & Pajak</span>
+                </div>
+
                 {/* Buffer, PPN, dan OPE */}
-                <div className="pt-2 border-t border-slate-100 grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Buffer Penawaran</label>
+                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">Buffer</label>
                     <div className="relative">
                       <input
                         type="number"
                         value={bufferPercent}
                         onChange={(e) => setBufferPercent(Number(e.target.value) || 0)}
-                        className="w-full px-2 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 rounded text-slate-900 text-xs font-mono focus:outline-none"
+                        className="w-full pl-2 pr-5 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                       />
-                      <span className="absolute right-2 top-1.5 text-slate-400 text-xs">%</span>
+                      <span className="absolute right-2 top-1.5 text-slate-400 text-xs pointer-events-none">%</span>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">PPN</label>
+                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">PPN</label>
                     <select
                       value={vatPercent}
                       onChange={(e) => setVatPercent(Number(e.target.value))}
-                      className="w-full px-1.5 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 rounded text-slate-900 text-xs focus:outline-none"
+                      className="w-full px-1.5 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                     >
                       <option value={0}>0%</option>
                       <option value={11}>11%</option>
@@ -929,12 +926,12 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Out-of-Pocket</label>
+                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">OPE (Rp)</label>
                     <MoneyInput
                       placeholder="0"
                       value={outOfPocketExpenses}
                       onChange={setOutOfPocketExpenses}
-                      className="w-full px-2 py-1.5 bg-slate-50 focus:bg-white border border-slate-300 rounded text-slate-900 text-xs font-mono focus:outline-none"
+                      className="w-full px-2 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900"
                     />
                   </div>
                 </div>
@@ -942,144 +939,255 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
               </div>
             </div>
 
-            {/* KOLOM KANAN: HASIL PERHITUNGAN FEE & RINGKASAN KEPUTUSAN (7 COLS) */}
-            <div className="lg:col-span-7 space-y-6">
+            {/* KOLOM KANAN: HASIL PERHITUNGAN & RINGKASAN EKSEKUTIF */}
+            <div className="lg:col-span-7 xl:col-span-8 space-y-3.5">
               
-              {/* RINGKASAN KEPUTUSAN (BIG CALLOUT CARD IMAGE 1) */}
-              <div className="bg-amber-950 text-white p-5 rounded-2xl shadow-md border border-amber-900 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-center sm:text-left">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300 bg-amber-900/60 px-2.5 py-1 rounded border border-amber-800">
-                    Ringkasan Keputusan Fee
+              {/* HERO EXECUTIVE CARD */}
+              <div className="bg-slate-900 text-white rounded-xl p-4 sm:p-5 border border-slate-800 shadow-2xs relative overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                      Ringkasan Keputusan Fee Audit
+                    </div>
+                    <div className="text-xs text-slate-300 mt-0.5">
+                      Rekomendasi Final Quotation · KAP Fridolinus Peno
+                    </div>
+                  </div>
+                  <span className="self-start sm:self-auto text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                    {clientName || 'Calon Klien'} · TA {fiscalYear}
                   </span>
-                  <div className="text-xs text-amber-200 mt-2 font-medium">TOTAL PENAWARAN (FINAL QUOTATION)</div>
-                  <div className="text-3xl sm:text-4xl font-black text-amber-400 mt-1 tracking-tight">
-                    {formatRupiah(results.totalPenawaran)}
+                </div>
+
+                <div className="py-3.5 flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Total Penawaran Audit (Include Buffer, PPN & OPE)
+                    </div>
+                    <div className="text-3xl sm:text-4xl font-black text-amber-400 mt-0.5 tracking-tight font-mono">
+                      {formatRupiah(results.totalPenawaran)}
+                    </div>
+                  </div>
+                  <div className="text-xs text-slate-300 font-mono">
+                    Fee Normal: <span className="font-semibold text-white">{formatRupiah(results.feeNormal)}</span>
                   </div>
                 </div>
 
-                <div className="bg-amber-900/40 p-3.5 rounded-xl border border-amber-800/80 text-xs space-y-1.5 w-full sm:w-auto shrink-0 font-mono">
-                  <div className="flex justify-between gap-4 text-slate-300">
-                    <span>Fee Normal:</span>
-                    <span className="font-semibold text-white">{formatRupiah(results.feeNormal)}</span>
+                {/* 4 KPI MINI PILLS */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-slate-800/80 text-xs font-mono">
+                  <div className="bg-slate-800/70 p-2.5 rounded-lg border border-slate-700/60">
+                    <div className="text-[10px] text-slate-400 font-sans">Benchmark HBR</div>
+                    <div className="font-bold text-slate-100 mt-0.5 text-xs sm:text-[13px]">{formatRupiah(results.benchmarkFeeHbr)}</div>
                   </div>
-                  <div className="flex justify-between gap-4 text-slate-300">
-                    <span>Benchmark HBR:</span>
-                    <span className="font-semibold text-white">{formatRupiah(results.benchmarkFeeHbr)}</span>
+                  <div className="bg-slate-800/70 p-2.5 rounded-lg border border-slate-700/60">
+                    <div className="text-[10px] text-slate-400 font-sans">Biaya Internal ({internalCostFactor}%)</div>
+                    <div className="font-bold text-slate-100 mt-0.5 text-xs sm:text-[13px]">{formatRupiah(teamCalculations.indicativeInternalCost)}</div>
                   </div>
-                  <div className="flex justify-between gap-4 text-slate-300">
-                    <span>Estimasi Biaya Internal:</span>
-                    <span className="font-semibold text-white">{formatRupiah(teamCalculations.indicativeInternalCost)}</span>
+                  <div className="bg-slate-800/70 p-2.5 rounded-lg border border-slate-700/60">
+                    <div className="text-[10px] text-slate-400 font-sans">Margin Kontribusi</div>
+                    <div className="font-bold text-emerald-400 mt-0.5 text-xs sm:text-[13px]">{formatRupiah(results.contributionMargin)}</div>
                   </div>
-                  <div className="flex justify-between gap-4 text-emerald-400 border-t border-amber-800/80 pt-1 font-bold">
-                    <span>Margin Kontribusi:</span>
-                    <span>{formatRupiah(results.contributionMargin)}</span>
-                  </div>
-                  <div className="flex justify-between gap-4 text-amber-300 font-bold">
-                    <span>Margin %:</span>
-                    <span>{results.marginPercent}%</span>
+                  <div className="bg-slate-800/70 p-2.5 rounded-lg border border-slate-700/60">
+                    <div className="text-[10px] text-slate-400 font-sans">Margin Persentase</div>
+                    <div className="font-bold text-amber-300 mt-0.5 text-xs sm:text-[13px]">{results.marginPercent}%</div>
                   </div>
                 </div>
               </div>
 
-              {/* TABEL RINCIAN HASIL PERHITUNGAN FEE (IMAGE 1 TENGAH) */}
-              <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
-                <div className="bg-slate-800 text-white px-4 py-2.5 font-semibold text-xs uppercase tracking-wider flex justify-between items-center">
-                  <span>Hasil Perhitungan Fee & Faktor Penyesuaian</span>
-                  <span className="text-slate-300 text-[11px]">Model: Omzet vs HBR</span>
+              {/* DUAL MODEL COMPARATOR */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Model A: Fee Matriks */}
+                <div className={`p-3.5 rounded-xl border transition-all ${
+                  results.feeMatriks >= results.benchmarkFeeHbr
+                    ? 'bg-amber-50/70 border-amber-300 shadow-2xs ring-1 ring-amber-400/30'
+                    : 'bg-white border-slate-200/90 shadow-2xs'
+                }`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-bold text-slate-800">Fee Matriks Omzet</span>
+                    {results.feeMatriks >= results.benchmarkFeeHbr ? (
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-amber-600 text-white tracking-wider uppercase">
+                        Terpilih Acuan
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium text-slate-400">Lebih Rendah</span>
+                    )}
+                  </div>
+                  <div className="text-xl font-black text-slate-900 font-mono tracking-tight">
+                    {formatRupiah(results.feeMatriks)}
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-1 flex justify-between font-mono">
+                    <span>Base Tier {baseFeeEvaluation.tier?.code || '-'}: {formatRupiah(baseFeeEvaluation.baseFee)}</span>
+                    <span className="font-semibold text-amber-800">Adj: +{adjustments.cappedAdj}%</span>
+                  </div>
                 </div>
 
-                <div className="p-4 sm:p-5 space-y-3 text-xs">
+                {/* Model B: Benchmark HBR */}
+                <div className={`p-3.5 rounded-xl border transition-all ${
+                  results.benchmarkFeeHbr > results.feeMatriks
+                    ? 'bg-blue-50/70 border-blue-300 shadow-2xs ring-1 ring-blue-400/30'
+                    : 'bg-white border-slate-200/90 shadow-2xs'
+                }`}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-bold text-slate-800">Benchmark HBR IAPI</span>
+                    {results.benchmarkFeeHbr > results.feeMatriks ? (
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-blue-600 text-white tracking-wider uppercase">
+                        Terpilih Acuan
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium text-slate-400">Lebih Rendah</span>
+                    )}
+                  </div>
+                  <div className="text-xl font-black text-slate-900 font-mono tracking-tight">
+                    {formatRupiah(results.benchmarkFeeHbr)}
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-1 flex justify-between font-mono">
+                    <span>Alokasi Jam: {teamCalculations.adjustedHours.toFixed(1)}j</span>
+                    <span className="font-semibold text-blue-800">Zona: {hbrZone}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* RINCIAN PERHITUNGAN & 9 PENYESUAIAN */}
+              <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                <div className="bg-slate-50/90 border-b border-slate-200/80 px-3.5 py-2.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-3.5 rounded-full bg-amber-500"></div>
+                    <span className="font-bold text-xs text-slate-800 tracking-tight">
+                      Komponen Penyesuaian & Rincian Finansial
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-500">
+                    Maks. 150% Cap
+                  </span>
+                </div>
+
+                <div className="p-3.5 sm:p-4 space-y-3 text-xs">
                   
-                  {/* Base Fee */}
-                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
-                    <span className="font-semibold text-slate-800">Base Fee Berdasarkan Omzet</span>
-                    <span className="font-mono font-bold text-slate-900">{formatRupiah(baseFeeEvaluation.baseFee)}</span>
+                  {/* 9 FAKTOR BADGE CHIPS GRID */}
+                  <div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                      9 Faktor Penyesuaian Komersial & Risiko:
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 text-[11px]">
+                      <div className="bg-slate-50 border border-slate-200/70 rounded-md px-2 py-1 flex justify-between items-center">
+                        <span className="text-slate-500">Aset:</span>
+                        <span className="font-mono font-bold text-slate-800">+{adjustments.assetAdj}%</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200/70 rounded-md px-2 py-1 flex justify-between items-center">
+                        <span className="text-slate-500">Transaksi:</span>
+                        <span className="font-mono font-bold text-slate-800">+{adjustments.transAdj}%</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200/70 rounded-md px-2 py-1 flex justify-between items-center">
+                        <span className="text-slate-500">Cabang:</span>
+                        <span className="font-mono font-bold text-slate-800">+{adjustments.branchAdj}%</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200/70 rounded-md px-2 py-1 flex justify-between items-center">
+                        <span className="text-slate-500">Persediaan:</span>
+                        <span className="font-mono font-bold text-slate-800">+{adjustments.invAdj}%</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200/70 rounded-md px-2 py-1 flex justify-between items-center">
+                        <span className="text-slate-500">Industri:</span>
+                        <span className="font-mono font-bold text-slate-800">+{adjustments.indAdj}%</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200/70 rounded-md px-2 py-1 flex justify-between items-center">
+                        <span className="text-slate-500">Pembukuan:</span>
+                        <span className={`font-mono font-bold ${adjustments.bookAdj < 0 ? 'text-blue-700' : 'text-slate-800'}`}>
+                          {adjustments.bookAdj > 0 ? `+${adjustments.bookAdj}` : adjustments.bookAdj}%
+                        </span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200/70 rounded-md px-2 py-1 flex justify-between items-center">
+                        <span className="text-slate-500">Risiko:</span>
+                        <span className="font-mono font-bold text-slate-800">+{adjustments.riskAdj}%</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200/70 rounded-md px-2 py-1 flex justify-between items-center">
+                        <span className="text-slate-500">First-Year:</span>
+                        <span className="font-mono font-bold text-slate-800">+{adjustments.firstYearAdj}%</span>
+                      </div>
+                      <div className="bg-slate-50 border border-slate-200/70 rounded-md px-2 py-1 flex justify-between items-center col-span-2 sm:col-span-2">
+                        <span className="text-slate-500">Deadline:</span>
+                        <span className="font-mono font-bold text-slate-800">+{adjustments.deadlineAdj}%</span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* 9 Baris Adjustment */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 py-1 text-[11px] text-slate-600 bg-slate-50/70 p-2.5 rounded-lg border border-slate-200/60">
-                    <div>Adjustment Aset: <span className="font-semibold text-slate-900">{adjustments.assetAdj}%</span></div>
-                    <div>Adjustment Transaksi: <span className="font-semibold text-slate-900">{adjustments.transAdj}%</span></div>
-                    <div>Adjustment Cabang: <span className="font-semibold text-slate-900">{adjustments.branchAdj}%</span></div>
-                    <div>Adjustment Persediaan: <span className="font-semibold text-slate-900">{adjustments.invAdj}%</span></div>
-                    <div>Adjustment Industri: <span className="font-semibold text-slate-900">{adjustments.indAdj}%</span></div>
-                    <div>Adjustment Pembukuan: <span className="font-semibold text-slate-900">{adjustments.bookAdj}%</span></div>
-                    <div>Adjustment Risiko: <span className="font-semibold text-slate-900">{adjustments.riskAdj}%</span></div>
-                    <div>Adjustment First-Year: <span className="font-semibold text-slate-900">{adjustments.firstYearAdj}%</span></div>
-                    <div>Adjustment Deadline: <span className="font-semibold text-slate-900">{adjustments.deadlineAdj}%</span></div>
-                  </div>
-
-                  {/* Total & Capped Adjustment */}
-                  <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                    <span className="font-semibold text-slate-700">Total Adjustment Terakumulasi</span>
-                    <span className="font-mono font-bold text-slate-800">{adjustments.totalAdj}%</span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100 bg-amber-50/50 px-2 rounded">
-                    <div>
-                      <span className="font-bold text-amber-900">Adjustment Digunakan (Maks. 150%)</span>
-                      <div className="w-32 bg-slate-200 rounded-full h-1.5 mt-1 overflow-hidden">
+                  {/* ACCUMULATOR PROGRESS BAR & CAP */}
+                  <div className="p-2.5 rounded-lg bg-amber-50/60 border border-amber-200/70 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex justify-between items-center text-[11px] mb-1">
+                        <span className="font-semibold text-amber-950">
+                          Total Akumulasi: <span className="font-mono">{adjustments.totalAdj}%</span>
+                        </span>
+                        <span className="text-amber-800 font-bold font-mono text-xs">
+                          Diterapkan: {adjustments.cappedAdj}% {adjustments.totalAdj > 150 ? '(Capped 150%)' : ''}
+                        </span>
+                      </div>
+                      <div className="w-full bg-amber-200/70 rounded-full h-1.5 overflow-hidden">
                         <div 
-                          className="bg-amber-600 h-1.5 rounded-full" 
+                          className="bg-amber-600 h-1.5 rounded-full transition-all" 
                           style={{ width: `${Math.min((adjustments.cappedAdj / 150) * 100, 100)}%` }}
                         />
                       </div>
                     </div>
-                    <span className="font-mono font-black text-amber-900 text-sm">{adjustments.cappedAdj}%</span>
                   </div>
 
-                  {/* Perbandingan Fee Matriks vs Benchmark HBR */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    <div className="p-3 rounded-lg border border-slate-200 bg-slate-50">
-                      <div className="text-[11px] text-slate-500 font-medium">Fee Matriks (Base Fee × 1+Adj)</div>
-                      <div className="text-base font-bold text-slate-800 mt-0.5">{formatRupiah(results.feeMatriks)}</div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">Berbasis kapasitas omzet klien</div>
+                  {/* FINANCIAL BREAKDOWN LIST */}
+                  <div className="space-y-1.5 font-mono text-xs pt-1 border-t border-slate-100">
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-slate-600">
+                      <span>Base Fee Berdasarkan Omzet:</span>
+                      <span className="font-semibold text-slate-900">{formatRupiah(baseFeeEvaluation.baseFee)}</span>
                     </div>
 
-                    <div className="p-3 rounded-lg border border-blue-200 bg-blue-50/60 ring-1 ring-blue-500/20">
-                      <div className="text-[11px] text-blue-700 font-medium">Benchmark Fee Berbasis HBR</div>
-                      <div className="text-base font-bold text-blue-900 mt-0.5">{formatRupiah(results.benchmarkFeeHbr)}</div>
-                      <div className="text-[10px] text-blue-600/70 mt-0.5">Berbasis tarif jam tim PDP IAPI</div>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-slate-600">
+                      <span>Fee Matriks (Base Fee × (1 + {adjustments.cappedAdj}%)):</span>
+                      <span className="font-semibold text-slate-800">{formatRupiah(results.feeMatriks)}</span>
                     </div>
-                  </div>
 
-                  {/* Kesimpulan Fee Normal */}
-                  <div className="pt-2 border-t border-slate-100 space-y-1.5 font-mono">
-                    <div className="flex justify-between items-center text-slate-600">
-                      <span>Fee Minimum Internal:</span>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-slate-600">
+                      <span>Benchmark Fee Berbasis HBR ({teamCalculations.adjustedHours.toFixed(1)} Jam):</span>
+                      <span className="font-semibold text-slate-800">{formatRupiah(results.benchmarkFeeHbr)}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-slate-500">
+                      <span>Fee Minimum Internal (Floor):</span>
                       <span className="font-semibold">{formatRupiah(results.feeMinimumInternal)}</span>
                     </div>
 
-                    <div className="flex justify-between items-center text-blue-800 bg-blue-50/70 px-2.5 py-1 rounded font-bold">
-                      <span>Fee Normal (Ambil Nilai Tertinggi):</span>
-                      <span>{formatRupiah(results.feeNormal)}</span>
+                    <div className="flex justify-between items-center py-1.5 px-2 bg-blue-50/80 rounded border border-blue-200/80 text-blue-900 font-bold">
+                      <span className="font-sans">Fee Normal (Tertinggi Matriks vs HBR):</span>
+                      <span className="text-sm">{formatRupiah(results.feeNormal)}</span>
                     </div>
 
-                    <div className="flex justify-between items-center text-slate-800 font-bold pt-1">
-                      <span>Fee Penawaran (+ buffer {bufferPercent}%):</span>
-                      <span className="text-amber-800 text-sm">{formatRupiah(results.feePenawaran)}</span>
+                    {bufferPercent > 0 && (
+                      <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-slate-600">
+                        <span>Buffer Penawaran (+{bufferPercent}%):</span>
+                        <span>{formatRupiah(results.feePenawaran - results.feeNormal)}</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-slate-800 font-bold">
+                      <span>Fee Penawaran Jasa:</span>
+                      <span className="text-slate-900">{formatRupiah(results.feePenawaran)}</span>
                     </div>
 
                     {outOfPocketExpenses > 0 && (
-                      <div className="flex justify-between items-center text-slate-600">
-                        <span>Out-of-Pocket Expenses:</span>
+                      <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-slate-600">
+                        <span>Out-of-Pocket Expenses (OPE):</span>
                         <span>{formatRupiah(outOfPocketExpenses)}</span>
                       </div>
                     )}
 
-                    <div className="flex justify-between items-center text-slate-600">
-                      <span>Subtotal Jasa:</span>
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-slate-600">
+                      <span>Subtotal Jasa & OPE:</span>
                       <span>{formatRupiah(results.subtotal)}</span>
                     </div>
 
-                    <div className="flex justify-between items-center text-slate-500">
+                    <div className="flex justify-between items-center py-1 border-b border-slate-100/70 text-slate-500">
                       <span>PPN ({vatPercent}%):</span>
                       <span>{formatRupiah(results.ppnAmount)}</span>
                     </div>
 
-                    <div className="flex justify-between items-center text-slate-900 font-black text-sm border-t border-slate-200 pt-2">
-                      <span>TOTAL PENAWARAN:</span>
-                      <span className="text-blue-700">{formatRupiah(results.totalPenawaran)}</span>
+                    <div className="flex justify-between items-center pt-2 text-slate-900 font-black text-sm">
+                      <span className="font-sans">TOTAL PENAWARAN:</span>
+                      <span className="text-blue-700 text-base">{formatRupiah(results.totalPenawaran)}</span>
                     </div>
                   </div>
 
@@ -1090,60 +1198,65 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
 
           </div>
 
-          {/* TABEL ALOKASI JAM & BENCHMARK TIM (IMAGE 1 BAWAH & IMAGE 4) */}
-          <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden">
-            <div className="bg-slate-800 text-white px-4 py-3 font-semibold text-xs uppercase tracking-wider flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-              <div>
-                <span>Estimasi Jam & Benchmark Tim (PDP IAPI No. 3 Tahun 2024)</span>
-                <span className="block sm:inline sm:ml-2 text-[11px] text-amber-300 font-normal">
-                  Zona: {hbrZone} · Biaya Internal Indikatif: {internalCostFactor}%
-                </span>
+          {/* TABEL ALOKASI JAM & BENCHMARK TIM (FULL FRAME) */}
+          <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+            <div className="bg-slate-50/90 border-b border-slate-200/80 px-3.5 py-2.5 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-3.5 rounded-full bg-indigo-600"></div>
+                <div>
+                  <span className="font-bold text-xs text-slate-800 tracking-tight">
+                    Estimasi Jam & Benchmark Tim (PDP IAPI No. 3 Tahun 2024)
+                  </span>
+                  <span className="ml-2 text-[10px] text-slate-500 font-medium">
+                    Zona: {hbrZone} · Biaya Internal: {internalCostFactor}%
+                  </span>
+                </div>
               </div>
-              <div className="text-[11px] text-slate-300 font-mono">
-                Jam Dasar: {teamCalculations.baseHours}j → Jam Disesuaikan: <span className="text-white font-bold">{teamCalculations.adjustedHours}j</span>
+              <div className="text-[11px] text-slate-500 font-mono">
+                Jam Dasar: {teamCalculations.baseHours}j → Jam Disesuaikan: <span className="text-slate-900 font-bold">{teamCalculations.adjustedHours.toFixed(1)}j</span>
               </div>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs sm:text-sm">
+              <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold text-xs">
-                    <th className="py-2.5 px-4">Level Personel</th>
-                    <th className="py-2.5 px-3 text-center">Alokasi (%)</th>
-                    <th className="py-2.5 px-3 text-center">Alokasi Jam</th>
-                    <th className="py-2.5 px-4 text-right">HBR / Jam ({hbrZone})</th>
-                    <th className="py-2.5 px-4 text-right font-bold text-slate-800">Nilai HBR</th>
+                  <tr className="bg-slate-50/60 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
+                    <th className="py-2 px-3.5">Level Personel</th>
+                    <th className="py-2 px-3 text-center">Alokasi (%)</th>
+                    <th className="py-2 px-3 text-center">Alokasi Jam</th>
+                    <th className="py-2 px-3.5 text-right">Tarif HBR / Jam ({hbrZone})</th>
+                    <th className="py-2 px-3.5 text-right font-bold text-slate-800">Nilai HBR</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-mono text-xs">
                   {teamCalculations.breakdown.map((row) => (
-                    <tr key={row.level} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-2.5 px-4 font-sans font-semibold text-slate-900">{row.level}</td>
-                      <td className="py-2.5 px-3 text-center font-semibold text-slate-700">{row.defaultAllocation}%</td>
-                      <td className="py-2.5 px-3 text-center text-slate-800 font-bold">{row.allocatedHours.toFixed(1)}</td>
-                      <td className="py-2.5 px-4 text-right text-slate-700">{formatRupiah(row.effectiveRate)}</td>
-                      <td className="py-2.5 px-4 text-right font-bold text-slate-900">{formatRupiah(row.totalHbrAmount)}</td>
+                    <tr key={row.level} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-2 px-3.5 font-sans font-semibold text-slate-900">{row.level}</td>
+                      <td className="py-2 px-3 text-center font-semibold text-slate-700">{row.defaultAllocation}%</td>
+                      <td className="py-2 px-3 text-center text-slate-800 font-bold">{row.allocatedHours.toFixed(1)}j</td>
+                      <td className="py-2 px-3.5 text-right text-slate-700">{formatRupiah(row.effectiveRate)}</td>
+                      <td className="py-2 px-3.5 text-right font-bold text-slate-900">{formatRupiah(row.totalHbrAmount)}</td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-slate-50 border-t-2 border-slate-200 font-mono text-xs font-bold text-slate-900">
+                <tfoot className="bg-slate-50/80 border-t-2 border-slate-200 font-mono text-xs font-bold text-slate-900">
                   <tr>
-                    <td className="py-3 px-4 font-sans">Total Jam & Benchmark HBR</td>
-                    <td className="py-3 px-3 text-center">100%</td>
-                    <td className="py-3 px-3 text-center text-blue-700">{teamCalculations.adjustedHours.toFixed(1)}j</td>
+                    <td className="py-2.5 px-3.5 font-sans">Total Jam & Benchmark HBR</td>
+                    <td className="py-2.5 px-3 text-center">100%</td>
+                    <td className="py-2.5 px-3 text-center text-blue-700">{teamCalculations.adjustedHours.toFixed(1)}j</td>
                     <td></td>
-                    <td className="py-3 px-4 text-right text-blue-700">{formatRupiah(teamCalculations.totalHbrFee)}</td>
+                    <td className="py-2.5 px-3.5 text-right text-blue-700">{formatRupiah(teamCalculations.totalHbrFee)}</td>
                   </tr>
                 </tfoot>
               </table>
             </div>
 
-            <div className="p-3 bg-slate-50/70 border-t border-slate-200 text-xs text-slate-600 flex flex-col sm:flex-row justify-between gap-2">
+            <div className="p-3 bg-slate-50/60 border-t border-slate-200 text-[11px] text-slate-500 flex flex-col sm:flex-row justify-between gap-1.5">
               <div>
-                *Catatan: Margin bersifat indikatif karena 'Biaya Internal' memakai faktor <span className="font-semibold text-slate-800">{internalCostFactor}%</span> dari HBR sebagai asumsi awal.
+                *Catatan: Margin indikatif karena 'Biaya Internal' memakai asumsi faktor <span className="font-semibold text-slate-700">{internalCostFactor}%</span> dari HBR IAPI.
               </div>
-              <div className="font-semibold text-slate-900">
-                Estimasi Biaya Internal Total: <span className="text-amber-800 font-mono">{formatRupiah(teamCalculations.indicativeInternalCost)}</span>
+              <div className="font-semibold text-slate-800 font-mono">
+                Estimasi Biaya Internal Total: <span className="text-amber-800">{formatRupiah(teamCalculations.indicativeInternalCost)}</span>
               </div>
             </div>
           </div>
@@ -1151,30 +1264,33 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
         </div>
       )}
 
-      {/* TAB 2: MATRIKS BASE FEE BERDASARKAN OMZET (IMAGE 2) */}
+      {/* TAB 2: MATRIKS BASE FEE BERDASARKAN OMZET */}
       {activeTab === 'matrix' && (
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden space-y-4">
-          <div className="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-amber-950 text-white">
-            <div>
-              <h2 className="text-base font-bold">Matriks Base Fee Audit Berdasarkan Omzet · 2026</h2>
-              <p className="text-xs text-amber-200 mt-0.5">Tabel referensi dasar penentuan base fee dan jam audit dasar berdasarkan tier omzet tahunan klien.</p>
+        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+          <div className="p-3.5 sm:px-5 sm:py-3 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/90 text-slate-900">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-3.5 rounded-full bg-amber-500"></div>
+              <div>
+                <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Matriks Base Fee Audit Berdasarkan Omzet · 2026</h2>
+                <p className="text-[11px] text-slate-500 mt-0.5">Tabel referensi dasar penentuan base fee dan jam audit dasar berdasarkan tier omzet tahunan klien.</p>
+              </div>
             </div>
             {baseFeeEvaluation.tier && (
-              <span className="px-3 py-1 rounded bg-amber-500/30 border border-amber-400 text-amber-200 text-xs font-bold">
+              <span className="self-start sm:self-auto px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold font-mono">
                 Tier Terpilih: {baseFeeEvaluation.tier.code} ({baseFeeEvaluation.tier.label})
               </span>
             )}
           </div>
 
-          <div className="p-4 overflow-x-auto">
+          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-100 border-b border-slate-300 text-slate-700 font-bold">
-                  <th className="py-2.5 px-3">Kode</th>
+                <tr className="bg-slate-50/60 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
+                  <th className="py-2.5 px-3.5">Kode</th>
                   <th className="py-2.5 px-3">Rentang Omzet Tahunan</th>
                   <th className="py-2.5 px-4 text-right">Base Fee</th>
-                  <th className="py-2.5 px-3 text-center">Jam Audit Dasar</th>
-                  <th className="py-2.5 px-3 text-center">Estimasi Hari Tim</th>
+                  <th className="py-2.5 px-3 text-center">Jam Dasar</th>
+                  <th className="py-2.5 px-3 text-center">Hari Tim</th>
                   <th className="py-2.5 px-4">Komposisi Tim Minimum</th>
                 </tr>
               </thead>
@@ -1185,12 +1301,12 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                     <tr 
                       key={tier.code} 
                       className={`transition-colors ${
-                        isActive ? 'bg-amber-100/70 font-bold text-amber-950 ring-1 ring-amber-400' : 'hover:bg-slate-50'
+                        isActive ? 'bg-amber-50/90 font-bold text-amber-950 ring-1 ring-amber-300' : 'hover:bg-slate-50/60'
                       }`}
                     >
-                      <td className="py-2.5 px-3 font-sans font-bold">{tier.code}</td>
+                      <td className="py-2.5 px-3.5 font-sans font-bold">{tier.code}</td>
                       <td className="py-2.5 px-3 font-sans">{tier.label}</td>
-                      <td className="py-2.5 px-4 text-right">{formatRupiah(tier.baseFee)}</td>
+                      <td className="py-2.5 px-4 text-right font-bold">{formatRupiah(tier.baseFee)}</td>
                       <td className="py-2.5 px-3 text-center font-bold text-blue-700">{tier.baseHours}j</td>
                       <td className="py-2.5 px-3 text-center font-sans text-slate-600">{tier.estimatedDays}</td>
                       <td className="py-2.5 px-4 font-sans text-slate-700">{tier.teamComposition}</td>
@@ -1201,130 +1317,160 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
             </table>
           </div>
 
-          <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-600 italic">
-            Catatan: Matriks base fee ini merupakan kebijakan/alat estimasi internal KAP, bukan tarif baku IAPI. Fee final harus dikonfirmasi dengan budget jam, risiko, ruang lingkup, dan professional judgment.
+          <div className="p-3 bg-slate-50/60 border-t border-slate-200 text-[11px] text-slate-500">
+            Catatan: Matriks base fee ini merupakan alat estimasi internal KAP, bukan tarif baku mengikat IAPI. Fee final dikonfirmasi dengan budget jam, risiko, dan professional judgment.
           </div>
         </div>
       )}
 
-      {/* TAB 3: TABEL 9 FAKTOR PENYESUAIAN (IMAGE 3) */}
+      {/* TAB 3: TABEL 9 FAKTOR PENYESUAIAN */}
       {activeTab === 'adjustments' && (
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden space-y-4">
-          <div className="p-5 border-b border-slate-200 bg-slate-800 text-white">
-            <h2 className="text-base font-bold">Faktor Penyesuaian Fee Audit (Adjustment Factors)</h2>
-            <p className="text-xs text-slate-300 mt-0.5">Pedoman persentase penyesuaian komersial & operasional audit berdasarkan kompleksitas penugasan.</p>
+        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+          <div className="p-3.5 sm:px-5 sm:py-3 border-b border-slate-200/80 bg-slate-50/90 text-slate-900 flex items-center gap-2">
+            <div className="w-1.5 h-3.5 rounded-full bg-emerald-600"></div>
+            <div>
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Faktor Penyesuaian Fee Audit (9 Adjustment Factors)</h2>
+              <p className="text-[11px] text-slate-500 mt-0.5">Pedoman persentase penyesuaian komersial & operasional audit berdasarkan parameter risiko.</p>
+            </div>
           </div>
 
-          <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+          <div className="p-3.5 sm:p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
             
             {/* Faktor 1: ASET */}
-            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-              <h3 className="font-bold text-slate-900 border-b border-slate-200 pb-1.5 mb-2">1. Faktor Aset</h3>
-              <ul className="space-y-1 text-slate-600">
-                <li className="flex justify-between"><span>≤ Rp5 miliar:</span> <span className="font-bold">0%</span></li>
-                <li className="flex justify-between"><span>&gt; Rp5 - 25 miliar:</span> <span className="font-bold">+5%</span></li>
-                <li className="flex justify-between"><span>&gt; Rp25 - 100 miliar:</span> <span className="font-bold">+10%</span></li>
-                <li className="flex justify-between"><span>&gt; Rp100 - 500 miliar:</span> <span className="font-bold">+15%</span></li>
-                <li className="flex justify-between"><span>&gt; Rp500 miliar - Rp1 triliun:</span> <span className="font-bold">+20%</span></li>
-                <li className="flex justify-between"><span>&gt; Rp1 - 5 triliun:</span> <span className="font-bold">+25%</span></li>
-                <li className="flex justify-between"><span>&gt; Rp5 triliun:</span> <span className="font-bold">+30%</span></li>
+            <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-2xs hover:border-slate-300 transition-all">
+              <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 mb-2 flex items-center justify-between">
+                <span>1. Faktor Aset</span>
+                <span className="text-[10px] text-slate-400 font-normal">Kuantitatif</span>
+              </h3>
+              <ul className="space-y-1.5 text-slate-600 font-mono text-[11px]">
+                <li className="flex justify-between"><span>≤ Rp5 miliar:</span> <span className="font-bold text-slate-900">0%</span></li>
+                <li className="flex justify-between"><span>&gt; Rp5 - 25 miliar:</span> <span className="font-bold text-slate-900">+5%</span></li>
+                <li className="flex justify-between"><span>&gt; Rp25 - 100 miliar:</span> <span className="font-bold text-slate-900">+10%</span></li>
+                <li className="flex justify-between"><span>&gt; Rp100 - 500 miliar:</span> <span className="font-bold text-slate-900">+15%</span></li>
+                <li className="flex justify-between"><span>&gt; Rp500 miliar - Rp1 T:</span> <span className="font-bold text-slate-900">+20%</span></li>
+                <li className="flex justify-between"><span>&gt; Rp1 - 5 triliun:</span> <span className="font-bold text-slate-900">+25%</span></li>
+                <li className="flex justify-between"><span>&gt; Rp5 triliun:</span> <span className="font-bold text-slate-900">+30%</span></li>
               </ul>
             </div>
 
             {/* Faktor 2: TRANSAKSI */}
-            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-              <h3 className="font-bold text-slate-900 border-b border-slate-200 pb-1.5 mb-2">2. Volume Transaksi / Bulan</h3>
-              <ul className="space-y-1 text-slate-600">
-                <li className="flex justify-between"><span>&lt; 100 / bulan:</span> <span className="font-bold">0%</span></li>
-                <li className="flex justify-between"><span>100 - 500 / bulan:</span> <span className="font-bold">+5%</span></li>
-                <li className="flex justify-between"><span>501 - 2.000 / bulan:</span> <span className="font-bold">+10%</span></li>
-                <li className="flex justify-between"><span>2.001 - 5.000 / bulan:</span> <span className="font-bold">+15%</span></li>
-                <li className="flex justify-between"><span>5.001 - 10.000 / bulan:</span> <span className="font-bold">+20%</span></li>
-                <li className="flex justify-between"><span>&gt; 10.000 / bulan:</span> <span className="font-bold">+30%</span></li>
+            <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-2xs hover:border-slate-300 transition-all">
+              <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 mb-2 flex items-center justify-between">
+                <span>2. Volume Transaksi</span>
+                <span className="text-[10px] text-slate-400 font-normal">Per Bulan</span>
+              </h3>
+              <ul className="space-y-1.5 text-slate-600 font-mono text-[11px]">
+                <li className="flex justify-between"><span>&lt; 100 / bulan:</span> <span className="font-bold text-slate-900">0%</span></li>
+                <li className="flex justify-between"><span>100 - 500 / bulan:</span> <span className="font-bold text-slate-900">+5%</span></li>
+                <li className="flex justify-between"><span>501 - 2.000 / bulan:</span> <span className="font-bold text-slate-900">+10%</span></li>
+                <li className="flex justify-between"><span>2.001 - 5.000 / bulan:</span> <span className="font-bold text-slate-900">+15%</span></li>
+                <li className="flex justify-between"><span>5.001 - 10.000 / bln:</span> <span className="font-bold text-slate-900">+20%</span></li>
+                <li className="flex justify-between"><span>&gt; 10.000 / bulan:</span> <span className="font-bold text-slate-900">+30%</span></li>
               </ul>
             </div>
 
             {/* Faktor 3: CABANG */}
-            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-              <h3 className="font-bold text-slate-900 border-b border-slate-200 pb-1.5 mb-2">3. Jumlah Lokasi / Cabang</h3>
-              <ul className="space-y-1 text-slate-600">
-                <li className="flex justify-between"><span>1 lokasi:</span> <span className="font-bold">0%</span></li>
-                <li className="flex justify-between"><span>2 - 3 lokasi:</span> <span className="font-bold">+5%</span></li>
-                <li className="flex justify-between"><span>4 - 5 lokasi:</span> <span className="font-bold">+10%</span></li>
-                <li className="flex justify-between"><span>6 - 10 lokasi:</span> <span className="font-bold">+15%</span></li>
-                <li className="flex justify-between"><span>11 - 20 lokasi:</span> <span className="font-bold">+20%</span></li>
-                <li className="flex justify-between"><span>&gt; 20 lokasi:</span> <span className="font-bold">+30%</span></li>
+            <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-2xs hover:border-slate-300 transition-all">
+              <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 mb-2 flex items-center justify-between">
+                <span>3. Lokasi / Cabang</span>
+                <span className="text-[10px] text-slate-400 font-normal">Penyebaran</span>
+              </h3>
+              <ul className="space-y-1.5 text-slate-600 font-mono text-[11px]">
+                <li className="flex justify-between"><span>1 lokasi:</span> <span className="font-bold text-slate-900">0%</span></li>
+                <li className="flex justify-between"><span>2 - 3 lokasi:</span> <span className="font-bold text-slate-900">+5%</span></li>
+                <li className="flex justify-between"><span>4 - 5 lokasi:</span> <span className="font-bold text-slate-900">+10%</span></li>
+                <li className="flex justify-between"><span>6 - 10 lokasi:</span> <span className="font-bold text-slate-900">+15%</span></li>
+                <li className="flex justify-between"><span>11 - 20 lokasi:</span> <span className="font-bold text-slate-900">+20%</span></li>
+                <li className="flex justify-between"><span>&gt; 20 lokasi:</span> <span className="font-bold text-slate-900">+30%</span></li>
               </ul>
             </div>
 
             {/* Faktor 4: PERSEDIAAN */}
-            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-              <h3 className="font-bold text-slate-900 border-b border-slate-200 pb-1.5 mb-2">4. Kondisi Persediaan</h3>
-              <ul className="space-y-1 text-slate-600">
-                <li className="flex justify-between"><span>Tidak material / nihil:</span> <span className="font-bold">0%</span></li>
-                <li className="flex justify-between"><span>Material, 1 lokasi:</span> <span className="font-bold">+5%</span></li>
-                <li className="flex justify-between"><span>Material, 2-5 gudang:</span> <span className="font-bold">+10%</span></li>
-                <li className="flex justify-between"><span>Banyak SKU / slow moving:</span> <span className="font-bold">+15%</span></li>
-                <li className="flex justify-between"><span>Kompleks / multi lokasi:</span> <span className="font-bold">+25%</span></li>
+            <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-2xs hover:border-slate-300 transition-all">
+              <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 mb-2 flex items-center justify-between">
+                <span>4. Kondisi Persediaan</span>
+                <span className="text-[10px] text-slate-400 font-normal">Stock Opname</span>
+              </h3>
+              <ul className="space-y-1.5 text-slate-600 font-mono text-[11px]">
+                <li className="flex justify-between"><span>Tidak material / nihil:</span> <span className="font-bold text-slate-900">0%</span></li>
+                <li className="flex justify-between"><span>Material, 1 lokasi:</span> <span className="font-bold text-slate-900">+5%</span></li>
+                <li className="flex justify-between"><span>Material, 2-5 gudang:</span> <span className="font-bold text-slate-900">+10%</span></li>
+                <li className="flex justify-between"><span>Banyak SKU / slow moving:</span> <span className="font-bold text-slate-900">+15%</span></li>
+                <li className="flex justify-between"><span>Kompleks / multi lokasi:</span> <span className="font-bold text-slate-900">+25%</span></li>
               </ul>
             </div>
 
             {/* Faktor 5: INDUSTRI */}
-            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-              <h3 className="font-bold text-slate-900 border-b border-slate-200 pb-1.5 mb-2">5. Kompleksitas Industri</h3>
-              <ul className="space-y-1 text-slate-600">
-                <li className="flex justify-between"><span>Rendah (Jasa sederhana):</span> <span className="font-bold">0%</span></li>
-                <li className="flex justify-between"><span>Menengah (Distributor, hotel):</span> <span className="font-bold">+10%</span></li>
-                <li className="flex justify-between"><span>Menengah-Tinggi (Konstruksi):</span> <span className="font-bold">+20%</span></li>
-                <li className="flex justify-between"><span>Tinggi (Manufaktur, tambang):</span> <span className="font-bold">+30%</span></li>
-                <li className="flex justify-between"><span>Sangat Tinggi (Bank, emiten):</span> <span className="font-bold">+45%</span></li>
+            <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-2xs hover:border-slate-300 transition-all">
+              <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 mb-2 flex items-center justify-between">
+                <span>5. Kompleksitas Industri</span>
+                <span className="text-[10px] text-slate-400 font-normal">Regulasi</span>
+              </h3>
+              <ul className="space-y-1.5 text-slate-600 font-mono text-[11px]">
+                <li className="flex justify-between"><span>Rendah (Jasa sederhana):</span> <span className="font-bold text-slate-900">0%</span></li>
+                <li className="flex justify-between"><span>Menengah (Distributor, hotel):</span> <span className="font-bold text-slate-900">+10%</span></li>
+                <li className="flex justify-between"><span>Menengah-Tinggi (Konstruksi):</span> <span className="font-bold text-slate-900">+20%</span></li>
+                <li className="flex justify-between"><span>Tinggi (Manufaktur, tambang):</span> <span className="font-bold text-slate-900">+30%</span></li>
+                <li className="flex justify-between"><span>Sangat Tinggi (Bank, emiten):</span> <span className="font-bold text-slate-900">+45%</span></li>
               </ul>
             </div>
 
             {/* Faktor 6: PEMBUKUAN */}
-            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-              <h3 className="font-bold text-slate-900 border-b border-slate-200 pb-1.5 mb-2">6. Kualitas Pembukuan</h3>
-              <ul className="space-y-1 text-slate-600">
+            <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-2xs hover:border-slate-300 transition-all">
+              <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 mb-2 flex items-center justify-between">
+                <span>6. Kualitas Pembukuan</span>
+                <span className="text-[10px] text-slate-400 font-normal">Kerapian</span>
+              </h3>
+              <ul className="space-y-1.5 text-slate-600 font-mono text-[11px]">
                 <li className="flex justify-between"><span>Sangat rapi:</span> <span className="font-bold text-emerald-700">-5%</span></li>
-                <li className="flex justify-between"><span>Normal:</span> <span className="font-bold">0%</span></li>
-                <li className="flex justify-between"><span>Rekonsiliasi belum lengkap:</span> <span className="font-bold">+10%</span></li>
-                <li className="flex justify-between"><span>Banyak akun unreconciled:</span> <span className="font-bold">+15%</span></li>
-                <li className="flex justify-between"><span>Tidak rapi:</span> <span className="font-bold">+25%</span></li>
-                <li className="flex justify-between"><span>LK belum selesai:</span> <span className="font-bold">+30%</span></li>
+                <li className="flex justify-between"><span>Normal:</span> <span className="font-bold text-slate-900">0%</span></li>
+                <li className="flex justify-between"><span>Rekonsiliasi belum lengkap:</span> <span className="font-bold text-slate-900">+10%</span></li>
+                <li className="flex justify-between"><span>Banyak akun unreconciled:</span> <span className="font-bold text-slate-900">+15%</span></li>
+                <li className="flex justify-between"><span>Tidak rapi:</span> <span className="font-bold text-slate-900">+25%</span></li>
+                <li className="flex justify-between"><span>LK belum selesai:</span> <span className="font-bold text-slate-900">+30%</span></li>
               </ul>
             </div>
 
             {/* Faktor 7: RISIKO */}
-            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-              <h3 className="font-bold text-slate-900 border-b border-slate-200 pb-1.5 mb-2">7. Risiko Engagement</h3>
-              <ul className="space-y-1 text-slate-600">
-                <li className="flex justify-between"><span>Rendah:</span> <span className="font-bold">0%</span></li>
-                <li className="flex justify-between"><span>Moderate:</span> <span className="font-bold">+10%</span></li>
-                <li className="flex justify-between"><span>Moderate-High:</span> <span className="font-bold">+20%</span></li>
-                <li className="flex justify-between"><span>High (Going concern/fraud):</span> <span className="font-bold">+30%</span></li>
-                <li className="flex justify-between"><span>Very High (Evaluasi Klien):</span> <span className="font-bold">+50%</span></li>
+            <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-2xs hover:border-slate-300 transition-all">
+              <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 mb-2 flex items-center justify-between">
+                <span>7. Risiko Perikatan</span>
+                <span className="text-[10px] text-slate-400 font-normal">Engagement</span>
+              </h3>
+              <ul className="space-y-1.5 text-slate-600 font-mono text-[11px]">
+                <li className="flex justify-between"><span>Rendah:</span> <span className="font-bold text-slate-900">0%</span></li>
+                <li className="flex justify-between"><span>Moderate:</span> <span className="font-bold text-slate-900">+10%</span></li>
+                <li className="flex justify-between"><span>Moderate-High:</span> <span className="font-bold text-slate-900">+20%</span></li>
+                <li className="flex justify-between"><span>High (Going concern/fraud):</span> <span className="font-bold text-slate-900">+30%</span></li>
+                <li className="flex justify-between"><span>Very High (Evaluasi Klien):</span> <span className="font-bold text-rose-700">+50%</span></li>
               </ul>
             </div>
 
             {/* Faktor 8: FIRST YEAR */}
-            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-              <h3 className="font-bold text-slate-900 border-b border-slate-200 pb-1.5 mb-2">8. First-Year Audit</h3>
-              <ul className="space-y-1 text-slate-600">
-                <li className="flex justify-between"><span>Tidak (Recurring client):</span> <span className="font-bold">0%</span></li>
-                <li className="flex justify-between"><span>Ya (First-year normal):</span> <span className="font-bold">+10%</span></li>
-                <li className="flex justify-between"><span>Ya - Saldo Awal Kompleks:</span> <span className="font-bold">+20%</span></li>
+            <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-2xs hover:border-slate-300 transition-all">
+              <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 mb-2 flex items-center justify-between">
+                <span>8. First-Year Audit</span>
+                <span className="text-[10px] text-slate-400 font-normal">Saldo Awal</span>
+              </h3>
+              <ul className="space-y-1.5 text-slate-600 font-mono text-[11px]">
+                <li className="flex justify-between"><span>Tidak (Recurring client):</span> <span className="font-bold text-slate-900">0%</span></li>
+                <li className="flex justify-between"><span>Ya (First-year normal):</span> <span className="font-bold text-slate-900">+10%</span></li>
+                <li className="flex justify-between"><span>Ya - Saldo Awal Kompleks:</span> <span className="font-bold text-slate-900">+20%</span></li>
               </ul>
             </div>
 
             {/* Faktor 9: DEADLINE */}
-            <div className="border border-slate-200 rounded-lg p-3 bg-slate-50">
-              <h3 className="font-bold text-slate-900 border-b border-slate-200 pb-1.5 mb-2">9. Deadline Data Lengkap</h3>
-              <ul className="space-y-1 text-slate-600">
-                <li className="flex justify-between"><span>&gt; 60 hari:</span> <span className="font-bold">0%</span></li>
-                <li className="flex justify-between"><span>31 - 60 hari:</span> <span className="font-bold">+5%</span></li>
-                <li className="flex justify-between"><span>21 - 30 hari:</span> <span className="font-bold">+10%</span></li>
-                <li className="flex justify-between"><span>14 - 20 hari:</span> <span className="font-bold">+20%</span></li>
-                <li className="flex justify-between"><span>7 - 13 hari:</span> <span className="font-bold">+30%</span></li>
+            <div className="border border-slate-200/80 rounded-xl p-3 bg-white shadow-2xs hover:border-slate-300 transition-all">
+              <h3 className="font-bold text-slate-900 border-b border-slate-100 pb-1.5 mb-2 flex items-center justify-between">
+                <span>9. Batas Waktu (Deadline)</span>
+                <span className="text-[10px] text-slate-400 font-normal">Sejak Data Lengkap</span>
+              </h3>
+              <ul className="space-y-1.5 text-slate-600 font-mono text-[11px]">
+                <li className="flex justify-between"><span>&gt; 60 hari:</span> <span className="font-bold text-slate-900">0%</span></li>
+                <li className="flex justify-between"><span>31 - 60 hari:</span> <span className="font-bold text-slate-900">+5%</span></li>
+                <li className="flex justify-between"><span>21 - 30 hari:</span> <span className="font-bold text-slate-900">+10%</span></li>
+                <li className="flex justify-between"><span>14 - 20 hari:</span> <span className="font-bold text-slate-900">+20%</span></li>
+                <li className="flex justify-between"><span>7 - 13 hari:</span> <span className="font-bold text-slate-900">+30%</span></li>
                 <li className="flex justify-between"><span>&lt; 7 hari (Urgent):</span> <span className="font-bold text-rose-700">+45%</span></li>
               </ul>
             </div>
@@ -1333,66 +1479,71 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
         </div>
       )}
 
-      {/* TAB 4: TARIF HBR & ALOKASI TIM EDITABLE (IMAGE 4) */}
+      {/* TAB 4: TARIF HBR & ALOKASI TIM EDITABLE */}
       {activeTab === 'rates' && (
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs overflow-hidden space-y-4">
-          <div className="p-5 border-b border-slate-200 bg-slate-800 text-white flex justify-between items-center">
-            <div>
-              <h2 className="text-base font-bold">Tarif Per Jam & Alokasi Tim (PDP IAPI No. 3 Tahun 2024)</h2>
-              <p className="text-xs text-slate-300 mt-0.5">Benchmark minimum imbalan jasa audit menurut regulasi dewan pengurus IAPI.</p>
+        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
+          <div className="p-3.5 sm:px-5 sm:py-3 border-b border-slate-200/80 bg-slate-50/90 text-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-3.5 rounded-full bg-indigo-600"></div>
+              <div>
+                <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Tarif Per Jam & Alokasi Tim (PDP IAPI No. 3 Tahun 2024)</h2>
+                <p className="text-[11px] text-slate-500 mt-0.5">Benchmark minimum imbalan jasa audit menurut regulasi dewan pengurus IAPI.</p>
+              </div>
             </div>
-            <div className="flex items-center flex-wrap gap-3 text-xs">
+            <div className="flex items-center flex-wrap gap-2 text-xs">
               <button
                 type="button"
                 onClick={handleResetRates}
-                className="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded border border-slate-600 transition-colors"
+                className="px-2.5 py-1 text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 text-xs font-medium transition-colors shadow-2xs"
                 title="Kembalikan tarif ke standar PDP IAPI No. 3 Tahun 2024"
               >
-                Reset ke Standar IAPI
+                Reset Standar IAPI
               </button>
-              <div className="flex items-center gap-1.5">
-                <span>Faktor Biaya Internal:</span>
+              <div className="flex items-center gap-1.5 bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs text-[11px]">
+                <span className="text-slate-600 font-medium">Biaya Internal:</span>
                 <input
                   type="number"
                   min="30"
                   max="90"
                   value={internalCostFactor}
                   onChange={(e) => setInternalCostFactor(Number(e.target.value) || 60)}
-                  className="w-16 px-2 py-1 bg-white text-slate-900 rounded font-mono font-bold"
+                  className="w-12 text-center bg-slate-50 border border-slate-200 rounded py-0.5 font-mono font-bold text-slate-900 focus:outline-none"
                 />
-                <span>%</span>
+                <span className="text-slate-500 font-mono">%</span>
               </div>
             </div>
           </div>
 
-          <div className="p-4 overflow-x-auto">
+          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-100 border-b border-slate-300 text-slate-700 font-bold">
+                <tr className="bg-slate-50/60 border-b border-slate-200 text-slate-600 font-semibold text-[11px]">
                   <th className="py-2.5 px-4">Level Personel</th>
-                  <th className="py-2.5 px-3 text-center">Alokasi Jam (%)</th>
+                  <th className="py-2.5 px-3 text-center">Alokasi (%)</th>
                   <th className="py-2.5 px-4 text-right">HBR Jabodetabek</th>
                   <th className="py-2.5 px-4 text-right">HBR Luar Jabodetabek</th>
-                  <th className="py-2.5 px-4 text-right">Biaya Internal / Jam (Luar)</th>
+                  <th className="py-2.5 px-4 text-right">Biaya Internal (Luar)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-mono">
                 {teamRates.map((row, idx) => (
-                  <tr key={row.level} className="hover:bg-slate-50">
-                    <td className="py-2.5 px-4 font-sans font-bold text-slate-800">{row.level}</td>
+                  <tr key={row.level} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-2.5 px-4 font-sans font-bold text-slate-900">{row.level}</td>
                     <td className="py-2.5 px-3 text-center">
-                      <input
-                        type="number"
-                        min="1"
-                        max="100"
-                        value={row.defaultAllocation}
-                        onChange={(e) => {
-                          const val = Number(e.target.value) || 0;
-                          setTeamRates(prev => prev.map((r, i) => i === idx ? { ...r, defaultAllocation: val } : r));
-                        }}
-                        className="w-16 text-center bg-slate-50 border border-slate-300 rounded px-1.5 py-1 font-bold text-slate-900"
-                      />
-                      %
+                      <div className="inline-flex items-center gap-1">
+                        <input
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={row.defaultAllocation}
+                          onChange={(e) => {
+                            const val = Number(e.target.value) || 0;
+                            setTeamRates(prev => prev.map((r, i) => i === idx ? { ...r, defaultAllocation: val } : r));
+                          }}
+                          className="w-12 text-center bg-slate-50 border border-slate-200 rounded px-1 py-0.5 font-bold text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900"
+                        />
+                        <span className="text-slate-500">%</span>
+                      </div>
                     </td>
                     <td className="py-2.5 px-4 text-right">
                       <MoneyInput
@@ -1400,7 +1551,7 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                         onChange={(val) => {
                           setTeamRates(prev => prev.map((r, i) => i === idx ? { ...r, hbrJabodetabek: val } : r));
                         }}
-                        className="w-28 text-right bg-slate-50 border border-slate-300 rounded px-2 py-1 font-bold text-slate-900"
+                        className="w-28 text-right bg-slate-50 border border-slate-200 rounded px-2 py-0.5 font-bold text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900"
                       />
                     </td>
                     <td className="py-2.5 px-4 text-right">
@@ -1409,10 +1560,10 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                         onChange={(val) => {
                           setTeamRates(prev => prev.map((r, i) => i === idx ? { ...r, hbrLuarJabodetabek: val } : r));
                         }}
-                        className="w-28 text-right bg-slate-50 border border-slate-300 rounded px-2 py-1 font-bold text-slate-900"
+                        className="w-28 text-right bg-slate-50 border border-slate-200 rounded px-2 py-0.5 font-bold text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900"
                       />
                     </td>
-                    <td className="py-2.5 px-4 text-right text-slate-600">
+                    <td className="py-2.5 px-4 text-right text-slate-600 font-semibold">
                       {formatRupiah(Math.round(row.hbrLuarJabodetabek * (internalCostFactor / 100)))}
                     </td>
                   </tr>
@@ -1421,23 +1572,26 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
             </table>
           </div>
 
-          <div className="p-4 bg-slate-50 border-t border-slate-200 text-xs text-slate-600">
-            Catatan: HBR pada kolom C-D merupakan benchmark minimum sesuai PDP IAPI No. 3 Tahun 2024. Faktor biaya internal {internalCostFactor}% hanya asumsi awal untuk simulasi margin dan wajib disesuaikan dengan struktur biaya aktual KAP.
+          <div className="p-3 bg-slate-50/60 border-t border-slate-200 text-[11px] text-slate-500">
+            Catatan: HBR merupakan acuan minimum sesuai PDP IAPI No. 3 Tahun 2024. Faktor biaya internal {internalCostFactor}% merupakan estimasi awal untuk simulasi margin penugasan.
           </div>
         </div>
       )}
 
-      {/* TAB 5: PANDUAN PENGGUNAAN & PRINSIP KEBIJAKAN (IMAGE 5) */}
+      {/* TAB 5: PANDUAN PENGGUNAAN & PRINSIP KEBIJAKAN */}
       {activeTab === 'guideline' && (
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs p-6 space-y-6 text-xs text-slate-700">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">Panduan Penggunaan Kalkulator Fee Audit</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Standar Operasional Prosedur penentuan penawaran imbalan jasa audit pada KAP.</p>
+        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-4 sm:p-6 space-y-5 text-xs text-slate-700">
+          <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+            <div className="w-1.5 h-3.5 rounded-full bg-rose-600"></div>
+            <div>
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">Panduan Penggunaan Kalkulator Fee Audit</h2>
+              <p className="text-[11px] text-slate-500 mt-0.5">Standar Operasional Prosedur penentuan penawaran imbalan jasa audit pada KAP.</p>
+            </div>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="font-bold text-slate-900 uppercase tracking-wider text-xs">Langkah Operasional Penentuan Fee:</h3>
-            <ol className="list-decimal pl-5 space-y-2">
+          <div className="space-y-2.5">
+            <h3 className="font-bold text-slate-900 uppercase tracking-wider text-[11px]">Langkah Operasional Penentuan Fee:</h3>
+            <ol className="list-decimal pl-5 space-y-1.5 text-slate-600">
               <li><strong>Langkah 1:</strong> Isi identitas calon klien dan tahun buku penugasan audit.</li>
               <li><strong>Langkah 2:</strong> Masukkan omzet tahunan, total aset, volume transaksi bulanan, dan jumlah cabang untuk menentukan tier dasar dan penyesuaian kuantitatif.</li>
               <li><strong>Langkah 3:</strong> Tentukan kondisi persediaan, kompleksitas industri, pembukuan, risiko perikatan, dan status first-year audit untuk menentukan faktor pengali kualitatif.</li>
@@ -1448,18 +1602,18 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
             </ol>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-2 text-amber-950">
-            <h3 className="font-bold uppercase tracking-wider text-xs flex items-center gap-1.5">
-              <ShieldAlert size={16} />
+          <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-3.5 space-y-2 text-amber-950">
+            <h3 className="font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5 text-amber-900">
+              <ShieldAlert size={14} />
               Prinsip Kebijakan Internal KAP:
             </h3>
-            <ul className="list-disc pl-5 space-y-1.5 text-xs">
+            <ul className="list-disc pl-5 space-y-1 text-[11px] text-amber-900/90">
               <li>Matriks omzet hanya alat estimasi awal; keputusan fee final harus didukung budget jam kerja yang memadai.</li>
               <li>Jika benchmark HBR berbasis jam lebih tinggi daripada fee matriks, model fee normal mengambil nilai yang lebih tinggi.</li>
               <li>Adjustment total untuk perhitungan matriks dibatasi maksimal 150%; untuk kasus risiko ekstrem wajib dilakukan evaluasi penerimaan klien secara terpisah.</li>
               <li>Pekerjaan rekonstruksi pembukuan / penyusunan laporan keuangan terpisah dari jasa audit independen.</li>
               <li>Out-of-pocket expenses (OPE) dicatat terpisah agar harga jasa profesional tetap transparan dan akuntabel.</li>
-              <li>Simulasi margin memakai faktor biaya internal 60% dari HBR sebagai nilai acuan baku default.</li>
+              <li>Simulasi margin memakai faktor biaya internal {internalCostFactor}% dari HBR sebagai nilai acuan baku default.</li>
             </ul>
           </div>
         </div>
@@ -1467,42 +1621,42 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
 
       {/* TAB 6: FORMAT SURAT PROPOSAL FORMAL */}
       {activeTab === 'proposal' && (
-        <div className="bg-white rounded-xl border border-slate-200/90 shadow-xs p-6 sm:p-8 space-y-6 text-slate-800 text-xs">
-          <div className="border-b border-slate-200 pb-5 text-center">
-            <div className="text-xs uppercase font-bold text-slate-400 tracking-widest">{appName}</div>
-            <h3 className="text-lg font-bold text-slate-900 uppercase mt-1">Penawaran Imbalan Jasa Audit Independen</h3>
-            <p className="text-xs text-slate-500 mt-0.5">{institutionName || 'Kantor Akuntan Publik'} · Standar Profesional Akuntan Publik (SPAP)</p>
+        <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5 sm:p-8 space-y-5 text-slate-800 text-xs">
+          <div className="border-b border-slate-200 pb-4 text-center">
+            <div className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">{appName}</div>
+            <h3 className="text-base font-bold text-slate-900 uppercase mt-0.5">Penawaran Imbalan Jasa Audit Independen</h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">{institutionName || 'Kantor Akuntan Publik'} · Standar Profesional Akuntan Publik (SPAP)</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
-              <span className="text-slate-400 block font-medium">Kepada Yth:</span>
+              <span className="text-slate-400 block font-medium text-[11px]">Kepada Yth:</span>
               <span className="font-bold text-slate-900 text-sm">{clientName || '[Nama Calon Klien Belum Diisi]'}</span>
-              <span className="block text-slate-500">Tahun Buku {fiscalYear}</span>
+              <span className="block text-slate-500 text-[11px]">Tahun Buku {fiscalYear}</span>
             </div>
             <div className="text-right">
-              <span className="text-slate-400 block font-medium">Kategori Penugasan:</span>
+              <span className="text-slate-400 block font-medium text-[11px]">Kategori Penugasan:</span>
               <span className="font-semibold text-slate-800">{firstYearAudit.startsWith('Ya') ? 'Tahun Pertama (Initial)' : 'Perikatan Berulang'}</span>
-              <span className="block text-slate-500">Zona Tarif: {hbrZone}</span>
+              <span className="block text-slate-500 text-[11px]">Zona Tarif: {hbrZone}</span>
             </div>
           </div>
 
           <div className="border border-slate-200 rounded-lg overflow-hidden">
             <table className="w-full text-left">
-              <thead className="bg-slate-50 border-b border-slate-200 font-semibold text-slate-700">
+              <thead className="bg-slate-50/70 border-b border-slate-200 font-semibold text-slate-700 text-[11px]">
                 <tr>
                   <th className="p-3">Uraian Ruang Lingkup Jasa</th>
                   <th className="p-3 text-center">Estimasi Jam Tim</th>
                   <th className="p-3 text-right">Jumlah (Rp)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-mono">
+              <tbody className="divide-y divide-slate-100 font-mono text-xs">
                 <tr>
                   <td className="p-3 font-sans">
                     <div className="font-semibold text-slate-900">Imbalan Jasa Audit Laporan Keuangan Independen</div>
                     <div className="text-slate-500 text-[11px]">Berdasarkan Base Fee Omzet Tier {baseFeeEvaluation.tier?.code || '-'} dan PDP IAPI No. 3/2024 (Adj {adjustments.cappedAdj}%)</div>
                   </td>
-                  <td className="p-3 text-center font-bold text-blue-700">{teamCalculations.adjustedHours} Jam</td>
+                  <td className="p-3 text-center font-bold text-blue-700">{teamCalculations.adjustedHours.toFixed(1)} Jam</td>
                   <td className="p-3 text-right font-medium text-slate-900">{formatRupiah(results.feeNormal)}</td>
                 </tr>
                 {bufferPercent > 0 && (
@@ -1530,31 +1684,31 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
                     <td className="p-3 text-right text-slate-700">{formatRupiah(results.ppnAmount)}</td>
                   </tr>
                 )}
-                <tr className="bg-amber-50 font-bold text-slate-900 text-sm">
+                <tr className="bg-amber-50/70 font-bold text-slate-900 text-sm">
                   <td className="p-3 text-amber-950 font-sans">TOTAL PENAWARAN AUDIT</td>
-                  <td className="p-3 text-center text-blue-800">{teamCalculations.adjustedHours} Jam</td>
+                  <td className="p-3 text-center text-blue-800">{teamCalculations.adjustedHours.toFixed(1)} Jam</td>
                   <td className="p-3 text-right text-amber-900 font-black">{formatRupiah(results.totalPenawaran)}</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
-            <div className="font-semibold text-slate-900">Rekomendasi Termin Pembayaran:</div>
+          <div className="p-3.5 bg-slate-50/70 border border-slate-200 rounded-lg space-y-2">
+            <div className="font-semibold text-slate-900 text-xs">Rekomendasi Termin Pembayaran:</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[11px]">
-              <div className="p-2.5 bg-white border border-slate-200 rounded">
+              <div className="p-2.5 bg-white border border-slate-200 rounded-lg shadow-2xs">
                 <span className="font-bold block text-slate-900 font-sans">Termin I (30%)</span>
-                <span>{formatRupiah(Math.round(results.totalPenawaran * 0.3))}</span>
+                <span className="font-bold text-slate-800">{formatRupiah(Math.round(results.totalPenawaran * 0.3))}</span>
                 <span className="block text-[10px] text-slate-400 font-sans mt-0.5">Penandatanganan Surat Perikatan</span>
               </div>
-              <div className="p-2.5 bg-white border border-slate-200 rounded">
+              <div className="p-2.5 bg-white border border-slate-200 rounded-lg shadow-2xs">
                 <span className="font-bold block text-slate-900 font-sans">Termin II (50%)</span>
-                <span>{formatRupiah(Math.round(results.totalPenawaran * 0.5))}</span>
+                <span className="font-bold text-slate-800">{formatRupiah(Math.round(results.totalPenawaran * 0.5))}</span>
                 <span className="block text-[10px] text-slate-400 font-sans mt-0.5">Penyerahan Draft Laporan Auditor</span>
               </div>
-              <div className="p-2.5 bg-white border border-slate-200 rounded">
+              <div className="p-2.5 bg-white border border-slate-200 rounded-lg shadow-2xs">
                 <span className="font-bold block text-slate-900 font-sans">Termin III (20%)</span>
-                <span>{formatRupiah(Math.round(results.totalPenawaran * 0.2))}</span>
+                <span className="font-bold text-slate-800">{formatRupiah(Math.round(results.totalPenawaran * 0.2))}</span>
                 <span className="block text-[10px] text-slate-400 font-sans mt-0.5">Penyerahan Final Audit Report</span>
               </div>
             </div>
