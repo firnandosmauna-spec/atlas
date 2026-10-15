@@ -272,6 +272,23 @@ const WorkspaceBeranda = () => {
             </div>
           </div>
 
+          {/* Assigned Team Members & Supervisor strip if present */}
+          {(engagement.supervisorName || (engagement.teamMembers && engagement.teamMembers.length > 0)) && (
+            <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mr-1">Staf Tim Tambahan:</span>
+              {engagement.supervisorName && (
+                <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-800 border border-cyan-200">
+                  <span className="font-semibold mr-1">Supervisor:</span> {engagement.supervisorName}
+                </span>
+              )}
+              {engagement.teamMembers?.map(tm => (
+                <span key={tm.id} className="inline-flex items-center text-xs px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
+                  <span className="font-semibold mr-1">{tm.role}:</span> {tm.name}
+                </span>
+              ))}
+            </div>
+          )}
+
           {savedAuditor && (
             <div className="flex items-center gap-2 py-2 text-sm text-green-700">
               <CheckCircle size={14} /> Data tim tersimpan

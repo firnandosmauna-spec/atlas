@@ -109,9 +109,15 @@ const Engagements = () => {
                     <div className="text-xs text-gray-400">{eng.auditPeriod}</div>
                   </td>
                   <td className="px-6 py-4 text-xs text-gray-600 space-y-1">
-                    <div><span className="font-bold text-gray-800">P:</span> {eng.partnerName}</div>
-                    <div><span className="font-bold text-gray-800">M:</span> {eng.managerName}</div>
-                    <div><span className="font-bold text-gray-800">A:</span> {eng.auditorName}</div>
+                    <div><span className="font-bold text-gray-800">P:</span> {eng.partnerName || '-'}</div>
+                    <div><span className="font-bold text-gray-800">M:</span> {eng.managerName || '-'}</div>
+                    {eng.supervisorName && (
+                      <div><span className="font-bold text-cyan-700">S:</span> {eng.supervisorName}</div>
+                    )}
+                    <div><span className="font-bold text-gray-800">KT:</span> {eng.auditorName || '-'}</div>
+                    {eng.teamMembers && eng.teamMembers.length > 0 && (
+                      <div className="text-[10px] text-gray-500 font-medium">+{eng.teamMembers.length} staf tim</div>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-2">

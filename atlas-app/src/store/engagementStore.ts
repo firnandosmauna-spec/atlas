@@ -86,8 +86,16 @@ export interface Engagement {
   partnerName: string;
   managerId: string;
   managerName: string;
+  supervisorId?: string;
+  supervisorName?: string;
   auditorId: string;
   auditorName: string;
+  teamMembers?: {
+    id: string;
+    name: string;
+    role: string;
+    email?: string;
+  }[];
   startDate: string;
   targetDate: string;
   status: 'Draft' | 'Active' | 'Pending Review' | 'Completed' | 'Overdue' | 'Archived';

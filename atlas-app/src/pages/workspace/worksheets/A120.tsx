@@ -60,28 +60,54 @@ const A120 = () => {
   }, [startDate, endDate, startTime, endTime, restDuration, holidays]);
 
   // TEAM STATES
-  const [teamData, setTeamData] = useState<TeamMember[]>([
-    { 
-      id: '1', name: engagement.partnerName || 'Partner', role: 'Partner', rate: 2500000, 
-      autoHours: { planning: 0, riskResponse: 0, reporting: 0 }, 
-      manualHours: { planning: 0, riskResponse: 0, reporting: 0 } 
-    },
-    { 
-      id: '2', name: engagement.managerName || 'Manager', role: 'Manager', rate: 1500000, 
-      autoHours: { planning: 0, riskResponse: 0, reporting: 0 }, 
-      manualHours: { planning: 0, riskResponse: 0, reporting: 0 } 
-    },
-    { 
+  const [teamData, setTeamData] = useState<TeamMember[]>(() => {
+    const list: TeamMember[] = [
+      { 
+        id: '1', name: engagement.partnerName || 'Partner', role: 'Partner', rate: 2500000, 
+        autoHours: { planning: 0, riskResponse: 0, reporting: 0 }, 
+        manualHours: { planning: 0, riskResponse: 0, reporting: 0 } 
+      },
+      { 
+        id: '2', name: engagement.managerName || 'Manager', role: 'Manager', rate: 1500000, 
+        autoHours: { planning: 0, riskResponse: 0, reporting: 0 }, 
+        manualHours: { planning: 0, riskResponse: 0, reporting: 0 } 
+      },
+    ];
+
+    if (engagement.supervisorName) {
+      list.push({
+        id: 'sub-sup', name: engagement.supervisorName, role: 'Supervisor', rate: 1200000,
+        autoHours: { planning: 0, riskResponse: 0, reporting: 0 },
+        manualHours: { planning: 0, riskResponse: 0, reporting: 0 }
+      });
+    }
+
+    list.push({ 
       id: '3', name: engagement.auditorName || 'Ketua Tim', role: 'Ketua Tim', rate: 800000, 
       autoHours: { planning: 0, riskResponse: 0, reporting: 0 }, 
       manualHours: { planning: 0, riskResponse: 0, reporting: 0 } 
-    },
-    { 
-      id: '4', name: 'Anggota Tim 1', role: 'Anggota Tim', rate: 500000, 
-      autoHours: { planning: 0, riskResponse: 0, reporting: 0 }, 
-      manualHours: { planning: 0, riskResponse: 0, reporting: 0 } 
-    },
-  ]);
+    });
+
+    if (engagement.teamMembers && engagement.teamMembers.length > 0) {
+      engagement.teamMembers.forEach((tm, idx) => {
+        list.push({
+          id: tm.id || `tm-${idx + 4}`,
+          name: tm.name,
+          role: tm.role || 'Anggota Tim',
+          rate: tm.role?.includes('Pendukung') ? 350000 : 500000,
+          autoHours: { planning: 0, riskResponse: 0, reporting: 0 },
+          manualHours: { planning: 0, riskResponse: 0, reporting: 0 }
+        });
+      });
+    } else {
+      list.push({ 
+        id: '4', name: 'Anggota Tim 1', role: 'Anggota Tim', rate: 500000, 
+        autoHours: { planning: 0, riskResponse: 0, reporting: 0 }, 
+        manualHours: { planning: 0, riskResponse: 0, reporting: 0 } 
+      });
+    }
+    return list;
+  });
 
   // Effect to automatically calculate autoHours based on totalEffectiveHours
   useEffect(() => {
@@ -91,9 +117,10 @@ const A120 = () => {
         let roleWeight = 0;
         if (member.role === 'Partner') roleWeight = 0.10;
         else if (member.role === 'Manager') roleWeight = 0.15;
+        else if (member.role === 'Supervisor') roleWeight = 0.10;
         else if (member.role === 'Ketua Tim') roleWeight = 0.35;
-        else if (member.role === 'Anggota Tim') roleWeight = 0.40;
-        else roleWeight = 0;
+        else if (member.role.includes('Tim') || member.role.includes('Anggota')) roleWeight = 0.30;
+        else roleWeight = 0.10;
 
         const roleTotal = total * roleWeight;
         return {

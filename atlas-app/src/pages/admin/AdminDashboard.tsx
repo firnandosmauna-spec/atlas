@@ -33,54 +33,12 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuthStore } from '../../store/authStore';
 import { SYSTEM_ROLES, type SystemRoleName } from '../../constants/roles';
 
-interface UserData {
-  id: string;
-  email: string;
-  full_name: string;
-  role_id: string | null;
-  password?: string;
-  roles?: {
-    name: string;
-  };
-}
-
-const STORAGE_KEY_ADMIN_USERS = 'atlas_admin_users_list';
-const STORAGE_KEY_USER_ROLES = 'atlas_user_roles_map';
-
-const DEFAULT_INITIAL_USERS: UserData[] = [
-  {
-    id: 'usr-1',
-    email: 'admin@kap.com',
-    full_name: 'Ahmad Partner AP',
-    role_id: 'role-1',
-    password: 'password123',
-    roles: { name: 'Admin' }
-  },
-  {
-    id: 'usr-2',
-    email: 'partner@kap.com',
-    full_name: 'Drs. Fridolinus Peno, Ak., M.M., CA., CPA.',
-    role_id: 'role-2',
-    password: 'Audit2026!',
-    roles: { name: 'Partner/Akuntan Publik' }
-  },
-  {
-    id: 'usr-3',
-    email: 'auditor@kap.com',
-    full_name: 'Nando Manager',
-    role_id: 'role-3',
-    password: 'Audit2026!',
-    roles: { name: 'Manager' }
-  },
-  {
-    id: 'usr-4',
-    email: 'dwisafitriana99@gmail.com',
-    full_name: 'Auditor Atlas',
-    role_id: 'role-5',
-    password: 'dwisafitriana',
-    roles: { name: 'Ketua Tim' }
-  }
-];
+import { 
+  type UserData, 
+  STORAGE_KEY_ADMIN_USERS, 
+  STORAGE_KEY_USER_ROLES, 
+  DEFAULT_INITIAL_USERS 
+} from '../../utils/userManagement';
 
 // Helper icon mapping for the 9 KAP hierarchy roles
 const getRoleIcon = (number: number) => {
