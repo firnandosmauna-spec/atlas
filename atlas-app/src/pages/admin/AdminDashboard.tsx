@@ -20,7 +20,11 @@ import {
   FileSpreadsheet,
   Headphones,
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff,
+  Copy,
+  KeyRound
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuthStore } from '../../store/authStore';
@@ -31,6 +35,7 @@ interface UserData {
   email: string;
   full_name: string;
   role_id: string | null;
+  password?: string;
   roles?: {
     name: string;
   };
@@ -45,6 +50,7 @@ const DEFAULT_INITIAL_USERS: UserData[] = [
     email: 'admin@kap.com',
     full_name: 'Ahmad Partner AP',
     role_id: 'role-1',
+    password: 'password123',
     roles: { name: 'Admin' }
   },
   {
@@ -52,6 +58,7 @@ const DEFAULT_INITIAL_USERS: UserData[] = [
     email: 'partner@kap.com',
     full_name: 'Drs. Fridolinus Peno, Ak., M.M., CA., CPA.',
     role_id: 'role-2',
+    password: 'Audit2026!',
     roles: { name: 'Partner/Akuntan Publik' }
   },
   {
@@ -59,6 +66,7 @@ const DEFAULT_INITIAL_USERS: UserData[] = [
     email: 'auditor@kap.com',
     full_name: 'Nando Manager',
     role_id: 'role-3',
+    password: 'Audit2026!',
     roles: { name: 'Manager' }
   },
   {
@@ -66,6 +74,7 @@ const DEFAULT_INITIAL_USERS: UserData[] = [
     email: 'dwisafitriana99@gmail.com',
     full_name: 'Auditor Atlas',
     role_id: 'role-5',
+    password: 'dwisafitriana',
     roles: { name: 'Ketua Tim' }
   }
 ];
@@ -95,10 +104,25 @@ const AdminDashboard = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   
-  // Add new user state
+  // Add new user state with initial password
   const [isAddingUser, setIsAddingUser] = useState(false);
-  const [newUser, setNewUser] = useState({ full_name: '', email: '', role_name: 'Ketua Tim' as SystemRoleName });
+  const [newUser, setNewUser] = useState({ 
+    full_name: '', 
+    email: '', 
+    role_name: 'Ketua Tim' as SystemRoleName,
+    password: 'Audit2026!'
+  });
+  const [showNewUserPassword, setShowNewUserPassword] = useState(false);
   const [isSubmittingNewUser, setIsSubmittingNewUser] = useState(false);
+
+  const generateRandomPassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let rand = 'KAP-';
+    for (let i = 0; i < 4; i++) {
+      rand += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewUser(prev => ({ ...prev, password: rand + '!' }));
+  };
 
   useEffect(() => {
     fetchData();
@@ -268,9 +292,15 @@ const AdminDashboard = () => {
     const fullName = newUser.full_name.trim();
     const email = newUser.email.trim().toLowerCase();
     const roleName = newUser.role_name;
+    const password = newUser.password.trim() || 'Audit2026!';
 
     if (!fullName || !email || !roleName) {
       setErrorMessage('Mohon lengkapi Nama Lengkap, Email Akun, dan Pilihan Role.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMessage('Kata sandi akun minimal 6 karakter.');
       return;
     }
 
@@ -304,6 +334,7 @@ const AdminDashboard = () => {
       id: newId,
       email: email,
       full_name: fullName,
+      password: password,
       role_id: matchedRoleDef?.id || null,
       roles: { name: roleName }
     };
@@ -325,7 +356,16 @@ const AdminDashboard = () => {
       console.error('Error saving added user to localStorage:', e);
     }
 
-    // Try Supabase insert
+    // Try Supabase auth sign-up and db insert
+    try {
+      await supabase.auth.signUp({
+        email: email,
+        password: password
+      });
+    } catch (authErr) {
+      console.warn('Supabase auth signUp note (persisted locally):', authErr);
+    }
+
     try {
       const { error: insertErr } = await supabase.from('users').insert({
         id: newId,
@@ -340,10 +380,10 @@ const AdminDashboard = () => {
       console.warn('Supabase insert note (offline/fallback):', insertErr);
     }
 
-    setSuccessMessage(`Anggota tim "${fullName}" berhasil ditambahkan dan disimpan sebagai ${roleName}!`);
-    setTimeout(() => setSuccessMessage(''), 4500);
+    setSuccessMessage(`Anggota tim "${fullName}" berhasil ditambahkan sebagai ${roleName}! Kata sandi: "${password}"`);
+    setTimeout(() => setSuccessMessage(''), 6000);
 
-    setNewUser({ full_name: '', email: '', role_name: 'Ketua Tim' });
+    setNewUser({ full_name: '', email: '', role_name: 'Ketua Tim', password: 'Audit2026!' });
     setIsAddingUser(false);
     setIsSubmittingNewUser(false);
   };
@@ -513,7 +553,7 @@ const AdminDashboard = () => {
                 )}
 
                 <form onSubmit={handleAddUser} className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div>
                       <label className="block text-[11px] font-bold text-slate-700 mb-1">
                         Nama Lengkap & Gelar <span className="text-rose-500">*</span>
@@ -558,6 +598,42 @@ const AdminDashboard = () => {
                           </option>
                         ))}
                       </select>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] font-bold text-slate-700">
+                          Kata Sandi (Password) <span className="text-rose-500">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={generateRandomPassword}
+                          className="text-[10px] text-blue-600 hover:text-blue-800 font-semibold hover:underline cursor-pointer"
+                        >
+                          Buat Acak
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <input 
+                          required
+                          type={showNewUserPassword ? 'text' : 'password'} 
+                          value={newUser.password}
+                          onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                          className="w-full pl-3 pr-8 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 font-mono" 
+                          placeholder="Minimal 6 karakter" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewUserPassword(!showNewUserPassword)}
+                          className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-700 cursor-pointer"
+                          title={showNewUserPassword ? "Sembunyikan sandi" : "Lihat sandi"}
+                        >
+                          {showNewUserPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
+                      <span className="text-[10px] text-slate-400 mt-1 block">
+                        Sandi awal login anggota (bisa diubah nanti di Pengaturan).
+                      </span>
                     </div>
                   </div>
 
@@ -610,6 +686,7 @@ const AdminDashboard = () => {
                       <th className="px-3.5 py-2.5 font-bold">Pengguna</th>
                       <th className="px-3.5 py-2.5 font-bold">Email Akun</th>
                       <th className="px-3.5 py-2.5 font-bold">Penugasan Role KAP</th>
+                      <th className="px-3.5 py-2.5 font-bold">Kata Sandi Awal</th>
                       <th className="px-3.5 py-2.5 font-bold text-center">Status</th>
                       <th className="px-3.5 py-2.5 font-bold text-center w-16">Aksi</th>
                     </tr>
@@ -658,6 +735,26 @@ const AdminDashboard = () => {
                                   Tingkat {roleDef.number}
                                 </span>
                               )}
+                            </div>
+                          </td>
+
+                          <td className="px-3.5 py-2">
+                            <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                              <span className="px-2 py-0.5 bg-slate-100 text-slate-800 rounded border border-slate-200 font-semibold tracking-wide">
+                                {u.password || 'Audit2026!'}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(u.password || 'Audit2026!');
+                                  setSuccessMessage(`Kata sandi untuk ${u.full_name} (${u.password || 'Audit2026!'}) disalin ke clipboard!`);
+                                  setTimeout(() => setSuccessMessage(''), 3000);
+                                }}
+                                className="text-slate-400 hover:text-slate-700 p-0.5 rounded cursor-pointer"
+                                title="Salin kata sandi awal"
+                              >
+                                <Copy size={12} />
+                              </button>
                             </div>
                           </td>
 
