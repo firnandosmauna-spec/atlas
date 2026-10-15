@@ -32,8 +32,8 @@ const Settings = () => {
 
   const handleSaveBranding = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalAppName = appNameInput.trim() || 'SMART AUDIT PRO';
-    const finalAppShortName = appShortNameInput.trim() || 'SAP';
+    const finalAppName = appNameInput.trim() || 'ATLAS';
+    const finalAppShortName = appShortNameInput.trim() || 'ATLAS';
     const finalTagline = taglineInput.trim() || 'Audit Tool & Linked Archive System';
     const finalInstitution = institutionInput.trim() || 'P2PK Kementerian Keuangan';
 
@@ -55,8 +55,8 @@ const Settings = () => {
 
   const handleResetBranding = () => {
     config.resetConfig();
-    setAppNameInput('SMART AUDIT PRO');
-    setAppShortNameInput('SAP');
+    setAppNameInput('ATLAS');
+    setAppShortNameInput('ATLAS');
     setTaglineInput('Audit Tool & Linked Archive System');
     setInstitutionInput('P2PK Kementerian Keuangan');
 
@@ -253,7 +253,7 @@ const Settings = () => {
                         className="w-full px-2.5 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 transition-all font-semibold"
                         value={appNameInput}
                         onChange={e => setAppNameInput(e.target.value)}
-                        placeholder="Contoh: SMART AUDIT PRO"
+                        placeholder="Contoh: ATLAS"
                       />
                       <span className="text-[10px] text-slate-400 mt-0.5 block">
                         Tampil pada header bilah samping, tab browser, dan halaman login.
@@ -271,7 +271,7 @@ const Settings = () => {
                         className="w-full px-2.5 py-1.5 bg-slate-50/60 focus:bg-white border border-slate-200 rounded-lg text-slate-900 text-xs font-mono font-bold focus:outline-none focus:ring-1 focus:ring-slate-900 focus:border-slate-900 uppercase"
                         value={appShortNameInput}
                         onChange={e => setAppShortNameInput(e.target.value)}
-                        placeholder="Contoh: SAP"
+                        placeholder="Contoh: ATLAS"
                       />
                       <span className="text-[10px] text-slate-400 mt-0.5 block">
                         Tampil saat bilah samping diciutkan.
@@ -330,10 +330,10 @@ const Settings = () => {
                       <div className="bg-slate-900 text-white p-3 rounded-xl border border-slate-800 shadow-2xs">
                         <div className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Bilah Samping (Sidebar)</div>
                         <div className="text-sm font-black tracking-wide mt-1 truncate uppercase font-sans text-white">
-                          {appNameInput || 'SMART AUDIT PRO'}
+                          {appNameInput || 'ATLAS'}
                         </div>
                         <div className="text-[10px] text-slate-400 mt-1 flex items-center justify-between font-mono">
-                          <span>Kode Ciut: <span className="text-amber-400 font-bold">{appShortNameInput || 'SAP'}</span></span>
+                          <span>Kode Ciut: <span className="text-amber-400 font-bold">{appShortNameInput || 'ATLAS'}</span></span>
                           <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700">Aktif</span>
                         </div>
                       </div>
@@ -342,7 +342,7 @@ const Settings = () => {
                       <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 shadow-2xs">
                         <div className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">Header & Dokumen</div>
                         <div className="text-sm font-bold text-slate-900 mt-1 truncate">
-                          {appNameInput || 'SMART AUDIT PRO'} <span className="text-slate-400 font-normal">·</span> <span className="text-xs text-slate-600 font-normal">{taglineInput || 'Audit Tool'}</span>
+                          {appNameInput || 'ATLAS'} <span className="text-slate-400 font-normal">·</span> <span className="text-xs text-slate-600 font-normal">{taglineInput || 'Audit Tool'}</span>
                         </div>
                         <div className="text-[10px] text-slate-500 mt-1 truncate font-mono">
                           {institutionInput || 'P2PK Kementerian Keuangan'}

@@ -26,13 +26,18 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
     try {
       const { data } = await supabase.from('users').select('full_name, roles!inner(name)');
       if (data && data.length > 0) {
-        setPartners(data.filter((u: any) => u.roles?.name === 'Partner').map((u: any) => ({ name: u.full_name })));
-        setManagers(data.filter((u: any) => u.roles?.name === 'Manager').map((u: any) => ({ name: u.full_name })));
-        setAuditors(data.filter((u: any) => u.roles?.name?.includes('Auditor') || u.roles?.name === 'Staff / Junior').map((u: any) => ({ name: u.full_name })));
+        setPartners(data.filter((u: any) => u.roles?.name === 'Partner' || u.roles?.name === 'Partner/Akuntan Publik').map((u: any) => ({ name: u.full_name })));
+        setManagers(data.filter((u: any) => u.roles?.name === 'Manager' || u.roles?.name === 'Supervisor').map((u: any) => ({ name: u.full_name })));
+        setAuditors(data.filter((u: any) => 
+          u.roles?.name?.includes('Tim') || 
+          u.roles?.name?.includes('Auditor') || 
+          u.roles?.name === 'Tenaga Pendukung' || 
+          u.roles?.name === 'Staff / Junior'
+        ).map((u: any) => ({ name: u.full_name })));
       } else {
-        setPartners([{ name: 'Herika' }, { name: 'Budi (Partner)' }]);
-        setManagers([{ name: 'Joko (Manager)' }, { name: 'Siti (Manager)' }]);
-        setAuditors([{ name: 'Andi (Senior)' }, { name: 'Rina (Junior)' }, { name: 'User' }]);
+        setPartners([{ name: 'Ahmad Partner AP' }, { name: 'Herika' }]);
+        setManagers([{ name: 'Nando Manager' }, { name: 'Joko (Supervisor)' }]);
+        setAuditors([{ name: 'Auditor Atlas (Ketua Tim)' }, { name: 'Andi (Anggota Tim 1)' }, { name: 'Rina (Anggota Tim 2)' }]);
       }
     } catch (e) {
       setPartners([{ name: 'Herika' }, { name: 'Budi (Partner)' }]);

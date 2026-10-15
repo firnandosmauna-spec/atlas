@@ -1,7 +1,14 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabaseClient';
 
-export type Role = 'Admin' | 'Partner' | 'Manager' | 'Auditor' | 'Viewer';
+import type { SystemRoleName } from '../constants/roles';
+
+export type Role = 
+  | SystemRoleName
+  // Legacy aliases for backward compatibility:
+  | 'Partner' 
+  | 'Auditor' 
+  | 'Viewer';
 
 export interface User {
   id: string;
@@ -21,29 +28,81 @@ interface AuthState {
   initialize: () => Promise<void>;
 }
 
-// Minimal mock permissions mapped by role
+// Permissions mapped by role
 const rolePermissions: Record<Role, string[]> = {
-  Admin: [
+  'Admin': [
     'manage_users',
     'manage_roles',
     'manage_organizations',
     'view_all_engagements',
     'manage_app_config'
   ],
-  Partner: [
+  'Partner/Akuntan Publik': [
     'view_assigned_engagements',
     'perform_review',
     'give_approval',
     'view_audit_status',
-    'view_final_report'
+    'view_final_report',
+    'sign_audit_report'
   ],
-  Manager: [
+  'Partner': [
+    'view_assigned_engagements',
+    'perform_review',
+    'give_approval',
+    'view_audit_status',
+    'view_final_report',
+    'sign_audit_report'
+  ],
+  'Manager': [
+    'view_assigned_engagements',
     'review_auditor_work',
     'give_review_notes',
     'request_revision',
-    'give_approval_stage'
+    'give_approval_stage',
+    'manage_team_schedule'
   ],
-  Auditor: [
+  'Supervisor': [
+    'view_assigned_engagements',
+    'review_auditor_work',
+    'give_review_notes',
+    'request_revision',
+    'supervise_audit_execution'
+  ],
+  'Ketua Tim': [
+    'create_engagement',
+    'fill_worksheet',
+    'upload_evidence',
+    'perform_risk_assessment',
+    'execute_audit_procedure',
+    'fill_working_paper',
+    'give_review_notes'
+  ],
+  'Anggota Tim 1': [
+    'fill_worksheet',
+    'upload_evidence',
+    'perform_risk_assessment',
+    'execute_audit_procedure',
+    'fill_working_paper'
+  ],
+  'Anggota Tim 2': [
+    'fill_worksheet',
+    'upload_evidence',
+    'perform_risk_assessment',
+    'execute_audit_procedure',
+    'fill_working_paper'
+  ],
+  'Anggota Tim dst': [
+    'fill_worksheet',
+    'upload_evidence',
+    'execute_audit_procedure',
+    'fill_working_paper'
+  ],
+  'Tenaga Pendukung': [
+    'upload_evidence',
+    'view_readonly_data',
+    'input_basic_data'
+  ],
+  'Auditor': [
     'create_engagement',
     'fill_worksheet',
     'upload_evidence',
@@ -51,7 +110,7 @@ const rolePermissions: Record<Role, string[]> = {
     'execute_audit_procedure',
     'fill_working_paper'
   ],
-  Viewer: [
+  'Viewer': [
     'view_readonly_data'
   ]
 };

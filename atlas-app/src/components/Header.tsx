@@ -84,13 +84,17 @@ const Header = ({ onToggleSidebar }: HeaderProps = {}) => {
           <select 
             value={user?.role || ''} 
             onChange={handleRoleChange}
-            className="bg-transparent border-none text-sm font-semibold text-atlas-blue focus:ring-0 cursor-pointer outline-none"
+            className="bg-transparent border-none text-xs font-semibold text-atlas-blue focus:ring-0 cursor-pointer outline-none"
           >
-            <option value="Admin">Admin</option>
-            <option value="Partner">Partner / Signing Partner</option>
-            <option value="Manager">Manager / Reviewer</option>
-            <option value="Auditor">Auditor / Team Member</option>
-            <option value="Viewer">Viewer</option>
+            <option value="Admin">1. Admin</option>
+            <option value="Partner/Akuntan Publik">2. Partner/Akuntan Publik</option>
+            <option value="Manager">3. Manager</option>
+            <option value="Supervisor">4. Supervisor</option>
+            <option value="Ketua Tim">5. Ketua Tim</option>
+            <option value="Anggota Tim 1">6. Anggota Tim 1</option>
+            <option value="Anggota Tim 2">7. Anggota Tim 2</option>
+            <option value="Anggota Tim dst">8. Anggota Tim dst</option>
+            <option value="Tenaga Pendukung">9. Tenaga Pendukung</option>
           </select>
         </div>
 

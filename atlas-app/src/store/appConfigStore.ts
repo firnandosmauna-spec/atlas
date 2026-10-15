@@ -21,8 +21,8 @@ interface AppConfigActions {
 export type AppConfigStore = AppConfigState & AppConfigActions;
 
 export const DEFAULT_APP_CONFIG: AppConfigState = {
-  appName: 'SMART AUDIT PRO',
-  appShortName: 'SAP',
+  appName: 'ATLAS',
+  appShortName: 'ATLAS',
   tagline: 'Audit Tool & Linked Archive System',
   institutionName: 'P2PK Kementerian Keuangan',
   version: '1.0.0-PROTOTYPE'
