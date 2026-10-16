@@ -134,49 +134,58 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
     }
   };
 
-  const onSubmit = (data: Engagement) => {
-    const selectedPartner = allUsers.find(u => u.full_name === data.partnerName);
-    const selectedManager = allUsers.find(u => u.full_name === data.managerName);
-    const selectedSupervisor = allUsers.find(u => u.full_name === data.supervisorName);
-    const selectedAuditor = allUsers.find(u => u.full_name === data.auditorName);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const payload: Engagement = {
-      ...data,
-      partnerId: selectedPartner?.id || data.partnerId || '',
-      managerId: selectedManager?.id || data.managerId || '',
-      supervisorId: selectedSupervisor?.id || data.supervisorId || '',
-      auditorId: selectedAuditor?.id || data.auditorId || '',
-      teamMembers: selectedTeamMembers,
-    };
+  const onSubmit = async (data: Engagement) => {
+    setIsSubmitting(true);
+    try {
+      const selectedPartner = allUsers.find(u => u.full_name === data.partnerName);
+      const selectedManager = allUsers.find(u => u.full_name === data.managerName);
+      const selectedSupervisor = allUsers.find(u => u.full_name === data.supervisorName);
+      const selectedAuditor = allUsers.find(u => u.full_name === data.auditorName);
 
-    if (initialData) {
-      updateEngagement(initialData.id, payload);
-      addAuditLog({
-        engagementId: initialData.id,
-        user: payload.partnerName || 'User',
-        action: 'Memperbarui Perikatan',
-        module: 'Engagement',
-        record: payload.clientName,
-      });
-    } else {
-      const year = data.fiscalYear ? new Date(data.fiscalYear).getFullYear() : new Date().getFullYear();
-      const newEng: Engagement = {
-        ...payload,
-        id: data.id || `ENG-${year}-${Math.floor(100 + Math.random() * 900)}`,
-        status: 'Draft',
-        progress: 0,
+      const payload: Engagement = {
+        ...data,
+        partnerId: selectedPartner?.id || data.partnerId || '',
+        managerId: selectedManager?.id || data.managerId || '',
+        supervisorId: selectedSupervisor?.id || data.supervisorId || '',
+        auditorId: selectedAuditor?.id || data.auditorId || '',
+        teamMembers: selectedTeamMembers,
       };
-      addEngagement(newEng);
-      addAuditLog({
-        engagementId: newEng.id,
-        user: newEng.partnerName || 'User',
-        action: 'Membuat Perikatan',
-        module: 'Engagement',
-        record: newEng.clientName,
-        newValue: 'Draft'
-      });
+
+      if (initialData) {
+        await updateEngagement(initialData.id, payload);
+        addAuditLog({
+          engagementId: initialData.id,
+          user: payload.partnerName || 'User',
+          action: 'Memperbarui Perikatan',
+          module: 'Engagement',
+          record: payload.clientName,
+        });
+      } else {
+        const year = data.fiscalYear ? new Date(data.fiscalYear).getFullYear() : new Date().getFullYear();
+        const newEng: Engagement = {
+          ...payload,
+          id: data.id || `ENG-${year}-${Math.floor(100 + Math.random() * 900)}`,
+          status: 'Draft',
+          progress: 0,
+        };
+        await addEngagement(newEng);
+        addAuditLog({
+          engagementId: newEng.id,
+          user: newEng.partnerName || 'User',
+          action: 'Membuat Perikatan',
+          module: 'Engagement',
+          record: newEng.clientName,
+          newValue: 'Draft'
+        });
+      }
+      onClose();
+    } catch (err) {
+      console.error('Error submitting engagement form:', err);
+    } finally {
+      setIsSubmitting(false);
     }
-    onClose();
   };
 
   const handleNavigateAdmin = () => {
@@ -669,10 +678,18 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
               </button>
               <button 
                 type="submit" 
-                className="px-5 py-2 text-xs font-bold bg-atlas-blue hover:bg-blue-800 text-white rounded-lg transition-colors shadow-xs min-h-[38px] flex items-center justify-center gap-1.5"
+                disabled={isSubmitting}
+                className="px-5 py-2 text-xs font-bold bg-atlas-blue hover:bg-blue-800 disabled:opacity-70 text-white rounded-lg transition-colors shadow-xs min-h-[38px] flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-wait"
               >
-                <FolderKanban size={14} />
-                <span>{initialData ? 'Simpan Perubahan Perikatan' : 'Buat Engagement Baru'}</span>
+                <FolderKanban size={14} className={isSubmitting ? 'animate-pulse' : ''} />
+                <span>
+                  {isSubmitting 
+                    ? 'Menyimpan & Menyinkronkan...' 
+                    : initialData 
+                      ? 'Simpan Perubahan Perikatan' 
+                      : 'Buat Engagement Baru'
+                  }
+                </span>
               </button>
             </div>
           </div>

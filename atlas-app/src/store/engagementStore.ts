@@ -183,11 +183,11 @@ interface EngagementState {
   lastSyncedAt: string | null;
   syncError: string | null;
   syncWithCloud: () => Promise<void>;
-  addEngagement: (engagement: Engagement) => void;
-  updateEngagement: (id: string, updatedData: Partial<Engagement>) => void;
-  duplicateEngagement: (id: string) => void;
-  archiveEngagement: (id: string) => void;
-  deleteEngagement: (id: string) => void;
+  addEngagement: (engagement: Engagement) => Promise<void>;
+  updateEngagement: (id: string, updatedData: Partial<Engagement>) => Promise<void>;
+  duplicateEngagement: (id: string) => Promise<void>;
+  archiveEngagement: (id: string) => Promise<void>;
+  deleteEngagement: (id: string) => Promise<void>;
   openEngagement: (id: string) => void;
   addAuditLog: (log: Omit<AuditLog, 'id' | 'timestamp'>) => void;
   addAttachment: (attachment: Omit<Attachment, 'id' | 'uploadedDate'>) => void;
@@ -241,15 +241,21 @@ export const useEngagementStore = create<EngagementState>()(
         }
       },
 
-      addEngagement: (engagement) => {
+      addEngagement: async (engagement) => {
         set((state) => ({ 
           engagements: [engagement, ...state.engagements] 
         }));
-        // Auto sync to cloud in background
-        upsertCloudEngagement(engagement);
+        try {
+          const ok = await upsertCloudEngagement(engagement);
+          if (ok) {
+            set({ syncStatus: 'synced', lastSyncedAt: new Date().toISOString() });
+          }
+        } catch (e) {
+          console.error('[CloudSync] addEngagement sync error:', e);
+        }
       },
 
-      updateEngagement: (id, updatedData) => {
+      updateEngagement: async (id, updatedData) => {
         let updatedItem: Engagement | undefined;
         set((state) => {
           const updatedList = state.engagements.map((eng) => {
@@ -262,27 +268,37 @@ export const useEngagementStore = create<EngagementState>()(
           return { engagements: updatedList };
         });
         if (updatedItem) {
-          upsertCloudEngagement(updatedItem);
+          try {
+            const ok = await upsertCloudEngagement(updatedItem);
+            if (ok) {
+              set({ syncStatus: 'synced', lastSyncedAt: new Date().toISOString() });
+            }
+          } catch (e) {
+            console.error('[CloudSync] updateEngagement sync error:', e);
+          }
         }
       },
 
-      duplicateEngagement: (id) => set((state) => {
-        const engToDuplicate = state.engagements.find(e => e.id === id);
-        if (!engToDuplicate) return state;
+      duplicateEngagement: async (id) => {
+        const engToDuplicate = get().engagements.find(e => e.id === id);
+        if (!engToDuplicate) return;
         
         const duplicated: Engagement = {
           ...engToDuplicate,
-          id: `ENG-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+          id: `ENG-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
           clientName: `${engToDuplicate.clientName} (Copy)`,
           status: 'Draft',
           progress: 0
         };
-        // Background push
-        upsertCloudEngagement(duplicated);
-        return { engagements: [duplicated, ...state.engagements] };
-      }),
+        set((state) => ({ engagements: [duplicated, ...state.engagements] }));
+        try {
+          await upsertCloudEngagement(duplicated);
+        } catch (e) {
+          console.error('[CloudSync] duplicateEngagement error:', e);
+        }
+      },
 
-      archiveEngagement: (id) => {
+      archiveEngagement: async (id) => {
         let archivedItem: Engagement | undefined;
         set((state) => {
           const list = state.engagements.map((eng) => {
@@ -295,11 +311,15 @@ export const useEngagementStore = create<EngagementState>()(
           return { engagements: list };
         });
         if (archivedItem) {
-          upsertCloudEngagement(archivedItem);
+          try {
+            await upsertCloudEngagement(archivedItem);
+          } catch (e) {
+            console.error('[CloudSync] archiveEngagement error:', e);
+          }
         }
       },
 
-      deleteEngagement: (id) => {
+      deleteEngagement: async (id) => {
         set((state) => ({
           engagements: state.engagements.filter(e => e.id !== id),
           activeEngagementId: state.activeEngagementId === id ? null : state.activeEngagementId,
@@ -307,7 +327,11 @@ export const useEngagementStore = create<EngagementState>()(
           attachments: state.attachments.filter(a => a.engagementId !== id),
           reviewNotes: state.reviewNotes.filter(r => r.engagementId !== id)
         }));
-        deleteCloudEngagement(id);
+        try {
+          await deleteCloudEngagement(id);
+        } catch (e) {
+          console.error('[CloudSync] deleteEngagement error:', e);
+        }
       },
 
       openEngagement: (id) => set({ activeEngagementId: id }),

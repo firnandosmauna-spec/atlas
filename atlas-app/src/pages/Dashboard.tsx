@@ -13,12 +13,20 @@ import {
   Search,
   FileCheck,
   FolderOpen,
-  Plus
+  Plus,
+  RefreshCw
 } from 'lucide-react';
 
 const Dashboard = () => {
   const { hasPermission } = useAuthStore();
-  const { engagements = [], auditLogs = [], reviewNotes = [] } = useEngagementStore();
+  const { 
+    engagements = [], 
+    auditLogs = [], 
+    reviewNotes = [], 
+    isSyncing, 
+    syncStatus, 
+    syncWithCloud 
+  } = useEngagementStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
@@ -92,10 +100,25 @@ const Dashboard = () => {
               <p className="text-2xl font-bold text-gray-900">{completedCount}</p>
             </div>
           </div>
+          <button
+            onClick={() => syncWithCloud()}
+            disabled={isSyncing}
+            className={`px-3.5 py-2 text-xs font-bold transition-all shadow-xs whitespace-nowrap min-h-[44px] flex items-center justify-center rounded border gap-1.5 cursor-pointer disabled:cursor-wait ${
+              isSyncing 
+                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                : syncStatus === 'synced'
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}
+            title="Sinkronisasi data perikatan dengan database Supabase Cloud"
+          >
+            <RefreshCw size={14} className={isSyncing ? 'animate-spin text-blue-600' : 'text-gray-500'} />
+            <span>{isSyncing ? 'Menyinkronkan...' : syncStatus === 'synced' ? 'Tersinkron Cloud' : 'Sinkronkan Cloud'}</span>
+          </button>
           {hasPermission('create_engagement') && (
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="bg-atlas-blue hover:bg-blue-800 text-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors shadow-sm whitespace-nowrap min-h-[44px] flex items-center justify-center rounded"
+              className="bg-atlas-blue hover:bg-blue-800 text-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors shadow-sm whitespace-nowrap min-h-[44px] flex items-center justify-center rounded cursor-pointer"
             >
               + Buat Engagement
             </button>
