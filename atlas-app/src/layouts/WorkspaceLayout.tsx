@@ -136,9 +136,9 @@ const WorkspaceLayout = () => {
             </NavLink>
           ))}
 
-          {/* Divider + Audit Cycle label */}
+          {/* Divider + Kertas Kerja label */}
           <div className="mt-4 mb-1.5 px-3">
-            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Siklus Audit</p>
+            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Kertas Kerja</p>
           </div>
 
           {/* Audit Cycle phases */}
