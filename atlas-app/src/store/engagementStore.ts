@@ -1,5 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { 
+  upsertCloudEngagement, 
+  deleteCloudEngagement, 
+  syncEngagementsBidirectional 
+} from '../services/engagementSyncService';
 
 export interface Account {
   id: string;
@@ -173,6 +178,11 @@ interface EngagementState {
   attachments: Attachment[];
   notifications: Notification[];
   reviewNotes: ReviewNote[];
+  isSyncing: boolean;
+  syncStatus: 'idle' | 'syncing' | 'synced' | 'error';
+  lastSyncedAt: string | null;
+  syncError: string | null;
+  syncWithCloud: () => Promise<void>;
   addEngagement: (engagement: Engagement) => void;
   updateEngagement: (id: string, updatedData: Partial<Engagement>) => void;
   duplicateEngagement: (id: string) => void;
@@ -190,23 +200,71 @@ export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [];
 
 export const useEngagementStore = create<EngagementState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       engagements: DEFAULT_MASTER_ENGAGEMENTS,
       activeEngagementId: null,
       auditLogs: [],
       attachments: [],
       notifications: [],
       reviewNotes: [],
+      isSyncing: false,
+      syncStatus: 'idle',
+      lastSyncedAt: null,
+      syncError: null,
 
-      addEngagement: (engagement) => set((state) => ({ 
-        engagements: [engagement, ...state.engagements] 
-      })),
+      syncWithCloud: async () => {
+        set({ isSyncing: true, syncStatus: 'syncing', syncError: null });
+        try {
+          const currentEngagements = get().engagements;
+          const result = await syncEngagementsBidirectional(currentEngagements);
+          if (result.success) {
+            set({
+              engagements: result.engagements,
+              isSyncing: false,
+              syncStatus: 'synced',
+              lastSyncedAt: new Date().toISOString(),
+              syncError: null,
+            });
+          } else {
+            set({
+              isSyncing: false,
+              syncStatus: 'error',
+              syncError: result.error || 'Sinkronisasi cloud gagal',
+            });
+          }
+        } catch (err: any) {
+          set({
+            isSyncing: false,
+            syncStatus: 'error',
+            syncError: err?.message || 'Terjadi kesalahan sinkronisasi',
+          });
+        }
+      },
 
-      updateEngagement: (id, updatedData) => set((state) => ({
-        engagements: state.engagements.map((eng) => 
-          eng.id === id ? { ...eng, ...updatedData } : eng
-        )
-      })),
+      addEngagement: (engagement) => {
+        set((state) => ({ 
+          engagements: [engagement, ...state.engagements] 
+        }));
+        // Auto sync to cloud in background
+        upsertCloudEngagement(engagement);
+      },
+
+      updateEngagement: (id, updatedData) => {
+        let updatedItem: Engagement | undefined;
+        set((state) => {
+          const updatedList = state.engagements.map((eng) => {
+            if (eng.id === id) {
+              updatedItem = { ...eng, ...updatedData };
+              return updatedItem;
+            }
+            return eng;
+          });
+          return { engagements: updatedList };
+        });
+        if (updatedItem) {
+          upsertCloudEngagement(updatedItem);
+        }
+      },
 
       duplicateEngagement: (id) => set((state) => {
         const engToDuplicate = state.engagements.find(e => e.id === id);
@@ -219,22 +277,38 @@ export const useEngagementStore = create<EngagementState>()(
           status: 'Draft',
           progress: 0
         };
+        // Background push
+        upsertCloudEngagement(duplicated);
         return { engagements: [duplicated, ...state.engagements] };
       }),
 
-      archiveEngagement: (id) => set((state) => ({
-        engagements: state.engagements.map((eng) => 
-          eng.id === id ? { ...eng, status: 'Archived' } : eng
-        )
-      })),
+      archiveEngagement: (id) => {
+        let archivedItem: Engagement | undefined;
+        set((state) => {
+          const list = state.engagements.map((eng) => {
+            if (eng.id === id) {
+              archivedItem = { ...eng, status: 'Archived' as const };
+              return archivedItem;
+            }
+            return eng;
+          });
+          return { engagements: list };
+        });
+        if (archivedItem) {
+          upsertCloudEngagement(archivedItem);
+        }
+      },
 
-      deleteEngagement: (id) => set((state) => ({
-        engagements: state.engagements.filter(e => e.id !== id),
-        activeEngagementId: state.activeEngagementId === id ? null : state.activeEngagementId,
-        auditLogs: state.auditLogs.filter(l => l.engagementId !== id),
-        attachments: state.attachments.filter(a => a.engagementId !== id),
-        reviewNotes: state.reviewNotes.filter(r => r.engagementId !== id)
-      })),
+      deleteEngagement: (id) => {
+        set((state) => ({
+          engagements: state.engagements.filter(e => e.id !== id),
+          activeEngagementId: state.activeEngagementId === id ? null : state.activeEngagementId,
+          auditLogs: state.auditLogs.filter(l => l.engagementId !== id),
+          attachments: state.attachments.filter(a => a.engagementId !== id),
+          reviewNotes: state.reviewNotes.filter(r => r.engagementId !== id)
+        }));
+        deleteCloudEngagement(id);
+      },
 
       openEngagement: (id) => set({ activeEngagementId: id }),
       

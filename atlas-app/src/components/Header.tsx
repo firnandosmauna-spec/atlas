@@ -1,6 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell as BellIcon, User as UserIcon, ChevronDown, Menu, LogOut, Settings, Home, FolderOpen, Calculator } from 'lucide-react';
+import { 
+  Bell as BellIcon, 
+  User as UserIcon, 
+  ChevronDown, 
+  Menu, 
+  LogOut, 
+  Settings, 
+  Home, 
+  FolderOpen, 
+  Calculator, 
+  Cloud, 
+  RefreshCw, 
+  CheckCircle2, 
+  AlertCircle 
+} from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useEngagementStore } from '../store/engagementStore';
 import { useAppConfigStore } from '../store/appConfigStore';
@@ -19,6 +33,21 @@ const Header = ({ onToggleSidebar }: HeaderProps = {}) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  const { 
+    isSyncing, 
+    syncStatus, 
+    syncWithCloud, 
+    lastSyncedAt, 
+    syncError,
+    notifications,
+    markNotificationAsRead 
+  } = useEngagementStore();
+
+  // Auto-sync engagements on app mount
+  useEffect(() => {
+    syncWithCloud();
+  }, []);
+
   // Close menus on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -36,8 +65,6 @@ const Header = ({ onToggleSidebar }: HeaderProps = {}) => {
     await logout();
     navigate('/login');
   };
-  const notifications = useEngagementStore(state => state.notifications);
-  const markNotificationAsRead = useEngagementStore(state => state.markNotificationAsRead);
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const getNotificationIcon = (type: string) => {
@@ -97,6 +124,43 @@ const Header = ({ onToggleSidebar }: HeaderProps = {}) => {
             <option value="Tenaga Pendukung">9. Tenaga Pendukung</option>
           </select>
         </div>
+
+        {/* Cloud Sync Button */}
+        <button
+          onClick={() => syncWithCloud()}
+          disabled={isSyncing}
+          title={
+            isSyncing 
+              ? 'Sedang menyinkronkan data perikatan dengan cloud...' 
+              : syncStatus === 'synced' 
+                ? `Tersinkron dengan Cloud (${lastSyncedAt ? new Date(lastSyncedAt).toLocaleTimeString() : 'Baru saja'})` 
+                : syncStatus === 'error' 
+                  ? `Sinkronisasi cloud terhambat: ${syncError || 'Klik untuk mencoba kembali'}`
+                  : 'Klik untuk sinkronisasi perikatan dengan Supabase Cloud'
+          }
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all min-h-[38px] ${
+            isSyncing
+              ? 'bg-blue-50 text-blue-700 border-blue-200 cursor-wait'
+              : syncStatus === 'synced'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                : syncStatus === 'error'
+                  ? 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                  : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+          }`}
+        >
+          {isSyncing ? (
+            <RefreshCw size={14} className="animate-spin text-blue-600" />
+          ) : syncStatus === 'synced' ? (
+            <CheckCircle2 size={14} className="text-emerald-600" />
+          ) : syncStatus === 'error' ? (
+            <AlertCircle size={14} className="text-amber-600" />
+          ) : (
+            <Cloud size={14} className="text-gray-500" />
+          )}
+          <span className="hidden sm:inline">
+            {isSyncing ? 'Menyinkronkan...' : syncStatus === 'synced' ? 'Tersinkron' : 'Sync Cloud'}
+          </span>
+        </button>
 
         {/* Notifications */}
         <div className="relative">
