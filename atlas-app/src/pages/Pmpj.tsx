@@ -39,6 +39,13 @@ import {
   calculateAlertMenular, 
   formatRupiahPmpj 
 } from '../utils/pmpjCalculations';
+import { 
+  syncPmpjBidirectional, 
+  upsertCloudPmpjRegister, 
+  deleteCloudPmpjRegister, 
+  upsertCloudPmpjMonitoring, 
+  deleteCloudPmpjMonitoring 
+} from '../services/pmpjSyncService';
 
 const STORAGE_KEY_PMPJ_REGISTERS = 'atlas_pmpj_registers';
 const STORAGE_KEY_PMPJ_MONITORING = 'atlas_pmpj_monitoring';
@@ -191,8 +198,15 @@ const Pmpj: React.FC = () => {
     notes: ''
   });
 
-  // Load from LocalStorage
+  // Cloud Sync State
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [isCloudSynced, setIsCloudSynced] = useState(false);
+
+  // Load from LocalStorage + Cloud Sync
   useEffect(() => {
+    let initialRegs: PmpjClientRegister[] = [];
+    let initialMons: PmpjTransactionMonitoring[] = [];
+
     try {
       const mockRegIds = ['reg-001', 'reg-002', 'reg-003'];
       const mockMonIds = ['mon-001', 'mon-002', 'mon-003'];
@@ -200,29 +214,40 @@ const Pmpj: React.FC = () => {
       const storedRegs = localStorage.getItem(STORAGE_KEY_PMPJ_REGISTERS);
       if (storedRegs) {
         const parsed = JSON.parse(storedRegs);
-        const filtered = Array.isArray(parsed) ? parsed.filter((r: any) => !mockRegIds.includes(r.id)) : [];
-        setRegisters(filtered);
-        localStorage.setItem(STORAGE_KEY_PMPJ_REGISTERS, JSON.stringify(filtered));
+        initialRegs = Array.isArray(parsed) ? parsed.filter((r: any) => !mockRegIds.includes(r.id)) : [];
+        setRegisters(initialRegs);
       } else {
         setRegisters([]);
-        localStorage.setItem(STORAGE_KEY_PMPJ_REGISTERS, JSON.stringify([]));
       }
 
       const storedMon = localStorage.getItem(STORAGE_KEY_PMPJ_MONITORING);
       if (storedMon) {
         const parsedMon = JSON.parse(storedMon);
-        const filteredMon = Array.isArray(parsedMon) ? parsedMon.filter((m: any) => !mockMonIds.includes(m.id)) : [];
-        setMonitoringList(filteredMon);
-        localStorage.setItem(STORAGE_KEY_PMPJ_MONITORING, JSON.stringify(filteredMon));
+        initialMons = Array.isArray(parsedMon) ? parsedMon.filter((m: any) => !mockMonIds.includes(m.id)) : [];
+        setMonitoringList(initialMons);
       } else {
         setMonitoringList([]);
-        localStorage.setItem(STORAGE_KEY_PMPJ_MONITORING, JSON.stringify([]));
       }
     } catch (e) {
-      console.error('Error loading PMPJ data', e);
+      console.error('Error loading local PMPJ data', e);
       setRegisters([]);
       setMonitoringList([]);
     }
+
+    // Bidirectional Sync with Supabase Cloud
+    setIsCloudSyncing(true);
+    syncPmpjBidirectional(initialRegs, initialMons)
+      .then((res) => {
+        setRegisters(res.registers);
+        setMonitoringList(res.monitoring);
+        setIsCloudSynced(res.syncedWithCloud);
+      })
+      .catch((err) => {
+        console.warn('[PMPJ] Supabase sync fallback to local:', err);
+      })
+      .finally(() => {
+        setIsCloudSyncing(false);
+      });
   }, []);
 
   // Save Helpers
@@ -298,20 +323,18 @@ const Pmpj: React.FC = () => {
 
     if (editingRegister) {
       // Update existing record
-      const updatedList = registers.map(item => {
-        if (item.id === editingRegister.id) {
-          return {
-            ...item,
-            ...regForm,
-            pmkScope,
-            isPmpjActive,
-            cddStatus,
-            retentionUntil
-          } as PmpjClientRegister;
-        }
-        return item;
-      });
+      const updatedRecord: PmpjClientRegister = {
+        ...editingRegister,
+        ...regForm,
+        pmkScope,
+        isPmpjActive,
+        cddStatus,
+        retentionUntil
+      } as PmpjClientRegister;
+
+      const updatedList = registers.map(item => item.id === editingRegister.id ? updatedRecord : item);
       saveRegistersToStorage(updatedList);
+      upsertCloudPmpjRegister(updatedRecord);
       setEditingRegister(null);
     } else {
       // Create new record
@@ -352,6 +375,7 @@ const Pmpj: React.FC = () => {
         notes: regForm.notes || ''
       };
       saveRegistersToStorage([newRecord, ...registers]);
+      upsertCloudPmpjRegister(newRecord);
     }
 
     setIsAddRegisterOpen(false);
@@ -362,6 +386,7 @@ const Pmpj: React.FC = () => {
     if (window.confirm('Hapus baris data register PMPJ ini?')) {
       const updated = registers.filter(r => r.id !== id);
       saveRegistersToStorage(updated);
+      deleteCloudPmpjRegister(id);
     }
   };
 
@@ -404,6 +429,7 @@ const Pmpj: React.FC = () => {
     };
 
     saveMonitoringToStorage([newRecord, ...monitoringList]);
+    upsertCloudPmpjMonitoring(newRecord);
     setIsAddMonitoringOpen(false);
   };
 
@@ -464,6 +490,17 @@ const Pmpj: React.FC = () => {
             <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
               PMK No. 55/PMK.01/2017 & PPATK
             </span>
+            {isCloudSyncing ? (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                Sinkron Cloud...
+              </span>
+            ) : isCloudSynced ? (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                Supabase Terhubung
+              </span>
+            ) : null}
           </div>
           <p className="text-xs text-slate-500">
             Sistem Pengendalian Mutu & Uji Tuntas Pengguna Jasa (Customer Due Diligence / CDD)

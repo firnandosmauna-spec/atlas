@@ -273,3 +273,48 @@ UPDATE public.users SET
     no_induk_kap = '26.2.1974'
 WHERE LOWER(email) IN ('dwisafitriana99@gmail.com', 'auditor@kap.com', 'auditor99@kap.com');
 
+-- =========================================================================
+-- 5. TABEL PMPJ (Prinsip Mengenali Pengguna Jasa - KAP Fridolinus Peno)
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS public.pmpj_registers (
+    id TEXT PRIMARY KEY,
+    client_id TEXT,
+    engagement_id TEXT,
+    client_name TEXT NOT NULL,
+    user_type TEXT,
+    service_type TEXT,
+    is_pmpj_active BOOLEAN DEFAULT false,
+    cdd_status TEXT,
+    internal_risk TEXT,
+    acceptance_decision TEXT,
+    reviewer TEXT,
+    data JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.pmpj_registers ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all pmpj_registers" ON public.pmpj_registers;
+CREATE POLICY "Allow all pmpj_registers" ON public.pmpj_registers FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.pmpj_monitoring (
+    id TEXT PRIMARY KEY,
+    monitoring_id TEXT,
+    client_id TEXT,
+    client_name TEXT,
+    date TEXT,
+    amount NUMERIC,
+    is_suspicious BOOLEAN DEFAULT false,
+    alert_menular TEXT,
+    follow_up_status TEXT,
+    reviewer TEXT,
+    data JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.pmpj_monitoring ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all pmpj_monitoring" ON public.pmpj_monitoring;
+CREATE POLICY "Allow all pmpj_monitoring" ON public.pmpj_monitoring FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+
