@@ -167,6 +167,7 @@ interface EngagementState {
   updateEngagement: (id: string, updatedData: Partial<Engagement>) => void;
   duplicateEngagement: (id: string) => void;
   archiveEngagement: (id: string) => void;
+  deleteEngagement: (id: string) => void;
   openEngagement: (id: string) => void;
   addAuditLog: (log: Omit<AuditLog, 'id' | 'timestamp'>) => void;
   addAttachment: (attachment: Omit<Attachment, 'id' | 'uploadedDate'>) => void;
@@ -273,6 +274,14 @@ export const useEngagementStore = create<EngagementState>()(
         engagements: state.engagements.map((eng) => 
           eng.id === id ? { ...eng, status: 'Archived' } : eng
         )
+      })),
+
+      deleteEngagement: (id) => set((state) => ({
+        engagements: state.engagements.filter(e => e.id !== id),
+        activeEngagementId: state.activeEngagementId === id ? null : state.activeEngagementId,
+        auditLogs: state.auditLogs.filter(l => l.engagementId !== id),
+        attachments: state.attachments.filter(a => a.engagementId !== id),
+        reviewNotes: state.reviewNotes.filter(r => r.engagementId !== id)
       })),
 
       openEngagement: (id) => set({ activeEngagementId: id }),

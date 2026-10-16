@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEngagementStore } from '../store/engagementStore';
 import type { Engagement } from '../store/engagementStore';
 import { useAuthStore } from '../store/authStore';
-import { Plus, MoreVertical, Copy, Archive, Edit2, FolderOpen, Search, Filter } from 'lucide-react';
+import { Plus, MoreVertical, Copy, Archive, Edit2, FolderOpen, Search, Filter, Trash2, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import EngagementFormModal from '../components/EngagementFormModal';
 
 const Engagements = () => {
-  const { engagements, duplicateEngagement, archiveEngagement, openEngagement } = useEngagementStore();
+  const { engagements, duplicateEngagement, archiveEngagement, deleteEngagement, openEngagement } = useEngagementStore();
   const { hasPermission } = useAuthStore();
   const navigate = useNavigate();
   
@@ -15,6 +15,32 @@ const Engagements = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEngagement, setEditingEngagement] = useState<Engagement | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
+  const [engagementToDelete, setEngagementToDelete] = useState<Engagement | null>(null);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  // Close menus & modals on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (engagementToDelete) setEngagementToDelete(null);
+        if (openDropdownId) setOpenDropdownId(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [engagementToDelete, openDropdownId]);
+
+  const confirmDelete = () => {
+    if (!engagementToDelete) return;
+    const clientName = engagementToDelete.clientName;
+    const engId = engagementToDelete.id;
+    deleteEngagement(engId);
+    setEngagementToDelete(null);
+    setSuccessToast(`Perikatan ${engId} (${clientName}) berhasil dihapus.`);
+    setTimeout(() => {
+      setSuccessToast(null);
+    }, 3500);
+  };
 
   const filteredEngagements = engagements.filter(eng => 
     eng.clientName.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -137,40 +163,58 @@ const Engagements = () => {
                   </td>
                   <td className="px-6 py-4 text-right relative">
                     <button 
-                      onClick={() => setOpenDropdownId(openDropdownId === eng.id ? null : eng.id)}
-                      className="p-2 text-gray-400 hover:text-atlas-blue hover:bg-blue-50 rounded-full transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenDropdownId(openDropdownId === eng.id ? null : eng.id);
+                      }}
+                      aria-label={`Menu opsi untuk perikatan ${eng.id}`}
+                      className="p-2 text-gray-400 hover:text-atlas-blue hover:bg-blue-50 rounded-full transition-colors min-h-[40px] min-w-[40px] inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-atlas-blue"
                     >
                       <MoreVertical size={18} />
                     </button>
                     
                     {/* Action Dropdown Menu */}
                     {openDropdownId === eng.id && (
-                      <div className="absolute right-8 top-10 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-10 overflow-hidden text-left">
-                        <button 
-                          onClick={() => { handleOpenWorkspace(eng.id); setOpenDropdownId(null); }}
-                          className="w-full px-4 py-3 flex items-center space-x-2 hover:bg-gray-50 text-sm text-gray-700"
-                        >
-                          <FolderOpen size={16} className="text-blue-500" /> <span>Buka Workspace</span>
-                        </button>
-                        <button 
-                          onClick={() => { setEditingEngagement(eng); setIsModalOpen(true); setOpenDropdownId(null); }}
-                          className="w-full px-4 py-3 flex items-center space-x-2 hover:bg-gray-50 text-sm text-gray-700 border-t border-gray-100"
-                        >
-                          <Edit2 size={16} className="text-amber-500" /> <span>Edit Engagement</span>
-                        </button>
-                        <button 
-                          onClick={() => { duplicateEngagement(eng.id); setOpenDropdownId(null); }}
-                          className="w-full px-4 py-3 flex items-center space-x-2 hover:bg-gray-50 text-sm text-gray-700 border-t border-gray-100"
-                        >
-                          <Copy size={16} className="text-emerald-500" /> <span>Duplikat</span>
-                        </button>
-                        <button 
-                          onClick={() => { archiveEngagement(eng.id); setOpenDropdownId(null); }}
-                          className="w-full px-4 py-3 flex items-center space-x-2 hover:bg-red-50 text-sm text-red-600 border-t border-gray-100"
-                        >
-                          <Archive size={16} /> <span>Arsipkan</span>
-                        </button>
-                      </div>
+                      <>
+                        <div 
+                          className="fixed inset-0 z-10 bg-transparent" 
+                          onClick={() => setOpenDropdownId(null)} 
+                        />
+                        <div className="absolute right-8 top-10 w-52 bg-white rounded-xl shadow-lg border border-gray-100 z-20 overflow-hidden text-left">
+                          <button 
+                            onClick={() => { handleOpenWorkspace(eng.id); setOpenDropdownId(null); }}
+                            className="w-full px-4 py-3 flex items-center space-x-2.5 hover:bg-gray-50 text-sm text-gray-700 min-h-[44px]"
+                          >
+                            <FolderOpen size={16} className="text-blue-500 shrink-0" /> <span>Buka Workspace</span>
+                          </button>
+                          <button 
+                            onClick={() => { setEditingEngagement(eng); setIsModalOpen(true); setOpenDropdownId(null); }}
+                            className="w-full px-4 py-3 flex items-center space-x-2.5 hover:bg-gray-50 text-sm text-gray-700 border-t border-gray-100 min-h-[44px]"
+                          >
+                            <Edit2 size={16} className="text-amber-500 shrink-0" /> <span>Edit Engagement</span>
+                          </button>
+                          <button 
+                            onClick={() => { duplicateEngagement(eng.id); setOpenDropdownId(null); }}
+                            className="w-full px-4 py-3 flex items-center space-x-2.5 hover:bg-gray-50 text-sm text-gray-700 border-t border-gray-100 min-h-[44px]"
+                          >
+                            <Copy size={16} className="text-emerald-500 shrink-0" /> <span>Duplikat</span>
+                          </button>
+                          <button 
+                            onClick={() => { archiveEngagement(eng.id); setOpenDropdownId(null); }}
+                            className="w-full px-4 py-3 flex items-center space-x-2.5 hover:bg-amber-50 text-sm text-amber-700 border-t border-gray-100 min-h-[44px]"
+                          >
+                            <Archive size={16} className="shrink-0" /> <span>Arsipkan</span>
+                          </button>
+                          {(hasPermission('delete_engagement') || !user || user.role === 'Admin' || user.role === 'Auditor') && (
+                            <button 
+                              onClick={() => { setEngagementToDelete(eng); setOpenDropdownId(null); }}
+                              className="w-full px-4 py-3 flex items-center space-x-2.5 hover:bg-red-50 text-sm text-red-600 border-t border-gray-100 min-h-[44px] transition-colors"
+                            >
+                              <Trash2 size={16} className="shrink-0" /> <span>Hapus Perikatan</span>
+                            </button>
+                          )}
+                        </div>
+                      </>
                     )}
                   </td>
                 </tr>
@@ -211,6 +255,85 @@ const Engagements = () => {
           onClose={() => setIsModalOpen(false)} 
           initialData={editingEngagement} 
         />
+      )}
+
+      {/* Modal Konfirmasi Hapus Perikatan */}
+      {engagementToDelete && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-delete-title"
+        >
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-200 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-5 sm:p-6 space-y-4">
+              <div className="flex items-start space-x-3.5">
+                <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                  <AlertTriangle size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 id="modal-delete-title" className="text-base font-bold text-gray-900">
+                    Konfirmasi Hapus Perikatan
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Tindakan ini permanen dan tidak dapat dibatalkan.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-3.5 border border-gray-200 text-xs space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">ID Perikatan:</span>
+                  <span className="font-semibold text-gray-800">{engagementToDelete.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Nama Klien:</span>
+                  <span className="font-semibold text-gray-800 truncate max-w-[200px]" title={engagementToDelete.clientName}>
+                    {engagementToDelete.clientName}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Tipe / Standar:</span>
+                  <span className="text-gray-700">{engagementToDelete.engagementType} - {engagementToDelete.accountingStandard}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Status:</span>
+                  <span className="font-medium text-gray-700">{engagementToDelete.status}</span>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Apakah Anda yakin ingin menghapus perikatan ini? Seluruh kertas kerja, daftar akun, dan catatan audit yang terkait akan dihapus secara permanen.
+              </p>
+
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEngagementToDelete(null)}
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors min-h-[44px] flex items-center justify-center"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm min-h-[44px] flex items-center justify-center space-x-1.5"
+                >
+                  <Trash2 size={15} />
+                  <span>Ya, Hapus Perikatan</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Feedback Sukses */}
+      {successToast && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center space-x-2 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-xl text-xs sm:text-sm font-medium animate-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+          <span>{successToast}</span>
+        </div>
       )}
     </div>
   );

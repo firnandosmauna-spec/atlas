@@ -31,6 +31,8 @@ interface AuthState {
 // Permissions mapped by role
 const rolePermissions: Record<Role, string[]> = {
   'Admin': [
+    'create_engagement',
+    'delete_engagement',
     'manage_users',
     'manage_roles',
     'manage_organizations',
@@ -38,6 +40,8 @@ const rolePermissions: Record<Role, string[]> = {
     'manage_app_config'
   ],
   'Partner/Akuntan Publik': [
+    'create_engagement',
+    'delete_engagement',
     'view_assigned_engagements',
     'perform_review',
     'give_approval',
@@ -46,6 +50,8 @@ const rolePermissions: Record<Role, string[]> = {
     'sign_audit_report'
   ],
   'Partner': [
+    'create_engagement',
+    'delete_engagement',
     'view_assigned_engagements',
     'perform_review',
     'give_approval',
@@ -70,6 +76,7 @@ const rolePermissions: Record<Role, string[]> = {
   ],
   'Ketua Tim': [
     'create_engagement',
+    'delete_engagement',
     'fill_worksheet',
     'upload_evidence',
     'perform_risk_assessment',
@@ -104,6 +111,7 @@ const rolePermissions: Record<Role, string[]> = {
   ],
   'Auditor': [
     'create_engagement',
+    'delete_engagement',
     'fill_worksheet',
     'upload_evidence',
     'perform_risk_assessment',
@@ -127,6 +135,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   hasPermission: (permission: string) => {
     const { user } = get();
     if (!user) return false;
+    if (user.role === 'Admin') return true;
     return rolePermissions[user.role]?.includes(permission) || false;
   },
   initialize: async () => {
