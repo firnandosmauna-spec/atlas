@@ -175,10 +175,42 @@ interface EngagementState {
   markAllNotificationsAsRead: () => void;
 }
 
+export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [
+  {
+    id: 'ENG-2026-001',
+    clientId: 'CLI-001',
+    clientName: 'PT Kertas Nusantara Sejahtera',
+    clientAddress: 'Kawasan Industri MM2100, Blok B-12, Cikarang Barat, Jawa Barat',
+    clientIndustry: 'Manufaktur & Pengolahan Kertas',
+    auditPeriod: '2025-12-31',
+    fiscalYear: '2025-12-31',
+    engagementType: 'Recurring',
+    accountingStandard: 'SAK_UMUM',
+    currency: 'IDR',
+    presentationUnit: 'Full',
+    partnerId: 'usr-2',
+    partnerName: 'Drs. Fridolinus Peno, Ak., M.M., CA., CPA.',
+    managerId: 'usr-3',
+    managerName: 'Nando Manager, S.E., M.Ak.',
+    supervisorId: 'usr-4',
+    supervisorName: 'Bambang Supervisor, S.E., Ak.',
+    auditorId: 'usr-5',
+    auditorName: 'Dwi Safitriana (Auditor Atlas)',
+    teamMembers: [
+      { id: 'usr-6', name: 'Rudi Substantif, S.Ak.', role: 'Anggota Tim 1', email: 'rudi.substantif@kap.com' },
+      { id: 'usr-7', name: 'Siti Rahma, S.E., M.Ak.', role: 'Anggota Tim 2', email: 'siti.rahma@kap.com' }
+    ],
+    startDate: '2026-01-15',
+    targetDate: '2026-04-30',
+    status: 'Active',
+    progress: 40
+  }
+];
+
 export const useEngagementStore = create<EngagementState>()(
   persist(
     (set) => ({
-      engagements: [],
+      engagements: DEFAULT_MASTER_ENGAGEMENTS,
       activeEngagementId: null,
       auditLogs: [],
       attachments: [],
@@ -256,12 +288,13 @@ export const useEngagementStore = create<EngagementState>()(
       version: 2,
       migrate: (persistedState: any) => {
         if (!persistedState) {
-          return { engagements: [], auditLogs: [], attachments: [], notifications: [], reviewNotes: [] };
+          return { engagements: DEFAULT_MASTER_ENGAGEMENTS, auditLogs: [], attachments: [], notifications: [], reviewNotes: [] };
         }
         const mockIds = ['ENG-2024-001', 'ENG-2025-DEMO', 'ENG-2018-001', 'ENG-2018-002', 'ENG-2018-003', 'ENG-2018-004'];
+        const existingEngs = (persistedState.engagements || []).filter((e: any) => !mockIds.includes(e.id));
         return {
           ...persistedState,
-          engagements: (persistedState.engagements || []).filter((e: any) => !mockIds.includes(e.id)),
+          engagements: existingEngs.length > 0 ? existingEngs : DEFAULT_MASTER_ENGAGEMENTS,
           auditLogs: (persistedState.auditLogs || []).filter((l: any) => !mockIds.includes(l.engagementId)),
           attachments: (persistedState.attachments || []).filter((a: any) => !mockIds.includes(a.engagementId)),
           reviewNotes: (persistedState.reviewNotes || []).filter((r: any) => !mockIds.includes(r.engagementId)),
