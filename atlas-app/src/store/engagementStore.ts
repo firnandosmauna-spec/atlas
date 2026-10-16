@@ -177,6 +177,34 @@ interface EngagementState {
 
 export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [
   {
+    id: 'ENG-2026-618',
+    clientId: 'CLI-002',
+    clientName: 'tes',
+    clientAddress: 'Indonesia',
+    clientIndustry: 'Jasa & Perdagangan',
+    auditPeriod: '2025-12-31',
+    fiscalYear: '2025-12-31',
+    engagementType: 'First Year',
+    accountingStandard: 'SAK_UMUM',
+    currency: 'IDR',
+    presentationUnit: 'Full',
+    partnerId: 'usr-1',
+    partnerName: 'ahmad Auditor',
+    managerId: 'usr-3',
+    managerName: 'nando',
+    supervisorId: 'usr-4',
+    supervisorName: 'Bambang Supervisor, S.E., Ak.',
+    auditorId: 'usr-3',
+    auditorName: 'nando',
+    teamMembers: [
+      { id: 'usr-6', name: 'Rudi Substantif, S.Ak.', role: 'Anggota Tim 1', email: 'rudi.substantif@kap.com' }
+    ],
+    startDate: '2026-02-01',
+    targetDate: '2026-05-31',
+    status: 'Draft',
+    progress: 0
+  },
+  {
     id: 'ENG-2026-001',
     clientId: 'CLI-001',
     clientName: 'PT Kertas Nusantara Sejahtera',
@@ -285,7 +313,7 @@ export const useEngagementStore = create<EngagementState>()(
     }),
     {
       name: 'atlas_engagements_store',
-      version: 2,
+      version: 3,
       migrate: (persistedState: any) => {
         if (!persistedState) {
           return { engagements: DEFAULT_MASTER_ENGAGEMENTS, auditLogs: [], attachments: [], notifications: [], reviewNotes: [] };

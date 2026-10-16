@@ -36,7 +36,12 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
       `}
     >
       <div className="h-16 flex items-center justify-between px-4 border-b border-blue-800">
-        <h1 className="text-xl font-bold tracking-wider overflow-hidden truncate pr-2 uppercase" title={appName}>
+        <h1 
+          className={`font-bold uppercase overflow-hidden truncate pr-2 ${
+            (appName?.length || 0) > 16 ? 'text-sm font-bold tracking-tight' : 'text-xl tracking-wider'
+          }`} 
+          title={appName}
+        >
           {isOpen ? (
             appName
           ) : (

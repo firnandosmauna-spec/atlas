@@ -21,11 +21,11 @@ interface AppConfigActions {
 export type AppConfigStore = AppConfigState & AppConfigActions;
 
 export const DEFAULT_APP_CONFIG: AppConfigState = {
-  appName: 'ATLAS',
-  appShortName: 'ATLAS',
-  tagline: 'Audit Tool & Linked Archive System',
-  institutionName: 'P2PK Kementerian Keuangan',
-  version: '1.0.0-PROTOTYPE'
+  appName: 'AUDIT FLOW',
+  appShortName: 'KAP Frido',
+  tagline: 'Audit Tool & Linked Archive System - KAP Fridolinus Peno',
+  institutionName: 'KAP Fridolinus Peno',
+  version: '1.0.0'
 };
 
 export const useAppConfigStore = create<AppConfigStore>()(
@@ -41,7 +41,17 @@ export const useAppConfigStore = create<AppConfigStore>()(
       resetConfig: () => set(DEFAULT_APP_CONFIG)
     }),
     {
-      name: 'atlas_app_config'
+      name: 'atlas_app_config',
+      version: 2,
+      migrate: (persistedState: any) => {
+        if (!persistedState) return DEFAULT_APP_CONFIG;
+        return {
+          ...DEFAULT_APP_CONFIG,
+          ...persistedState,
+          appName: persistedState.appName === 'ATLAS' || !persistedState.appName ? 'AUDIT FLOW' : persistedState.appName,
+          appShortName: persistedState.appShortName === 'ATLAS' || !persistedState.appShortName ? 'KAP Frido' : persistedState.appShortName
+        };
+      }
     }
   )
 );
