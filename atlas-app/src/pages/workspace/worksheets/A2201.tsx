@@ -18,14 +18,27 @@ const A2201: React.FC = () => {
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(val);
 
-  // Mock Data for comparison
+  const tb = engagement.trialBalance || [];
+  const getGroupSum = (groupName: string) => {
+    return tb
+      .filter(acc => acc.group?.toLowerCase().includes(groupName.toLowerCase()) || acc.name?.toLowerCase().includes(groupName.toLowerCase()))
+      .reduce((sum, acc) => sum + (Number(acc.endingBalance) || 0), 0);
+  };
+
+  const asetVal = getGroupSum('aset');
+  const liabVal = getGroupSum('liabilitas') || getGroupSum('kewajiban');
+  const ekuitasVal = getGroupSum('ekuitas') || getGroupSum('modal');
+  const pendapatanVal = getGroupSum('pendapatan') || getGroupSum('penjualan');
+  const bebanVal = getGroupSum('beban pokok') || getGroupSum('hpp');
+  const labaVal = pendapatanVal > 0 ? (pendapatanVal - bebanVal) : 0;
+
   const data = [
-    { id: "A", title: "ASET", current: 5000000000, prior: 4500000000 },
-    { id: "L", title: "LIABILITAS", current: 2000000000, prior: 2200000000 },
-    { id: "E", title: "EKUITAS", current: 3000000000, prior: 2300000000 },
-    { id: "R", title: "PENDAPATAN", current: 12000000000, prior: 10500000000 },
-    { id: "C", title: "BEBAN POKOK", current: 7000000000, prior: 6500000000 },
-    { id: "P", title: "LABA BERSIH", current: 2500000000, prior: 2000000000 },
+    { id: "A", title: "ASET", current: asetVal, prior: 0 },
+    { id: "L", title: "LIABILITAS", current: liabVal, prior: 0 },
+    { id: "E", title: "EKUITAS", current: ekuitasVal, prior: 0 },
+    { id: "R", title: "PENDAPATAN", current: pendapatanVal, prior: 0 },
+    { id: "C", title: "BEBAN POKOK", current: bebanVal, prior: 0 },
+    { id: "P", title: "LABA BERSIH", current: labaVal, prior: 0 },
   ];
 
   const handleIndustryAvgChange = (id: string, val: string) => {

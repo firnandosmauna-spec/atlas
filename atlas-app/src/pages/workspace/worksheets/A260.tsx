@@ -25,12 +25,7 @@ const A260 = () => {
 
   // 2. Tingkat Asersi
   // Using Trial Balance
-  const tb = engagement.trialBalance || [
-    { name: "Kas dan Setara Kas", endingBalance: 1500000000 },
-    { name: "Piutang Usaha", endingBalance: 2500000000 },
-    { name: "Persediaan", endingBalance: 3000000000 },
-    { name: "Aset Tetap", endingBalance: 12000000000 }
-  ];
+  const tb = engagement.trialBalance || [];
 
   const [accLevelData, setAccLevelData] = useState<any>({});
 
@@ -204,7 +199,14 @@ const A260 = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {tb.map((item, idx) => {
+              {tb.length === 0 ? (
+                <tr>
+                  <td colSpan={18} className="px-4 py-8 text-center text-sm text-gray-500 bg-gray-50">
+                    Belum ada data akun Trial Balance pada perikatan ini. Silakan input akun di menu Trial Balance terlebih dahulu.
+                  </td>
+                </tr>
+              ) : (
+                tb.map((item, idx) => {
                 const data = accLevelData[item.name] || { mtm: 'M', fraud: false, ir: '', cr: '', romm: '', sigRisk: false, saldoTransaksi: '', c: false, e: false, a: false, v: false, p: false, toc: false, ap: false, tod: false, interim: false, ye: false };
 
                 return (
@@ -294,8 +296,8 @@ const A260 = () => {
                       {data.ye && <CheckCircle2 size={10} className="mx-auto text-gray-800" />}
                     </td>
                   </tr>
-                )
-              })}
+                );
+              }))}
             </tbody>
           </table>
         </div>

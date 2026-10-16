@@ -12,7 +12,7 @@ const A230: React.FC = () => {
 
   // Mock statuses for supporting worksheets
   const subWorksheets = [
-    { id: "A.230.1", title: "Informasi umum dan aspek legalitas", completed: false, conclusion: "Tidak terdapat kemungkinan salah saji material" },
+    { id: "A.230.1", title: "Informasi umum dan aspek legalitas", completed: false, conclusion: "" },
     { id: "A.230.2", title: "Struktur Organisasi dan Tanggung Jawab", completed: false, conclusion: "" },
     { id: "A.230.3", title: "Proses aktivitas bisnis utama", completed: false, conclusion: "" },
     { id: "A.230.4", title: "Pemahaman peraturan yang relevan", completed: false, conclusion: "" },

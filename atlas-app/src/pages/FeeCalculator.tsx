@@ -261,26 +261,6 @@ const FeeCalculator: React.FC = () => {
     } catch {}
   };
 
-  const handleLoadExample = () => {
-    // Sesuai contoh pada Image 1 (PT ABC)
-    setClientName('Contoh PT ABC');
-    setFiscalYear(2026);
-    setAnnualRevenue(180000000000); // 180 Miliar
-    setTotalAssets(300000000000);   // 300 Miliar
-    setTransactionVolume(1500);     // 1.500 transaksi
-    setBranchCount(4);              // 4 lokasi/cabang
-    setInventoryCondition('Material, 2-5 gudang');
-    setIndustryComplexity('Menengah');
-    setBookkeepingQuality('Normal');
-    setEngagementRisk('Moderate');
-    setFirstYearAudit('Ya');
-    setDeadlineDays(30);
-    setHbrZone('Luar Jabodetabek');
-    setBufferPercent(10);
-    setVatPercent(0);
-    setOutOfPocketExpenses(0);
-    setInternalCostFactor(60);
-  };
 
   // =========================================================
   // 1. EVALUASI BASE FEE & JAM AUDIT DASAR (IMAGE 2)
@@ -576,15 +556,6 @@ Zona HBR: ${hbrZone} | Buffer: ${bufferPercent}%
         </div>
 
         <div className="flex items-center flex-wrap gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleLoadExample}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 hover:text-slate-900 border border-slate-200 rounded-lg transition-colors shadow-2xs"
-            title="Isi data sesuai contoh PT ABC pada spreadsheet untuk memverifikasi rumus"
-          >
-            <ArrowUpRight size={13} className="text-blue-600" />
-            <span>Contoh PT ABC</span>
-          </button>
 
           <button
             type="button"

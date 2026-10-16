@@ -194,25 +194,34 @@ const Pmpj: React.FC = () => {
   // Load from LocalStorage
   useEffect(() => {
     try {
+      const mockRegIds = ['reg-001', 'reg-002', 'reg-003'];
+      const mockMonIds = ['mon-001', 'mon-002', 'mon-003'];
+
       const storedRegs = localStorage.getItem(STORAGE_KEY_PMPJ_REGISTERS);
       if (storedRegs) {
-        setRegisters(JSON.parse(storedRegs));
+        const parsed = JSON.parse(storedRegs);
+        const filtered = Array.isArray(parsed) ? parsed.filter((r: any) => !mockRegIds.includes(r.id)) : [];
+        setRegisters(filtered);
+        localStorage.setItem(STORAGE_KEY_PMPJ_REGISTERS, JSON.stringify(filtered));
       } else {
-        setRegisters(INITIAL_PMPJ_REGISTERS);
-        localStorage.setItem(STORAGE_KEY_PMPJ_REGISTERS, JSON.stringify(INITIAL_PMPJ_REGISTERS));
+        setRegisters([]);
+        localStorage.setItem(STORAGE_KEY_PMPJ_REGISTERS, JSON.stringify([]));
       }
 
       const storedMon = localStorage.getItem(STORAGE_KEY_PMPJ_MONITORING);
       if (storedMon) {
-        setMonitoringList(JSON.parse(storedMon));
+        const parsedMon = JSON.parse(storedMon);
+        const filteredMon = Array.isArray(parsedMon) ? parsedMon.filter((m: any) => !mockMonIds.includes(m.id)) : [];
+        setMonitoringList(filteredMon);
+        localStorage.setItem(STORAGE_KEY_PMPJ_MONITORING, JSON.stringify(filteredMon));
       } else {
-        setMonitoringList(INITIAL_PMPJ_MONITORING);
-        localStorage.setItem(STORAGE_KEY_PMPJ_MONITORING, JSON.stringify(INITIAL_PMPJ_MONITORING));
+        setMonitoringList([]);
+        localStorage.setItem(STORAGE_KEY_PMPJ_MONITORING, JSON.stringify([]));
       }
     } catch (e) {
       console.error('Error loading PMPJ data', e);
-      setRegisters(INITIAL_PMPJ_REGISTERS);
-      setMonitoringList(INITIAL_PMPJ_MONITORING);
+      setRegisters([]);
+      setMonitoringList([]);
     }
   }, []);
 

@@ -37,20 +37,20 @@ const C200 = () => {
             <div className="bg-white border border-gray-300 px-2 py-1">{engagement.clientName}</div>
             
             <div className="text-red-700">Jenis usaha *</div>
-            <div className="bg-white border border-gray-300 px-2 py-1">Perdagangan Besar</div>
+            <div className="bg-white border border-gray-300 px-2 py-1">{engagement.businessSector || 'Perdagangan & Jasa'}</div>
             
             <div className="text-red-700">Periode Interim Berjalan *</div>
             <div className="bg-white border border-gray-300 px-2 py-1">-</div>
             
             <div className="text-red-700">Periode Berjalan *</div>
-            <div className="bg-white border border-gray-300 px-2 py-1">31/12/{engagement.period}</div>
+            <div className="bg-white border border-gray-300 px-2 py-1">31/12/{engagement.period || new Date().getFullYear()}</div>
             
             <div className="text-red-700">Periode Perbandingan *</div>
-            <div className="bg-white border border-gray-300 px-2 py-1">31/12/{parseInt(engagement.period) - 1}</div>
+            <div className="bg-white border border-gray-300 px-2 py-1">31/12/{parseInt(engagement.period) ? parseInt(engagement.period) - 1 : (new Date().getFullYear() - 1)}</div>
             
             <div className="text-red-700">SAK yang digunakan *</div>
             <div className="flex items-center gap-2">
-               <div className="bg-white border border-gray-300 px-2 py-1 flex-1">SAK ETAP</div>
+               <div className="bg-white border border-gray-300 px-2 py-1 flex-1">{engagement.accountingStandard || 'SAK Umum'}</div>
                <Link 
                  to={`/workspace/${engagement.id}/worksheet/c220`}
                  className="bg-red-600 hover:bg-red-700 text-white w-8 h-6 flex items-center justify-center rounded-sm transition-colors shadow-sm"

@@ -29,26 +29,26 @@ const C300 = () => {
 
   const initialData: MutuItem[] = [
     { id: 'h1', indeks: '', namaIndeks: 'A. RISK ASSESSMENT', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '', isSectionHeader: true },
-    { id: '1', indeks: 'A110', namaIndeks: 'Analisis Penerimaan dan Keberlanjutan Hubungan dengan Klien', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '2', indeks: 'A120', namaIndeks: 'Alokasi Jam Jasa dan Perencanaan Lainnya', kesimpulan: 'Alokasi jam kerja belum memadai', penjelasanKesimpulan: 'Perlu penyesuaian jam kerja manajer', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '3', indeks: 'A130', namaIndeks: 'Surat Perikatan', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '4', indeks: 'A140', namaIndeks: 'Surat Tugas', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '5', indeks: 'A150', namaIndeks: 'Pernyataan Independensi', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '6', indeks: 'A160', namaIndeks: 'Komunikasi Tim Perikatan', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '7', indeks: 'A210', namaIndeks: 'Materialitas Awal', kesimpulan: 'Materialitas belum ditentukan', penjelasanKesimpulan: 'Specific Materiality Belum Ditentukan', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '8', indeks: 'A220', namaIndeks: 'Prosedur Analitis Awal', kesimpulan: 'Memadai', penjelasanKesimpulan: 'Prosedur awal sudah dilakukan dan tidak ditemukan salah saji', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '9', indeks: 'A230', namaIndeks: 'Pemahaman Entitas dan Lingkungannya', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '1', indeks: 'A110', namaIndeks: 'Analisis Penerimaan dan Keberlanjutan Hubungan dengan Klien', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '2', indeks: 'A120', namaIndeks: 'Alokasi Jam Jasa dan Perencanaan Lainnya', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '3', indeks: 'A130', namaIndeks: 'Surat Perikatan', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '4', indeks: 'A140', namaIndeks: 'Surat Tugas', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '5', indeks: 'A150', namaIndeks: 'Pernyataan Independensi', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '6', indeks: 'A160', namaIndeks: 'Komunikasi Tim Perikatan', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '7', indeks: 'A210', namaIndeks: 'Materialitas Awal', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '8', indeks: 'A220', namaIndeks: 'Prosedur Analitis Awal', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '9', indeks: 'A230', namaIndeks: 'Pemahaman Entitas dan Lingkungannya', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
     
     { id: 'h2', indeks: '', namaIndeks: 'B. RISK RESPONSE', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '', isSectionHeader: true },
-    { id: '10', indeks: 'B100', namaIndeks: 'Uji Pengendalian dan Substantif', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '11', indeks: 'B210', namaIndeks: 'Estimasi Akuntansi', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '12', indeks: 'B220', namaIndeks: 'Pihak Berelasi', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '13', indeks: 'B230', namaIndeks: 'Peristiwa Kemudian', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '10', indeks: 'B100', namaIndeks: 'Uji Pengendalian dan Substantif', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '11', indeks: 'B210', namaIndeks: 'Estimasi Akuntansi', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '12', indeks: 'B220', namaIndeks: 'Pihak Berelasi', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '13', indeks: 'B230', namaIndeks: 'Peristiwa Kemudian', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
     
     { id: 'h3', indeks: '', namaIndeks: 'C. COMPLETING & REPORTING', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '', isSectionHeader: true },
-    { id: '14', indeks: 'C110', namaIndeks: 'Penilaian Materialitas Final', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '15', indeks: 'C120', namaIndeks: 'Prosedur Analitis Final', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
-    { id: '16', indeks: 'C200', namaIndeks: 'Review Pengungkapan LK', kesimpulan: 'Memadai', penjelasanKesimpulan: '-', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '14', indeks: 'C110', namaIndeks: 'Penilaian Materialitas Final', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '15', indeks: 'C120', namaIndeks: 'Prosedur Analitis Final', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
+    { id: '16', indeks: 'C200', namaIndeks: 'Review Pengungkapan LK', kesimpulan: '', penjelasanKesimpulan: '', saranReviewer: '', tindakLanjut: '', pereview: '', tanggal: '' },
   ];
 
   const [data, setData] = useState<MutuItem[]>(initialData);

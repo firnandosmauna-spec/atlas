@@ -21,9 +21,7 @@ const A1102: React.FC = () => {
   const [worksheetStatus, setWorksheetStatus] = useState<'In Progress' | 'Completed' | 'Pending Review'>('In Progress');
   
   // State for answers
-  const [answers, setAnswers] = useState<Record<number, string>>({
-    5: 'Tidak' // Question 6 (index 5) is default 'Tidak' via A.1102.1
-  });
+  const [answers, setAnswers] = useState<Record<number, string>>({});
 
   const isCompleted = Object.keys(answers).length === questions.length;
 

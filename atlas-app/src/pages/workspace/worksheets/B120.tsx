@@ -11,17 +11,8 @@ const B120 = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [simpulanAkhir, setSimpulanAkhir] = useState('');
 
-  // Dummy TB data mapping (In a real app, this should filter only MS, MTS, TMS accounts)
-  const tb = engagement.trialBalance || [
-    { name: "Kas dan Setara Kas", group: "Aset", endingBalance: 1500000000 },
-    { name: "Piutang Usaha", group: "Aset", endingBalance: 2500000000 },
-    { name: "Persediaan", group: "Aset", endingBalance: 3000000000 },
-    { name: "Aset Tetap", group: "Aset", endingBalance: 12000000000 },
-    { name: "Hutang Usaha", group: "Kewajiban", endingBalance: -4000000000 },
-    { name: "Modal Saham", group: "Ekuitas", endingBalance: -10000000000 },
-    { name: "Pendapatan Jasa", group: "Pendapatan", endingBalance: -8000000000 },
-    { name: "Beban Gaji", group: "Beban", endingBalance: 3000000000 },
-  ];
+  // TB data mapping
+  const tb = engagement.trialBalance || [];
 
   const [mappingData, setMappingData] = useState<Record<string, { kesimpulan: string, keterangan: string }>>({});
 
@@ -94,47 +85,55 @@ const B120 = () => {
               </tr>
             </thead>
             <tbody>
-              {tb.map((item, idx) => {
-                const data = mappingData[item.name] || { kesimpulan: '', keterangan: '' };
-                const indeks = getIndex(item.group);
-                
-                return (
-                  <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-3 py-1.5 border border-gray-400 font-bold text-gray-800">{idx + 1}. {item.name}</td>
-                    
-                    {/* Index / Link to Lead Schedule */}
-                    <td className="px-2 py-1 border border-gray-400 text-center bg-cyan-100/50">
-                      <Link 
-                        to={`/workspace/${engagement.id}/worksheet/ls-${indeks.toLowerCase()}`} 
-                        className="font-bold text-blue-700 underline flex items-center justify-center gap-1 hover:text-blue-900"
-                        title={`Buka Lead Schedule ${indeks}`}
-                      >
-                        {indeks}
-                      </Link>
-                    </td>
-                    
-                    {/* Kesimpulan */}
-                    <td className="px-0 py-0 border border-gray-400 bg-white">
-                      <textarea 
-                        className="w-full h-full min-h-[36px] bg-transparent outline-none p-1.5 text-red-700 font-medium resize-none leading-tight"
-                        value={data.kesimpulan}
-                        onChange={(e) => handleUpdate(item.name, 'kesimpulan', e.target.value)}
-                        placeholder="..."
-                      />
-                    </td>
-                    
-                    {/* Keterangan */}
-                    <td className="px-0 py-0 border border-gray-400 bg-white">
-                      <textarea 
-                        className="w-full h-full min-h-[36px] bg-transparent outline-none p-1.5 text-red-700 font-medium resize-none leading-tight"
-                        value={data.keterangan}
-                        onChange={(e) => handleUpdate(item.name, 'keterangan', e.target.value)}
-                        placeholder="..."
-                      />
-                    </td>
-                  </tr>
-                )
-              })}
+              {tb.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-500 bg-gray-50">
+                    Belum ada data akun Trial Balance pada perikatan ini.
+                  </td>
+                </tr>
+              ) : (
+                tb.map((item, idx) => {
+                  const data = mappingData[item.name] || { kesimpulan: '', keterangan: '' };
+                  const indeks = getIndex(item.group);
+                  
+                  return (
+                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-3 py-1.5 border border-gray-400 font-bold text-gray-800">{idx + 1}. {item.name}</td>
+                      
+                      {/* Index / Link to Lead Schedule */}
+                      <td className="px-2 py-1 border border-gray-400 text-center bg-cyan-100/50">
+                        <Link 
+                          to={`/workspace/${engagement.id}/worksheet/ls-${indeks.toLowerCase()}`} 
+                          className="font-bold text-blue-700 underline flex items-center justify-center gap-1 hover:text-blue-900"
+                          title={`Buka Lead Schedule ${indeks}`}
+                        >
+                          {indeks}
+                        </Link>
+                      </td>
+                      
+                      {/* Kesimpulan */}
+                      <td className="px-0 py-0 border border-gray-400 bg-white">
+                        <textarea 
+                          className="w-full h-full min-h-[36px] bg-transparent outline-none p-1.5 text-red-700 font-medium resize-none leading-tight"
+                          value={data.kesimpulan}
+                          onChange={(e) => handleUpdate(item.name, 'kesimpulan', e.target.value)}
+                          placeholder="..."
+                        />
+                      </td>
+                      
+                      {/* Keterangan */}
+                      <td className="px-0 py-0 border border-gray-400 bg-white">
+                        <textarea 
+                          className="w-full h-full min-h-[36px] bg-transparent outline-none p-1.5 text-red-700 font-medium resize-none leading-tight"
+                          value={data.keterangan}
+                          onChange={(e) => handleUpdate(item.name, 'keterangan', e.target.value)}
+                          placeholder="..."
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

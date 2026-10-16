@@ -14,7 +14,7 @@ const CompletingReporting = () => {
     { id: '5', code: 'C.400', name: 'Evaluasi Bukti Audit', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
     { id: '6', code: 'C.510', name: 'Review LAI', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
     { id: '7', code: 'C.520', name: 'Audit Final Memorandum', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
-    { id: '8', code: 'C.530', name: 'Laporan Auditor Independen Final', status: 'In Progress', progress: 50, reviewer: engagement.partnerName || 'Partner', lastUpdated: 'Baru saja' },
+    { id: '8', code: 'C.530', name: 'Laporan Auditor Independen Final', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
   ];
 
   return (

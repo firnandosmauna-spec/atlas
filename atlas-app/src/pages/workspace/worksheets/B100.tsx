@@ -52,19 +52,19 @@ const B100 = () => {
                 <div className="text-gray-900 bg-white border border-gray-300 px-2 py-1">: {engagement.clientName}</div>
                 
                 <div className="text-red-700">Jenis usaha *</div>
-                <div className="text-gray-900 bg-white border border-gray-300 px-2 py-1">: Perdagangan</div>
+                <div className="text-gray-900 bg-white border border-gray-300 px-2 py-1">: {engagement.businessSector || 'Perdagangan'}</div>
                 
                 <div className="text-red-700">Periode Interim Berjalan *</div>
                 <div className="text-gray-900 bg-white border border-gray-300 px-2 py-1">: -</div>
                 
                 <div className="text-red-700">Periode Berjalan *</div>
-                <div className="text-gray-900 bg-white border border-gray-300 px-2 py-1">: {engagement.period}</div>
+                <div className="text-gray-900 bg-white border border-gray-300 px-2 py-1">: {engagement.period || new Date().getFullYear()}</div>
                 
                 <div className="text-red-700">Periode Pembanding *</div>
-                <div className="text-gray-900 bg-white border border-gray-300 px-2 py-1">: {parseInt(engagement.period) - 1}</div>
+                <div className="text-gray-900 bg-white border border-gray-300 px-2 py-1">: {parseInt(engagement.period) ? parseInt(engagement.period) - 1 : (new Date().getFullYear() - 1)}</div>
                 
                 <div className="text-red-700">SAK yang digunakan *</div>
-                <div className="text-gray-900 bg-white border border-gray-300 px-2 py-1">: SAK ETAP</div>
+                <div className="text-gray-900 bg-white border border-gray-300 px-2 py-1">: {engagement.accountingStandard || 'SAK Umum'}</div>
                 
                 <div className="text-red-700">Aktivitas *</div>
                 <div className="text-gray-900 bg-white border border-gray-300 px-2 py-1">: Audit</div>

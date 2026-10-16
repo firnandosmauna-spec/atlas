@@ -20,12 +20,48 @@ const D100: React.FC = () => {
   const [showGrid, setShowGrid] = useState(false);
   const [headerValidation, setHeaderValidation] = useState<'valid' | 'invalid'>('valid');
 
-  // Mock Table Data
-  const [tableData, setTableData] = useState([
-    { no: '11010', nama: 'Kas Kecil', group: 'ASET', kelompok: 'ASET LANCAR', header: 'Kas dan setara kas', input: 'Ya', defaultAkun: 'D', interim_input: 2500, interim_lk: 2500, berjalan_input: 5500, berjalan_lk: 5500, banding_input: 4500, banding_lk: 4500 },
-    { no: '12010', nama: 'Bank Mandiri', group: 'ASET', kelompok: 'ASET LANCAR', header: 'Kas dan setara kas', input: '', defaultAkun: 'D', interim_input: 0, interim_lk: 0, berjalan_input: 1250, berjalan_lk: 1250, banding_input: 1100, banding_lk: 1100 },
-    { no: '13001', nama: 'Piutang Usaha', group: 'ASET', kelompok: 'ASET LANCAR', header: 'Piutang usaha', input: 'Ya', defaultAkun: 'D', interim_input: 0, interim_lk: 0, berjalan_input: 7500, berjalan_lk: 7500, banding_input: 6000, banding_lk: 6000 },
-  ]);
+  // Table Data dynamically initialized from engagement trial balance or empty
+  const [tableData, setTableData] = useState(() => {
+    if (engagement.trialBalance && engagement.trialBalance.length > 0) {
+      return engagement.trialBalance.map(acc => ({
+        no: (acc as any).code || (acc as any).accountCode || '',
+        nama: (acc as any).name || (acc as any).accountName || '',
+        group: acc.group || '',
+        kelompok: (acc as any).subGroup || (acc as any).kelompok || '',
+        header: (acc as any).header || (acc as any).name || (acc as any).accountName || '',
+        input: 'Ya',
+        defaultAkun: (acc as any).endingBalance < 0 ? 'K' : 'D',
+        interim_input: 0,
+        interim_lk: 0,
+        berjalan_input: Math.abs((acc as any).endingBalance || 0),
+        berjalan_lk: Math.abs((acc as any).endingBalance || 0),
+        banding_input: 0,
+        banding_lk: 0,
+      }));
+    }
+    return [];
+  });
+
+  const handleAddNewRow = () => {
+    setTableData(prev => [
+      ...prev,
+      {
+        no: '',
+        nama: '',
+        group: '',
+        kelompok: '',
+        header: '',
+        input: 'Ya',
+        defaultAkun: 'D',
+        interim_input: 0,
+        interim_lk: 0,
+        berjalan_input: 0,
+        berjalan_lk: 0,
+        banding_input: 0,
+        banding_lk: 0,
+      }
+    ]);
+  };
 
   const handleValidate = () => {
     if (!periodeBerjalan || !periodePerbandingan) {
@@ -155,6 +191,12 @@ const D100: React.FC = () => {
               </h3>
               
               <div className="flex items-center gap-4">
+                <button 
+                  onClick={handleAddNewRow}
+                  className="bg-emerald-600 text-white font-bold text-xs px-4 py-2 rounded shadow-sm hover:bg-emerald-700 transition-colors"
+                >
+                  + Tambah Baris Akun
+                </button>
                 <button className="bg-red-600 text-white font-bold text-xs px-4 py-2 rounded shadow-sm hover:bg-red-700 transition-colors">
                   Klik tambah header
                 </button>
@@ -202,9 +244,9 @@ const D100: React.FC = () => {
                     <th rowSpan={2} className="border border-gray-200 px-3 py-2 bg-gray-100 min-w-[200px] text-blue-600">Mapping Header Akun</th>
                     <th rowSpan={2} className="border border-gray-200 px-3 py-2 bg-gray-100 text-center w-12 text-red-600">Input</th>
                     <th rowSpan={2} className="border border-gray-200 px-3 py-2 bg-gray-100 text-center w-16 text-red-600 italic leading-tight">Default<br/>Akun</th>
-                    <th colSpan={2} className="border border-gray-200 px-3 py-1 bg-white text-center text-red-500 font-normal lowercase">{periodeInterim || '30 Juni 2018'}</th>
-                    <th colSpan={2} className="border border-gray-200 px-3 py-1 bg-white text-center text-red-500 font-normal lowercase">{periodeBerjalan || '31 Desember 2018'}</th>
-                    <th colSpan={2} className="border border-gray-200 px-3 py-1 bg-white text-center text-red-500 font-normal lowercase">{periodePerbandingan || '31 Desember 2017'}</th>
+                    <th colSpan={2} className="border border-gray-200 px-3 py-1 bg-white text-center text-red-500 font-normal lowercase">{periodeInterim || '-'}</th>
+                    <th colSpan={2} className="border border-gray-200 px-3 py-1 bg-white text-center text-red-500 font-normal lowercase">{periodeBerjalan || `31 Desember ${engagement.period || new Date().getFullYear()}`}</th>
+                    <th colSpan={2} className="border border-gray-200 px-3 py-1 bg-white text-center text-red-500 font-normal lowercase">{periodePerbandingan || `31 Desember ${Number(engagement.period || new Date().getFullYear()) - 1}`}</th>
                   </tr>
                   <tr>
                     <th className="border border-gray-200 px-2 py-1 bg-gray-100 text-center w-28 text-red-500 italic">Input Angka</th>

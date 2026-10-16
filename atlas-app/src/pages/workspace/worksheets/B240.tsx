@@ -29,9 +29,9 @@ const B240 = () => {
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
 
-  // Bagian 1: Analisis Z-Score (Mockup Variables)
-  const [saldoLaba, setSaldoLaba] = useState('2800.000');
-  const [modalSaham, setModalSaham] = useState('Modal disetor');
+  // Bagian 1: Analisis Z-Score
+  const [saldoLaba, setSaldoLaba] = useState('');
+  const [modalSaham, setModalSaham] = useState('');
 
   // Bagian 2: Risk Assessment
   const [riskItems, setRiskItems] = useState<RiskAssessmentItem[]>([

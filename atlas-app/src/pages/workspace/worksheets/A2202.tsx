@@ -16,11 +16,11 @@ interface RatioAnalysis {
 }
 
 const initialRatios: RatioAnalysis[] = [
-  { id: '1', name: 'Revenue Growth', group: 'Profitabilitas', pyValue: 1200000000, cyValue: 1500000000, expectation: 'Tumbuh sekitar 20% karena pembukaan cabang baru.', explanation: '', conclusion: '' },
-  { id: '2', name: 'Gross Profit Margin', group: 'Profitabilitas', pyValue: 0.35, cyValue: 0.38, expectation: 'Stabil di kisaran 35-40%.', explanation: '', conclusion: '' },
-  { id: '3', name: 'Operating Margin', group: 'Profitabilitas', pyValue: 0.15, cyValue: 0.12, expectation: 'Menurun sedikit akibat biaya sewa kantor baru.', explanation: '', conclusion: '' },
-  { id: '4', name: 'Current Ratio', group: 'Likuiditas', pyValue: 1.5, cyValue: 1.2, expectation: 'Masih di atas 1.0, namun ada kenaikan utang bank jangka pendek.', explanation: '', conclusion: '' },
-  { id: '5', name: 'Debt to Equity Ratio', group: 'Solvabilitas', pyValue: 0.8, cyValue: 1.1, expectation: 'Meningkat tajam karena pinjaman modal kerja.', explanation: '', conclusion: '' },
+  { id: '1', name: 'Revenue Growth', group: 'Profitabilitas', pyValue: 0, cyValue: 0, expectation: '', explanation: '', conclusion: '' },
+  { id: '2', name: 'Gross Profit Margin', group: 'Profitabilitas', pyValue: 0, cyValue: 0, expectation: '', explanation: '', conclusion: '' },
+  { id: '3', name: 'Operating Margin', group: 'Profitabilitas', pyValue: 0, cyValue: 0, expectation: '', explanation: '', conclusion: '' },
+  { id: '4', name: 'Current Ratio', group: 'Likuiditas', pyValue: 0, cyValue: 0, expectation: '', explanation: '', conclusion: '' },
+  { id: '5', name: 'Debt to Equity Ratio', group: 'Solvabilitas', pyValue: 0, cyValue: 0, expectation: '', explanation: '', conclusion: '' },
 ];
 
 const A2202 = () => {

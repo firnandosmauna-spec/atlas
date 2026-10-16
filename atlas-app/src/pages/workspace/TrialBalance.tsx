@@ -9,32 +9,16 @@ import ExportMenu from '../../components/ExportMenu';
 const GROUPS = ['Aset', 'Liabilitas', 'Ekuitas', 'Pendapatan', 'Beban'];
 const SUB_GROUPS = ['Aset Lancar', 'Aset Tidak Lancar', 'Liabilitas Jangka Pendek', 'Liabilitas Jangka Panjang', 'Modal', 'Pendapatan Usaha', 'Pendapatan Lain-lain', 'Beban Operasional', 'Beban Pokok Penjualan'];
 
-const initialMockData: Account[] = [
-  { id: '1', code: '1100-00', name: 'Kas dan Setara Kas', group: 'Aset', subGroup: 'Aset Lancar', debit: 500000000, credit: 0, endingBalance: 500000000 },
-  { id: '2', code: '1200-00', name: 'Piutang Usaha', group: 'Aset', subGroup: 'Aset Lancar', debit: 250000000, credit: 50000000, endingBalance: 200000000 },
-  { id: '3', code: '2100-00', name: 'Hutang Bank', group: 'Liabilitas', subGroup: 'Liabilitas Jangka Pendek', debit: 10000000, credit: 150000000, endingBalance: -140000000 },
-  { id: '4', code: '3100-00', name: 'Modal Saham', group: 'Ekuitas', subGroup: 'Modal', debit: 0, credit: 500000000, endingBalance: -500000000 },
-  { id: '5', code: '4100-00', name: 'Pendapatan Jasa', group: 'Pendapatan', subGroup: 'Pendapatan Usaha', debit: 0, credit: 300000000, endingBalance: -300000000 },
-  { id: '6', code: '5100-00', name: 'Beban Gaji', group: 'Beban', subGroup: 'Beban Operasional', debit: 120000000, credit: 0, endingBalance: 120000000 },
-];
-
 const TrialBalance = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
   const navigate = useNavigate();
   const updateEngagement = useEngagementStore(state => state.updateEngagement);
   
-  const [accounts, setAccounts] = useState<Account[]>(engagement.trialBalance || initialMockData);
+  const [accounts, setAccounts] = useState<Account[]>(engagement.trialBalance || []);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
   const [showImport, setShowImport] = useState(false);
-
-  // Auto-sync when empty
-  useEffect(() => {
-    if (!engagement.trialBalance) {
-      updateEngagement(engagement.id, { trialBalance: accounts });
-    }
-  }, []);
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(Math.abs(val));
@@ -46,7 +30,7 @@ const TrialBalance = () => {
     setTimeout(() => setIsSaved(false), 3000);
   };
 
-  const handleMockUpload = () => {
+  const handleOpenImport = () => {
     setShowImport(true);
   };
 
@@ -111,7 +95,7 @@ const TrialBalance = () => {
         
         <div className="flex space-x-3">
           <div className="flex border border-gray-200 p-1 mr-4">
-            <button onClick={handleMockUpload} className="flex items-center px-4 py-2 bg-gray-100 font-semibold text-sm text-gray-900 transition-colors hover:bg-gray-200">
+            <button onClick={handleOpenImport} className="flex items-center px-4 py-2 bg-gray-100 font-semibold text-sm text-gray-900 transition-colors hover:bg-gray-200">
               <Upload size={16} className="mr-2" /> Import Excel/CSV
             </button>
             <button onClick={handleAddManual} className="flex items-center px-4 py-2 hover:bg-gray-50 text-sm font-medium text-gray-600 transition-colors">
@@ -282,6 +266,16 @@ const TrialBalance = () => {
                     </td>
                   </tr>
                 ))}
+                {accounts.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-16 text-center text-gray-500">
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <p className="font-semibold text-gray-700">Belum ada akun di Trial Balance</p>
+                        <p className="text-xs text-gray-500">Gunakan tombol "+ Tambah Akun" di atas atau "Import Excel" untuk mengisi data neraca saldo klien.</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

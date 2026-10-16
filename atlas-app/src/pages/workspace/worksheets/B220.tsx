@@ -27,28 +27,23 @@ const B220 = () => {
   const [isSaved, setIsSaved] = useState(false);
 
   // Data dari A.230.3 (Read-only)
-  const pihakBerelasiAwal: PihakBerelasiItem[] = [
-    { id: 'a1', identitas: 'PT Induk Semang', sifatHubungan: 'Perusahaan Induk', melakukanTransaksi: 'Ya' },
-    { id: 'a2', identitas: 'Direktur Utama', sifatHubungan: 'Manajemen Kunci', melakukanTransaksi: 'Tidak' },
-  ];
+  const pihakBerelasiAwal: PihakBerelasiItem[] = [];
 
   // Data tambahan dari hasil prosedur B.220 (Editable)
-  const [pihakBerelasiTambahan, setPihakBerelasiTambahan] = useState<PihakBerelasiItem[]>([
-    { id: 't1', identitas: 'CV Mitra Jaya', sifatHubungan: 'Entitas Sepengendali', melakukanTransaksi: 'Ya' },
-  ]);
+  const [pihakBerelasiTambahan, setPihakBerelasiTambahan] = useState<PihakBerelasiItem[]>([]);
 
   const [prosedur, setProsedur] = useState<ProsedurItem[]>([
     { id: '1', no: '1', isParent: true, prosedur: 'Mengidentifikasi penilaian risiko salah saji material yang berkaitan dengan hubungan dan transaksi pihak berelasi dengan melakukan:', pelaksanaan: '', referensi: '' },
-    { id: '1a', no: 'a.', isParent: false, prosedur: 'Konfirmasi atau diskusi tentang sifat transaksi dengan pihak perantara yang sesuai (seperti bank, konsultan hukum, penjamin).', pelaksanaan: 'dilaksanakan', referensi: 'B.220.1' },
-    { id: '1b', no: 'b.', isParent: false, prosedur: 'Analisis catatan akuntansi untuk transaksi dengan pihak berelasi yang baru teridentifikasi.', pelaksanaan: 'dilaksanakan', referensi: 'B.220.2' },
-    { id: '1c', no: 'c.', isParent: false, prosedur: 'Mengonfirmasikan tujuan, hal spesifik, dan kondisi atau jumlah transfer dengan pihak berelasi.', pelaksanaan: 'tidak dilaksanakan', referensi: '-' },
-    { id: '1d', no: 'd.', isParent: false, prosedur: 'Mengevaluasi apakah transaksi pihak berelasi dicatat dan diungkapkan secara tepat.', pelaksanaan: 'dilaksanakan', referensi: 'C.100' },
-    { id: '1e', no: 'e.', isParent: false, prosedur: 'Memeriksa kontrak dengan pihak berelasi yang signifikan.', pelaksanaan: 'tidak berlaku', referensi: '-' },
+    { id: '1a', no: 'a.', isParent: false, prosedur: 'Konfirmasi atau diskusi tentang sifat transaksi dengan pihak perantara yang sesuai (seperti bank, konsultan hukum, penjamin).', pelaksanaan: '', referensi: '' },
+    { id: '1b', no: 'b.', isParent: false, prosedur: 'Analisis catatan akuntansi untuk transaksi dengan pihak berelasi yang baru teridentifikasi.', pelaksanaan: '', referensi: '' },
+    { id: '1c', no: 'c.', isParent: false, prosedur: 'Mengonfirmasikan tujuan, hal spesifik, dan kondisi atau jumlah transfer dengan pihak berelasi.', pelaksanaan: '', referensi: '' },
+    { id: '1d', no: 'd.', isParent: false, prosedur: 'Mengevaluasi apakah transaksi pihak berelasi dicatat dan diungkapkan secara tepat.', pelaksanaan: '', referensi: '' },
+    { id: '1e', no: 'e.', isParent: false, prosedur: 'Memeriksa kontrak dengan pihak berelasi yang signifikan.', pelaksanaan: '', referensi: '' },
     { id: '2', no: '2', isParent: true, prosedur: 'Mengidentifikasi transaksi pihak berelasi yang belum ditemukan, belum diungkapkan, atau signifikan.', pelaksanaan: '', referensi: '' },
-    { id: '2a', no: 'a.', isParent: false, prosedur: 'Mengomunikasikan informasi yang relevan kepada anggota tim perikatan lainnya.', pelaksanaan: 'dilaksanakan', referensi: '-' },
+    { id: '2a', no: 'a.', isParent: false, prosedur: 'Mengomunikasikan informasi yang relevan kepada anggota tim perikatan lainnya.', pelaksanaan: '', referensi: '' },
     { id: '2b', no: 'b.', isParent: true, prosedur: 'Ketentuan kerangka pelaporan keuangan yang berlaku yang digunakan pihak berelasi:', pelaksanaan: '', referensi: '' },
-    { id: '2b_i', no: '(i)', isParent: false, prosedur: 'Meminta manajemen untuk mengidentifikasi semua transaksi dengan pihak berelasi yang baru diketahui untuk evaluasi lebih lanjut.', pelaksanaan: 'dilaksanakan', referensi: '-' },
-    { id: '2b_ii', no: '(ii)', isParent: false, prosedur: 'Meminta keterangan mengapa entitas yang mengontrol hubungan dan transaksi pihak berelasi gagal untuk menemukan dan mengungkapkan.', pelaksanaan: 'tidak berlaku', referensi: '-' },
+    { id: '2b_i', no: '(i)', isParent: false, prosedur: 'Meminta manajemen untuk mengidentifikasi semua transaksi dengan pihak berelasi yang baru diketahui untuk evaluasi lebih lanjut.', pelaksanaan: '', referensi: '' },
+    { id: '2b_ii', no: '(ii)', isParent: false, prosedur: 'Meminta keterangan mengapa entitas yang mengontrol hubungan dan transaksi pihak berelasi gagal untuk menemukan dan mengungkapkan.', pelaksanaan: '', referensi: '' },
   ]);
 
   const [simpulan, setSimpulan] = useState('');
@@ -203,8 +198,14 @@ const B220 = () => {
               </tr>
             </thead>
             <tbody>
-              {/* Render rows side by side. Max of both arrays */}
-              {Array.from({ length: Math.max(pihakBerelasiAwal.length, pihakBerelasiTambahan.length) }).map((_, index) => {
+              {Math.max(pihakBerelasiAwal.length, pihakBerelasiTambahan.length) === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-4 py-8 text-center text-xs text-gray-500 bg-gray-50">
+                    Belum ada data pihak berelasi. Klik tombol <strong>"+ Tambah Temuan Pihak Berelasi"</strong> di bawah untuk menambahkan.
+                  </td>
+                </tr>
+              ) : (
+                Array.from({ length: Math.max(pihakBerelasiAwal.length, pihakBerelasiTambahan.length) }).map((_, index) => {
                 const awal = pihakBerelasiAwal[index];
                 const tambahan = pihakBerelasiTambahan[index];
 
@@ -244,7 +245,7 @@ const B220 = () => {
                     </td>
                   </tr>
                 );
-              })}
+              }))}
             </tbody>
           </table>
           <div className="p-2 border-t border-gray-300 bg-gray-50 flex justify-end">

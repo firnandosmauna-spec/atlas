@@ -24,14 +24,8 @@ const A240 = () => {
   const [fsRiskLevel, setFsRiskLevel] = useState('');
   const [fsRiskDesc, setFsRiskDesc] = useState('');
 
-  // --- State untuk Tingkat Akun ---
-  // Menggunakan TB dari engagement atau mock jika kosong
-  const tb = engagement.trialBalance || [
-    { name: "Kas dan Setara Kas", endingBalance: 1500000000 },
-    { name: "Piutang Usaha", endingBalance: 2500000000 },
-    { name: "Persediaan", endingBalance: 3000000000 },
-    { name: "Aset Tetap", endingBalance: 12000000000 }
-  ];
+  // State untuk Tingkat Akun
+  const tb = engagement.trialBalance || [];
 
   // Inisialisasi state per baris akun
   const [accLevelData, setAccLevelData] = useState<{
@@ -233,7 +227,14 @@ const A240 = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {tb.map((item, idx) => {
+                {tb.length === 0 ? (
+                  <tr>
+                    <td colSpan={17} className="px-4 py-8 text-center text-sm text-gray-500 bg-gray-50">
+                      Belum ada data akun Trial Balance pada perikatan ini. Silakan input akun di menu Trial Balance terlebih dahulu.
+                    </td>
+                  </tr>
+                ) : (
+                  tb.map((item, idx) => {
                   const data = accLevelData[item.name] || {};
                   const calcIR = calculateIR(data.likelihood, data.magnitude);
                   const isSig = isSignificantRisk(data);
@@ -312,8 +313,8 @@ const A240 = () => {
                         <textarea className="w-full h-full min-h-[30px] bg-transparent outline-none px-2 py-1 resize-none" placeholder="..." value={data.keterangan || ''} onChange={(e) => handleAccChange(item.name, 'keterangan', e.target.value)}></textarea>
                       </td>
                     </tr>
-                  )
-                })}
+                  );
+                }))}
               </tbody>
             </table>
           </div>

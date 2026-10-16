@@ -22,14 +22,7 @@ const B210 = () => {
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
 
-  const [items, setItems] = useState<EstimasiItem[]>([
-    { id: '1', akun: 'Aset Tetap Berwujud', tenagaAhli: 'KJPP XYZ', metode: 'Revaluasi', asumsi: 'Nilai Pasar', pengendalian: 'Review Manajemen', levelNilaiWajar: 'Level 2', referensi: 'A.100', catatan: 'Memadai' },
-    { id: '2', akun: 'Imbalan Pascakerja', tenagaAhli: 'Aktuaris ABC', metode: 'Projected Unit Credit', asumsi: 'Tingkat diskonto 7%', pengendalian: 'Otorisasi Direktur', levelNilaiWajar: 'Level 3', referensi: 'B.150', catatan: 'Memadai' },
-    { id: '3', akun: 'Penyusutan Aset', tenagaAhli: '-', metode: 'Garis Lurus', asumsi: 'Masa manfaat 5 tahun', pengendalian: 'Review Otomatis Sistem', levelNilaiWajar: '-', referensi: '-', catatan: 'Sesuai kebijakan akuntansi' },
-    { id: '4', akun: 'Cadangan penurunan nilai piutang', tenagaAhli: '-', metode: 'ECL', asumsi: 'Historical loss rate', pengendalian: 'Persetujuan CFO', levelNilaiWajar: '-', referensi: '-', catatan: 'Sesuai PSAK 71' },
-    { id: '5', akun: 'Impairment nilai goodwill / aset', tenagaAhli: 'Appraisal Independen', metode: 'DCF', asumsi: 'Growth rate 5%', pengendalian: 'Review Board', levelNilaiWajar: 'Level 3', referensi: '-', catatan: 'Asumsi agresif, perlu pendalaman' },
-    { id: '6', akun: 'Penurunan nilai Persediaan', tenagaAhli: '-', metode: 'NRV', asumsi: 'Harga jual terakhir', pengendalian: 'Stock opname tahunan', levelNilaiWajar: '-', referensi: '-', catatan: 'Memadai' },
-  ]);
+  const [items, setItems] = useState<EstimasiItem[]>([]);
 
   const [simpulan, setSimpulan] = useState('');
   const [alasan, setAlasan] = useState('');
@@ -167,7 +160,14 @@ const B210 = () => {
               </tr>
             </thead>
             <tbody>
-              {items.map((item, index) => (
+              {items.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="px-4 py-8 text-center text-xs text-gray-500 bg-gray-50">
+                    Belum ada catatan estimasi akuntansi manajemen. Klik tombol <strong>"+ Tambah Baris Estimasi"</strong> di bawah untuk menambahkan.
+                  </td>
+                </tr>
+              ) : (
+                items.map((item, index) => (
                 <tr key={item.id} className="hover:bg-slate-50 transition-colors">
                   <td className="border border-gray-400 bg-gray-50 text-center font-bold p-0 text-gray-500">
                     <div className="w-full h-full p-1.5 flex items-center justify-center">{index + 1}</div>
@@ -200,7 +200,7 @@ const B210 = () => {
                     <button onClick={() => handleDelete(item.id)} className="text-red-500 hover:text-red-700 bg-white p-1 rounded shadow-sm border border-red-100"><Trash2 size={12} /></button>
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
           <div className="p-2 border-t border-gray-300 bg-gray-50 flex justify-end">

@@ -6,12 +6,21 @@ import type { Engagement } from '../store/engagementStore';
 const PraPerikatan = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
 
+  const isA110Done = Boolean(engagement.worksheetA110?.decision);
   let worksheets: WorksheetInfo[] = [
-    { id: '1', code: 'A.110', name: 'Analisis Penerimaan dan Keberlanjutan Hubungan dengan Klien', status: 'Completed', progress: 100, reviewer: 'Budi S. (Manager)', lastUpdated: '12 Okt 2023' },
-    { id: '2', code: 'A.120', name: 'Alokasi Jam Jasa dan Biaya', status: 'In Progress', progress: 60, reviewer: null, lastUpdated: '14 Okt 2023' },
+    { 
+      id: '1', 
+      code: 'A.110', 
+      name: 'Analisis Penerimaan dan Keberlanjutan Hubungan dengan Klien', 
+      status: isA110Done ? 'Completed' : 'Not Started', 
+      progress: isA110Done ? 100 : 0, 
+      reviewer: isA110Done ? (engagement.managerName || 'Manager') : null, 
+      lastUpdated: isA110Done ? 'Tersimpan' : '-' 
+    },
+    { id: '2', code: 'A.120', name: 'Alokasi Jam Jasa dan Biaya', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
     { id: '3', code: 'A.130', name: 'Surat Perikatan', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
     { id: '4', code: 'A.140', name: 'Surat Tugas', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
-    { id: '5', code: 'A.150', name: 'Pernyataan Independensi', status: 'Needs Revision', progress: 90, reviewer: 'Agus T. (Partner)', lastUpdated: '15 Okt 2023' },
+    { id: '5', code: 'A.150', name: 'Pernyataan Independensi', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
     { id: '6', code: 'A.160', name: 'Komunikasi Tim Perikatan', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
   ];
 

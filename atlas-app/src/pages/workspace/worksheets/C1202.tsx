@@ -43,18 +43,18 @@ const C1202 = () => {
   ]);
 
   const [dataRasio, setDataRasio] = useState<SimpulanRasio[]>([
-    { id: 'r1', jenis: 'Rasio Lancar', analisisAwal: 1.5, analisisFinal: 0, periodeSebelumnya: 1.4, rataIndustri: 0, analisis: '' },
-    { id: 'r2', jenis: 'Rasio Kas', analisisAwal: 0.8, analisisFinal: 0, periodeSebelumnya: 0.7, rataIndustri: 0, analisis: '' },
-    { id: 'r3', jenis: 'Rasio Cepat', analisisAwal: 1.1, analisisFinal: 0, periodeSebelumnya: 1.2, rataIndustri: 0, analisis: '' },
-    { id: 'r4', jenis: 'Perputaran Persediaan', analisisAwal: 4.5, analisisFinal: 0, periodeSebelumnya: 4.0, rataIndustri: 0, analisis: '' },
-    { id: 'r5', jenis: 'Perputaran Piutang Usaha', analisisAwal: 6.2, analisisFinal: 0, periodeSebelumnya: 6.0, rataIndustri: 0, analisis: '' },
-    { id: 'r6', jenis: 'Perputaran Total Aset', analisisAwal: 1.2, analisisFinal: 0, periodeSebelumnya: 1.1, rataIndustri: 0, analisis: '' },
-    { id: 'r7', jenis: 'Rasio Utang terhadap Ekuitas', analisisAwal: 0.5, analisisFinal: 0, periodeSebelumnya: 0.6, rataIndustri: 0, analisis: '' },
-    { id: 'r8', jenis: 'Rasio Utang terhadap Total Aset', analisisAwal: 0.3, analisisFinal: 0, periodeSebelumnya: 0.4, rataIndustri: 0, analisis: '' },
-    { id: 'r9', jenis: 'Laba Kotor terhadap Penjualan', analisisAwal: 0.4, analisisFinal: 0, periodeSebelumnya: 0.38, rataIndustri: 0, analisis: '' },
-    { id: 'r10', jenis: 'Laba Bersih terhadap Penjualan', analisisAwal: 0.15, analisisFinal: 0, periodeSebelumnya: 0.12, rataIndustri: 0, analisis: '' },
-    { id: 'r11', jenis: 'Return on Assets (ROA)', analisisAwal: 0.1, analisisFinal: 0, periodeSebelumnya: 0.08, rataIndustri: 0, analisis: '' },
-    { id: 'r12', jenis: 'Return on Equity (ROE)', analisisAwal: 0.18, analisisFinal: 0, periodeSebelumnya: 0.15, rataIndustri: 0, analisis: '' },
+    { id: 'r1', jenis: 'Rasio Lancar', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
+    { id: 'r2', jenis: 'Rasio Kas', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
+    { id: 'r3', jenis: 'Rasio Cepat', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
+    { id: 'r4', jenis: 'Perputaran Persediaan', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
+    { id: 'r5', jenis: 'Perputaran Piutang Usaha', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
+    { id: 'r6', jenis: 'Perputaran Total Aset', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
+    { id: 'r7', jenis: 'Rasio Utang terhadap Ekuitas', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
+    { id: 'r8', jenis: 'Rasio Utang terhadap Total Aset', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
+    { id: 'r9', jenis: 'Laba Kotor terhadap Penjualan', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
+    { id: 'r10', jenis: 'Laba Bersih terhadap Penjualan', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
+    { id: 'r11', jenis: 'Return on Assets (ROA)', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
+    { id: 'r12', jenis: 'Return on Equity (ROE)', analisisAwal: 0, analisisFinal: 0, periodeSebelumnya: 0, rataIndustri: 0, analisis: '' },
   ]);
 
   const handleUpdateAkun = (id: string, field: keyof DataRasio, value: string) => {

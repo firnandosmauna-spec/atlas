@@ -29,12 +29,7 @@ const B130 = () => {
   const [simpulanPAJE, setSimpulanPAJE] = useState('');
 
   // Journal Entries State
-  const [entries, setEntries] = useState<JournalEntry[]>([
-    { id: '1', ref: 'AJ1', noAkun: '1001', namaAkun: 'Kas dan Setara Kas', keterangan: 'Penyesuaian kas', dibukukanD: 5000000, dibukukanK: 0, tdkDibukukanD: 0, tdkDibukukanK: 0, kelompok: 'ASET LANCAR', kelemahanPI: 'TIDAK', kecurangan: 'TIDAK' },
-    { id: '2', ref: 'AJ1', noAkun: '5001', namaAkun: 'Beban Operasional', keterangan: 'Penyesuaian kas', dibukukanD: 0, dibukukanK: 5000000, tdkDibukukanD: 0, tdkDibukukanK: 0, kelompok: 'BEBAN', kelemahanPI: 'TIDAK', kecurangan: 'TIDAK' },
-    { id: '3', ref: 'AJ2', noAkun: '1002', namaAkun: 'Piutang Usaha', keterangan: 'Koreksi piutang tak tertagih', dibukukanD: 0, dibukukanK: 0, tdkDibukukanD: 10000000, tdkDibukukanK: 0, kelompok: 'ASET LANCAR', kelemahanPI: 'YA', kecurangan: 'TIDAK' },
-    { id: '4', ref: 'AJ2', noAkun: '4001', namaAkun: 'Pendapatan Jasa', keterangan: 'Koreksi piutang tak tertagih', dibukukanD: 0, dibukukanK: 0, tdkDibukukanD: 0, tdkDibukukanK: 10000000, kelompok: 'PENDAPATAN', kelemahanPI: 'YA', kecurangan: 'TIDAK' },
-  ]);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
 
   const handleUpdate = (id: string, field: keyof JournalEntry, value: any) => {
     setEntries(prev => prev.map(entry => entry.id === id ? { ...entry, [field]: value } : entry));
@@ -70,7 +65,7 @@ const B130 = () => {
   const totalTdkDibukukanD = entries.reduce((s, e) => s + e.tdkDibukukanD, 0);
   const totalTdkDibukukanK = entries.reduce((s, e) => s + e.tdkDibukukanK, 0);
 
-  const performanceMateriality = 50000000; // Dummy value
+  const performanceMateriality = engagement.materiality?.performanceMateriality || 0;
 
   return (
     <WorksheetContainer
@@ -212,7 +207,14 @@ const B130 = () => {
               </tr>
             </thead>
             <tbody>
-              {entries.map((entry) => (
+              {entries.length === 0 ? (
+                <tr>
+                  <td colSpan={12} className="px-4 py-8 text-center text-xs text-gray-500 bg-gray-50">
+                    Belum ada jurnal penyesuaian (CAJE/PAJE). Klik tombol <strong>"+ Tambah Baris Jurnal"</strong> di bawah untuk menambahkan.
+                  </td>
+                </tr>
+              ) : (
+                entries.map((entry) => (
                 <tr key={entry.id} className="hover:bg-slate-50">
                   <td className="p-0 border border-gray-400 bg-white">
                     <input type="text" className="w-full h-full p-1.5 outline-none text-center bg-transparent" value={entry.ref} onChange={e => handleUpdate(entry.id, 'ref', e.target.value)} />
@@ -267,7 +269,7 @@ const B130 = () => {
                     <button onClick={() => handleDelete(entry.id)} className="text-red-500 hover:text-red-700 bg-white p-1 rounded shadow-sm border border-red-100"><Trash2 size={12} /></button>
                   </td>
                 </tr>
-              ))}
+              )))}
               
               {/* Grand Totals */}
               <tr className="bg-gray-200/80 font-bold">

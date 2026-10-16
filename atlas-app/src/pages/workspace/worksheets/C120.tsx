@@ -43,19 +43,19 @@ const C120 = () => {
             <div className="bg-white border border-gray-300 px-2 py-1">{engagement.clientName}</div>
             
             <div className="text-red-700">Jenis usaha *</div>
-            <div className="bg-white border border-gray-300 px-2 py-1">Perdagangan Besar</div>
+            <div className="bg-white border border-gray-300 px-2 py-1">{engagement.businessSector || 'Perdagangan & Jasa'}</div>
             
             <div className="text-red-700">Periode Interim Berjalan *</div>
             <div className="bg-white border border-gray-300 px-2 py-1">-</div>
             
             <div className="text-red-700">Periode Berjalan *</div>
-            <div className="bg-white border border-gray-300 px-2 py-1">31/12/{engagement.period}</div>
+            <div className="bg-white border border-gray-300 px-2 py-1">31/12/{engagement.period || new Date().getFullYear()}</div>
             
             <div className="text-red-700">Periode Perbandingan *</div>
-            <div className="bg-white border border-gray-300 px-2 py-1">31/12/{parseInt(engagement.period) - 1}</div>
+            <div className="bg-white border border-gray-300 px-2 py-1">31/12/{parseInt(engagement.period) ? parseInt(engagement.period) - 1 : (new Date().getFullYear() - 1)}</div>
             
             <div className="text-red-700">SAK yang digunakan *</div>
-            <div className="bg-white border border-gray-300 px-2 py-1">SAK ETAP</div>
+            <div className="bg-white border border-gray-300 px-2 py-1">{engagement.accountingStandard || 'SAK Umum'}</div>
             
             <div className="text-red-700 mt-4">Analisis LK Tahap Akhir *</div>
             <div className="mt-4 grid grid-cols-[300px_100px] gap-2 items-center">

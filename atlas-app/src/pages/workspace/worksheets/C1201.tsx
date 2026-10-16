@@ -24,12 +24,22 @@ const C1201 = () => {
   const [simpulan, setSimpulan] = useState('');
   const [penjelasan, setPenjelasan] = useState('');
 
-  const [data, setData] = useState<AkunData[]>([
-    { id: '1', nama: 'Kas dan Setara Kas', saldoKini: 500000000, analisisVertikalKini: 0, saldoLalu: 450000000, analisisVertikalLalu: 0, rataIndustri: 0, keterangan: '' },
-    { id: '2', nama: 'Piutang Usaha', saldoKini: 1200000000, analisisVertikalKini: 0, saldoLalu: 1100000000, analisisVertikalLalu: 0, rataIndustri: 0, keterangan: '' },
-    { id: '3', nama: 'Persediaan', saldoKini: 800000000, analisisVertikalKini: 0, saldoLalu: 850000000, analisisVertikalLalu: 0, rataIndustri: 0, keterangan: '' },
-    { id: '4', nama: 'Aset Tetap', saldoKini: 2500000000, analisisVertikalKini: 0, saldoLalu: 2600000000, analisisVertikalLalu: 0, rataIndustri: 0, keterangan: '' },
-  ]);
+  const tb = engagement.trialBalance || [];
+  const [data, setData] = useState<AkunData[]>(() => {
+    if (tb.length > 0) {
+      return tb.map((acc, idx) => ({
+        id: acc.id || String(idx + 1),
+        nama: acc.name,
+        saldoKini: acc.endingBalance || 0,
+        analisisVertikalKini: 0,
+        saldoLalu: 0,
+        analisisVertikalLalu: 0,
+        rataIndustri: 0,
+        keterangan: ''
+      }));
+    }
+    return [];
+  });
 
   const handleUpdate = (id: string, field: keyof AkunData, value: string) => {
     setData(prev => prev.map(item => {
@@ -153,7 +163,14 @@ const C1201 = () => {
               </tr>
             </thead>
             <tbody>
-              {data.map((item) => {
+              {data.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-4 py-8 text-center text-xs text-gray-500 bg-gray-50">
+                    Belum ada data akun Trial Balance pada perikatan ini.
+                  </td>
+                </tr>
+              ) : (
+                data.map((item) => {
                 const diffNilai = item.saldoKini - item.saldoLalu;
                 const diffPersen = item.saldoLalu !== 0 ? (diffNilai / item.saldoLalu) * 100 : 0;
                 
@@ -181,8 +198,8 @@ const C1201 = () => {
                       />
                     </td>
                   </tr>
-                )
-              })}
+                );
+              }))}
             </tbody>
           </table>
         </div>

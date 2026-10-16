@@ -12,24 +12,8 @@ const B110 = () => {
   const [labaRugiTahunBerjalan, setLabaRugiTahunBerjalan] = useState('');
   const [ekuitasLainnya, setEkuitasLainnya] = useState('');
 
-  const tb = engagement.trialBalance || [
-    { name: "Kas dan Setara Kas", group: "Aset", endingBalance: 1500000000 },
-    { name: "Piutang Usaha", group: "Aset", endingBalance: 2500000000 },
-    { name: "Persediaan", group: "Aset", endingBalance: 3000000000 },
-    { name: "Aset Tetap", group: "Aset", endingBalance: 12000000000 },
-    { name: "Hutang Usaha", group: "Kewajiban", endingBalance: -4000000000 },
-    { name: "Modal Saham", group: "Ekuitas", endingBalance: -10000000000 },
-    { name: "Laba Ditahan", group: "Ekuitas", endingBalance: -2000000000 },
-    { name: "Pendapatan Jasa", group: "Pendapatan", endingBalance: -8000000000 },
-    { name: "Beban Gaji", group: "Beban", endingBalance: 3000000000 },
-    { name: "Beban Operasional", group: "Beban", endingBalance: 2000000000 },
-  ];
-
-  // Dummy CAJE data (in real app, this should come from B130)
-  const cajeData: Record<string, { debet: number, kredit: number }> = {
-    "Piutang Usaha": { debet: 50000000, kredit: 0 },
-    "Pendapatan Jasa": { debet: 0, kredit: 50000000 },
-  };
+  const tb = engagement.trialBalance || [];
+  const cajeData: Record<string, { debet: number, kredit: number }> = {};
 
   const formatCurrency = (val: number) => {
     if (val === 0) return '-';
@@ -55,7 +39,7 @@ const B110 = () => {
       // Assuming endingBalance is already properly signed (+ for Dr, - for Cr)
       const auditBalance = item.endingBalance + caje.debet - caje.kredit;
       
-      // Determine Lead Schedule (dummy logic)
+      // Determine Lead Schedule group mapping
       let ls = 'A';
       if (item.group === 'Kewajiban') ls = 'C';
       if (item.group === 'Ekuitas') ls = 'E';
@@ -63,7 +47,7 @@ const B110 = () => {
       if (item.group === 'Beban') ls = 'PL2';
 
       return {
-        noAkun: `100${index + 1}`,
+        noAkun: item.code || (item as any).accountCode || `100${index + 1}`,
         namaAkun: item.name,
         saldoBook: item.endingBalance,
         ls: ls,
@@ -77,7 +61,7 @@ const B110 = () => {
   const totalAsetAudit = tableData.filter(d => ['Aset'].includes(tb.find(t => t.name === d.namaAkun)?.group || '')).reduce((sum, d) => sum + d.saldoAudit, 0);
   const totalPasivaAudit = tableData.filter(d => ['Kewajiban', 'Ekuitas'].includes(tb.find(t => t.name === d.namaAkun)?.group || '')).reduce((sum, d) => sum + Math.abs(d.saldoAudit), 0);
   
-  // Dummy selisih neraca
+  // Selisih neraca (Aset - Pasiva)
   const selisihNeraca = totalAsetAudit - totalPasivaAudit;
 
   const handleSave = () => {
@@ -164,17 +148,25 @@ const B110 = () => {
               </tr>
 
               {/* Data Rows */}
-              {tableData.map((row) => (
-                <tr key={row.noAkun} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-2 py-1 border border-gray-300 text-center font-mono text-gray-700">{row.noAkun}</td>
-                  <td className="px-2 py-1 border border-gray-300 font-bold text-gray-800">{row.namaAkun}</td>
-                  <td className="px-2 py-1 border border-gray-300 text-right font-mono">{formatCurrency(row.saldoBook)}</td>
-                  <td className="px-2 py-1 border border-gray-300 text-center font-bold text-blue-700 underline cursor-pointer hover:bg-blue-50 transition-colors">{row.ls}</td>
-                  <td className="px-2 py-1 border border-gray-300 text-right font-mono text-gray-600">{formatCurrency(row.cajeDebet)}</td>
-                  <td className="px-2 py-1 border border-gray-300 text-right font-mono text-gray-600">{formatCurrency(row.cajeKredit)}</td>
-                  <td className="px-2 py-1 border border-gray-300 text-right font-mono font-bold">{formatCurrency(row.saldoAudit)}</td>
+              {tableData.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500 bg-gray-50">
+                    Belum ada data akun Trial Balance pada perikatan ini.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                tableData.map((row) => (
+                  <tr key={row.noAkun} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-2 py-1 border border-gray-300 text-center font-mono text-gray-700">{row.noAkun}</td>
+                    <td className="px-2 py-1 border border-gray-300 font-bold text-gray-800">{row.namaAkun}</td>
+                    <td className="px-2 py-1 border border-gray-300 text-right font-mono">{formatCurrency(row.saldoBook)}</td>
+                    <td className="px-2 py-1 border border-gray-300 text-center font-bold text-blue-700 underline cursor-pointer hover:bg-blue-50 transition-colors">{row.ls}</td>
+                    <td className="px-2 py-1 border border-gray-300 text-right font-mono text-gray-600">{formatCurrency(row.cajeDebet)}</td>
+                    <td className="px-2 py-1 border border-gray-300 text-right font-mono text-gray-600">{formatCurrency(row.cajeKredit)}</td>
+                    <td className="px-2 py-1 border border-gray-300 text-right font-mono font-bold">{formatCurrency(row.saldoAudit)}</td>
+                  </tr>
+                ))
+              )}
               
               {/* Grand Totals */}
               <tr className="bg-gray-200/60 font-bold">

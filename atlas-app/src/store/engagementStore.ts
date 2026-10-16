@@ -176,65 +176,7 @@ interface EngagementState {
   markAllNotificationsAsRead: () => void;
 }
 
-export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [
-  {
-    id: 'ENG-2026-618',
-    clientId: 'CLI-002',
-    clientName: 'tes',
-    clientAddress: 'Indonesia',
-    clientIndustry: 'Jasa & Perdagangan',
-    auditPeriod: '2025-12-31',
-    fiscalYear: '2025-12-31',
-    engagementType: 'First Year',
-    accountingStandard: 'SAK_UMUM',
-    currency: 'IDR',
-    presentationUnit: 'Full',
-    partnerId: 'usr-1',
-    partnerName: 'ahmad Auditor',
-    managerId: 'usr-3',
-    managerName: 'nando',
-    supervisorId: 'usr-4',
-    supervisorName: 'Bambang Supervisor, S.E., Ak.',
-    auditorId: 'usr-3',
-    auditorName: 'nando',
-    teamMembers: [
-      { id: 'usr-6', name: 'Rudi Substantif, S.Ak.', role: 'Anggota Tim 1', email: 'rudi.substantif@kap.com' }
-    ],
-    startDate: '2026-02-01',
-    targetDate: '2026-05-31',
-    status: 'Draft',
-    progress: 0
-  },
-  {
-    id: 'ENG-2026-001',
-    clientId: 'CLI-001',
-    clientName: 'PT Kertas Nusantara Sejahtera',
-    clientAddress: 'Kawasan Industri MM2100, Blok B-12, Cikarang Barat, Jawa Barat',
-    clientIndustry: 'Manufaktur & Pengolahan Kertas',
-    auditPeriod: '2025-12-31',
-    fiscalYear: '2025-12-31',
-    engagementType: 'Recurring',
-    accountingStandard: 'SAK_UMUM',
-    currency: 'IDR',
-    presentationUnit: 'Full',
-    partnerId: 'usr-2',
-    partnerName: 'Drs. Fridolinus Peno, Ak., M.M., CA., CPA.',
-    managerId: 'usr-3',
-    managerName: 'Nando Manager, S.E., M.Ak.',
-    supervisorId: 'usr-4',
-    supervisorName: 'Bambang Supervisor, S.E., Ak.',
-    auditorId: 'usr-5',
-    auditorName: 'Dwi Safitriana (Auditor Atlas)',
-    teamMembers: [
-      { id: 'usr-6', name: 'Rudi Substantif, S.Ak.', role: 'Anggota Tim 1', email: 'rudi.substantif@kap.com' },
-      { id: 'usr-7', name: 'Siti Rahma, S.E., M.Ak.', role: 'Anggota Tim 2', email: 'siti.rahma@kap.com' }
-    ],
-    startDate: '2026-01-15',
-    targetDate: '2026-04-30',
-    status: 'Active',
-    progress: 40
-  }
-];
+export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [];
 
 export const useEngagementStore = create<EngagementState>()(
   persist(
@@ -322,16 +264,19 @@ export const useEngagementStore = create<EngagementState>()(
     }),
     {
       name: 'atlas_engagements_store',
-      version: 3,
+      version: 4,
       migrate: (persistedState: any) => {
         if (!persistedState) {
-          return { engagements: DEFAULT_MASTER_ENGAGEMENTS, auditLogs: [], attachments: [], notifications: [], reviewNotes: [] };
+          return { engagements: [], auditLogs: [], attachments: [], notifications: [], reviewNotes: [] };
         }
-        const mockIds = ['ENG-2024-001', 'ENG-2025-DEMO', 'ENG-2018-001', 'ENG-2018-002', 'ENG-2018-003', 'ENG-2018-004'];
+        const mockIds = [
+          'ENG-2024-001', 'ENG-2025-DEMO', 'ENG-2018-001', 'ENG-2018-002', 'ENG-2018-003', 'ENG-2018-004',
+          'ENG-2026-618', 'ENG-2026-001'
+        ];
         const existingEngs = (persistedState.engagements || []).filter((e: any) => !mockIds.includes(e.id));
         return {
           ...persistedState,
-          engagements: existingEngs.length > 0 ? existingEngs : DEFAULT_MASTER_ENGAGEMENTS,
+          engagements: existingEngs,
           auditLogs: (persistedState.auditLogs || []).filter((l: any) => !mockIds.includes(l.engagementId)),
           attachments: (persistedState.attachments || []).filter((a: any) => !mockIds.includes(a.engagementId)),
           reviewNotes: (persistedState.reviewNotes || []).filter((r: any) => !mockIds.includes(r.engagementId)),

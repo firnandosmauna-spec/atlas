@@ -26,10 +26,8 @@ const LeadSchedule = ({ indeks = 'A' }: { indeks?: string }) => {
   if (indeks.toUpperCase() === 'PL2') group = 'Beban';
 
   // Filter trial balance
-  const tbFiltered = engagement.trialBalance?.filter(t => t.group === group) || [
-    { name: "Dummy Account 1", endingBalance: 1000000 },
-    { name: "Dummy Account 2", endingBalance: 2000000 },
-  ];
+  const tb = engagement.trialBalance || [];
+  const tbFiltered = tb.filter(t => (t.group || '').toLowerCase() === group.toLowerCase() || ((t as any).subGroup || (t as any).kelompok || '').toLowerCase().includes(group.toLowerCase()));
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(Math.abs(val));
 
@@ -68,7 +66,7 @@ const LeadSchedule = ({ indeks = 'A' }: { indeks?: string }) => {
           <div className="w-full md:w-72 bg-white border border-gray-300 p-2 rounded text-[10px]">
              <div className="flex justify-between items-center mb-1">
                <span>Disiapkan oleh</span>
-               <input type="text" className="border border-red-300 bg-red-50 w-24 px-1 py-0.5" defaultValue="Auditor A" />
+               <input type="text" className="border border-red-300 bg-red-50 w-24 px-1 py-0.5" defaultValue={engagement.auditorName || ''} />
              </div>
              <div className="flex justify-between items-center mb-1">
                <span>Tanggal mulai</span>
@@ -80,7 +78,7 @@ const LeadSchedule = ({ indeks = 'A' }: { indeks?: string }) => {
              </div>
              <div className="flex justify-between items-center mb-1">
                <span>Direview oleh</span>
-               <input type="text" className="border border-red-300 bg-red-50 w-24 px-1 py-0.5" defaultValue="Manager B" />
+               <input type="text" className="border border-red-300 bg-red-50 w-24 px-1 py-0.5" defaultValue={engagement.managerName || ''} />
              </div>
           </div>
         </div>
@@ -184,19 +182,32 @@ const LeadSchedule = ({ indeks = 'A' }: { indeks?: string }) => {
               </tr>
             </thead>
             <tbody>
-              {tbFiltered.map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-2 py-1 border border-gray-300 text-center font-mono text-gray-700">100{idx+1}</td>
-                  <td className="px-2 py-1 border border-gray-300 font-bold text-gray-800">{item.name}</td>
-                  <td className="px-2 py-1 border border-gray-300 text-right font-mono">{formatCurrency(item.endingBalance)}</td>
-                  <td className="px-2 py-1 border border-gray-300 bg-white"></td>
-                  <td className="px-2 py-1 border border-gray-300 bg-white"></td>
-                  <td className="px-2 py-1 border border-gray-300 text-right font-mono text-gray-600">-</td>
-                  <td className="px-2 py-1 border border-gray-300 text-right font-mono text-gray-600">-</td>
-                  <td className="px-2 py-1 border border-gray-300 bg-white"></td>
-                  <td className="px-2 py-1 border border-gray-300 text-right font-mono font-bold">{formatCurrency(item.endingBalance)}</td>
+              {tbFiltered.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-4 py-8 text-center text-gray-400 bg-gray-50 italic">
+                    Belum ada akun {group ? `kelompok ${group}` : ''} pada Trial Balance. Silakan import atau input akun pada menu Trial Balance.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                tbFiltered.map((item, idx) => {
+                  const code = (item as any).code || (item as any).accountCode || `100${idx + 1}`;
+                  const name = item.name || (item as any).accountName || '-';
+                  const balance = (item as any).finalBalanceDebit || (item as any).finalBalanceCredit || item.endingBalance || 0;
+                  return (
+                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-2 py-1 border border-gray-300 text-center font-mono text-gray-700">{code}</td>
+                      <td className="px-2 py-1 border border-gray-300 font-bold text-gray-800">{name}</td>
+                      <td className="px-2 py-1 border border-gray-300 text-right font-mono">{formatCurrency(balance)}</td>
+                      <td className="px-2 py-1 border border-gray-300 bg-white"></td>
+                      <td className="px-2 py-1 border border-gray-300 bg-white"></td>
+                      <td className="px-2 py-1 border border-gray-300 text-right font-mono text-gray-600">-</td>
+                      <td className="px-2 py-1 border border-gray-300 text-right font-mono text-gray-600">-</td>
+                      <td className="px-2 py-1 border border-gray-300 bg-white"></td>
+                      <td className="px-2 py-1 border border-gray-300 text-right font-mono font-bold">{formatCurrency(balance)}</td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

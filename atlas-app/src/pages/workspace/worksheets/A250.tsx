@@ -12,7 +12,7 @@ const A250 = () => {
   const [kesimpulanAkhir, setKesimpulanAkhir] = useState('');
 
   const cycles = [
-    { id: 'A.250.1', title: 'Entity Level', conclusion: 'Efektif' },
+    { id: 'A.250.1', title: 'Entity Level', conclusion: 'Belum Dinilai' },
     { id: 'A.250.2', title: 'Uraian Siklus Penjualan, Piutang Usaha, dan Penerimaan', conclusion: 'Belum Dinilai' },
     { id: 'A.250.3', title: 'Uraian Siklus Pembelian Persediaan, Hutang, dan Pengeluaran', conclusion: 'Belum Dinilai' },
     { id: 'A.250.4', title: 'Uraian Penyimpanan dan Pengendalian Kas', conclusion: 'Belum Dinilai' },
@@ -47,15 +47,15 @@ const A250 = () => {
             </div>
             <div className="flex items-center justify-between border-b border-cyan-200 pb-1">
               <span className="text-gray-600">Jenis Usaha</span>
-              <span className="text-gray-900">{engagement.industry || 'Manufaktur'}</span>
+              <span className="text-gray-900">{engagement.businessSector || engagement.industry || '-'}</span>
             </div>
             <div className="flex items-center justify-between border-b border-cyan-200 pb-1">
               <span className="text-gray-600">Periode Berakhir</span>
-              <span className="text-gray-900">{engagement.period}</span>
+              <span className="text-gray-900">{engagement.period || new Date().getFullYear()}</span>
             </div>
             <div className="flex items-center justify-between border-b border-cyan-200 pb-1">
               <span className="text-gray-600">Standar Akuntansi</span>
-              <span className="text-gray-900">{engagement.standard || 'SAK Umum'}</span>
+              <span className="text-gray-900">{engagement.accountingStandard || engagement.standard || 'SAK Umum'}</span>
             </div>
             <div className="flex items-center justify-between pb-1">
               <span className="text-gray-600">Status KKP</span>

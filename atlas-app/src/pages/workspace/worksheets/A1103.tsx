@@ -33,22 +33,22 @@ const A1103: React.FC = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([
     {
       id: '1',
-      nama: engagement.partnerName || 'Partner Name',
+      nama: engagement.partnerName || '',
       kompetensi: 'Memadai',
       waktu: 'Tersedia',
       independensi: 'Independen',
       dipilih: 'Ya',
-      inisial: 'PRT',
+      inisial: engagement.partnerName ? engagement.partnerName.slice(0, 3).toUpperCase() : 'PRT',
       peran: 'Partner'
     },
     {
       id: '2',
-      nama: engagement.managerName || 'Manager Name',
+      nama: engagement.managerName || '',
       kompetensi: 'Memadai',
       waktu: 'Tersedia',
       independensi: 'Independen',
       dipilih: 'Ya',
-      inisial: 'MGR',
+      inisial: engagement.managerName ? engagement.managerName.slice(0, 3).toUpperCase() : 'MGR',
       peran: 'Manager'
     }
   ]);
@@ -57,10 +57,10 @@ const A1103: React.FC = () => {
   const [temaPelatihan, setTemaPelatihan] = useState('');
 
   // EQCR States
-  const [risikoPenerimaan, setRisikoPenerimaan] = useState('Tinggi'); // From A110 technically
-  const [jenisUsaha, setJenisUsaha] = useState('Perdagangan');
-  const [statusKepemilikan, setStatusKepemilikan] = useState('Swasta');
-  const [eqcr, setEqcr] = useState('Ya');
+  const [risikoPenerimaan, setRisikoPenerimaan] = useState(engagement.worksheetA110?.overallRisk === 'high' ? 'Tinggi' : 'Rendah');
+  const [jenisUsaha, setJenisUsaha] = useState(engagement.businessSector || 'Perdagangan');
+  const [statusKepemilikan, setStatusKepemilikan] = useState(engagement.entityType || 'Swasta');
+  const [eqcr, setEqcr] = useState('');
 
   const isCompleted = teamMembers.length > 0 && teamMembers.every(
     m => m.nama && m.kompetensi && m.waktu && m.independensi && m.dipilih && m.inisial && m.peran

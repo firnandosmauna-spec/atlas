@@ -11,35 +11,31 @@ const A2502 = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [simpulan, setSimpulan] = useState('');
 
-  // Dummy uraian siklus from A.230.3
-  const [rows, setRows] = useState([
-    {
-      id: '1',
-      uraian: 'Penerimaan order pelanggan',
-      risiko: '',
-      wcgw: '',
-      pelaksanaan: '',
-      dokumentasi: '',
-      akun: '',
-      asersi: { C: false, E: false, A: false, V: false, P: false },
-      mengandalkan: '',
-      toc: '',
-      result: ''
-    },
-    {
-      id: '2',
-      uraian: 'Pengecekan kredit dan persetujuan',
-      risiko: '',
-      wcgw: '',
-      pelaksanaan: '',
-      dokumentasi: '',
-      akun: '',
-      asersi: { C: false, E: false, A: false, V: false, P: false },
-      mengandalkan: '',
-      toc: '',
-      result: ''
-    }
-  ]);
+  // Uraian siklus dari A.230.3 atau input perikatan
+  const [rows, setRows] = useState<any[]>([]);
+
+  const addRow = () => {
+    setRows(prev => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        uraian: '',
+        risiko: '',
+        wcgw: '',
+        pelaksanaan: '',
+        dokumentasi: '',
+        akun: '',
+        asersi: { C: false, E: false, A: false, V: false, P: false },
+        mengandalkan: '',
+        toc: '',
+        result: ''
+      }
+    ]);
+  };
+
+  const deleteRow = (id: string) => {
+    setRows(prev => prev.filter(r => r.id !== id));
+  };
 
   const aktivitasPengendalianOpts = [
     'Otorisasi',
@@ -90,7 +86,7 @@ const A2502 = () => {
           <div className="w-full md:w-72 bg-white border border-gray-300 p-2 rounded text-[10px]">
              <div className="flex justify-between items-center mb-1">
                <span>Disiapkan oleh</span>
-               <input type="text" className="border border-red-300 bg-red-50 w-24 px-1 py-0.5" defaultValue="Auditor A" />
+               <input type="text" className="border border-red-300 bg-red-50 w-24 px-1 py-0.5" defaultValue={engagement.auditorName || ''} />
              </div>
              <div className="flex justify-between items-center mb-1">
                <span>Tanggal mulai</span>
@@ -102,15 +98,21 @@ const A2502 = () => {
              </div>
              <div className="flex justify-between items-center mb-1">
                <span>Direview oleh</span>
-               <input type="text" className="border border-red-300 bg-red-50 w-24 px-1 py-0.5" defaultValue="Manager B" />
+               <input type="text" className="border border-red-300 bg-red-50 w-24 px-1 py-0.5" defaultValue={engagement.managerName || ''} />
              </div>
           </div>
         </div>
 
         {/* ACCOUNT LEVEL TABLE */}
         <div className="bg-white border border-green-800 overflow-x-auto shadow-sm">
-          <div className="bg-green-800 text-white text-center py-1 font-bold text-[11px] uppercase tracking-widest border-b border-green-900">
-            ACCOUNT LEVEL
+          <div className="bg-green-800 text-white px-3 py-1.5 font-bold text-[11px] uppercase tracking-widest border-b border-green-900 flex justify-between items-center">
+            <span>ACCOUNT LEVEL</span>
+            <button
+              onClick={addRow}
+              className="bg-white text-green-900 px-2.5 py-0.5 rounded text-[10px] font-bold hover:bg-green-50 shadow-xs transition-colors"
+            >
+              + Tambah Uraian Siklus
+            </button>
           </div>
           <table className="w-max min-w-full text-left border-collapse">
             <thead>
@@ -125,6 +127,7 @@ const A2502 = () => {
                 <th className="px-2 py-2 border border-gray-400 text-blue-900 font-bold text-center w-24 align-middle" rowSpan={2}>Akan Mengandalkan?</th>
                 <th className="px-2 py-2 border border-gray-400 text-blue-900 font-bold text-center w-24 align-middle" rowSpan={2}>TOC</th>
                 <th className="px-2 py-2 border border-gray-400 text-blue-900 font-bold text-center w-24 align-middle" rowSpan={2}>Result</th>
+                <th className="px-2 py-2 border border-gray-400 text-blue-900 font-bold text-center w-12 align-middle" rowSpan={2}>Aksi</th>
               </tr>
               <tr className="bg-blue-100/30 text-[9px] text-center">
                 <th className="px-1 py-1 border border-gray-400 w-8">C</th>
@@ -135,11 +138,23 @@ const A2502 = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-300 text-[10px]">
-              {rows.map((row, idx) => (
-                <tr key={row.id} className="hover:bg-slate-50">
-                  <td className="px-2 py-1 border border-gray-400 align-top bg-white font-medium text-gray-800">
-                    {idx + 1}. {row.uraian}
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={14} className="px-4 py-8 text-center text-xs text-gray-500 bg-gray-50">
+                    Belum ada uraian siklus pengendalian internal. Klik tombol <strong>"+ Tambah Uraian Siklus"</strong> di atas untuk menambahkan.
                   </td>
+                </tr>
+              ) : (
+                rows.map((row, idx) => (
+                  <tr key={row.id} className="hover:bg-slate-50">
+                    <td className="px-2 py-1 border border-gray-400 align-top bg-white font-medium text-gray-800">
+                      <textarea
+                        className="w-full bg-transparent outline-none p-1 text-xs resize-none"
+                        placeholder={`Uraian siklus ${idx + 1}...`}
+                        value={row.uraian}
+                        onChange={(e) => updateRow(row.id, 'uraian', e.target.value)}
+                      />
+                    </td>
                   <td className="px-0 py-0 border border-gray-400 align-top bg-yellow-50">
                     <textarea 
                       className="w-full h-full min-h-[40px] bg-transparent outline-none p-1.5 resize-none"
@@ -230,8 +245,18 @@ const A2502 = () => {
                       {row.result || '-'}
                     </div>
                   </td>
+                  <td className="px-1 py-1 border border-gray-400 align-middle text-center bg-white">
+                    <button
+                      onClick={() => deleteRow(row.id)}
+                      className="text-red-500 hover:text-red-700 text-xs font-bold p-1"
+                      title="Hapus baris ini"
+                    >
+                      ×
+                    </button>
+                  </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>

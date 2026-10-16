@@ -5,7 +5,7 @@ import type { Engagement } from '../../../store/engagementStore';
 import WorksheetContainer from '../../../components/WorksheetContainer';
 import { Save, CheckCircle2, ArrowLeft, ArrowRight } from 'lucide-react';
 
-const prosedurDummy = [
+const STANDAR_AUDIT_PROSEDUR = [
   { no: 1, type: 'PROSEDUR ANALITIS SUBTANTIF', text: 'Membandingkan saldo kas tahun berjalan dengan saldo periode sebelumnya.', asersi: 'C, E, A' },
   { no: 2, type: 'PROSEDUR ANALITIS SUBTANTIF', text: 'Bila terdapat ketidakwajaran atas selisih dari prosedur perbandingan di atas, maka peroleh penjelasan dari Manajemen dan lakukan prosedur lainnya bila diperlukan.', asersi: 'C, E, A' },
   { no: 3, type: 'PROSEDUR SUBTANTIF RINCI', text: 'Melakukan pengadaan atas setoran dan penarikan tunai tahun berjalan termasuk rekening yang ditutup.', asersi: 'C' },
@@ -88,9 +88,9 @@ const BankProsedur = ({ indeks = 'A' }: { indeks?: string }) => {
               </tr>
             </thead>
             <tbody>
-              {prosedurDummy.map((p, i) => {
+              {STANDAR_AUDIT_PROSEDUR.map((p, i) => {
                 const data = prosedurState[p.no] || { status: '', pic: '', ref: '' };
-                const isNewSection = i === 0 || prosedurDummy[i-1].type !== p.type;
+                const isNewSection = i === 0 || STANDAR_AUDIT_PROSEDUR[i-1].type !== p.type;
                 
                 return (
                   <React.Fragment key={p.no}>

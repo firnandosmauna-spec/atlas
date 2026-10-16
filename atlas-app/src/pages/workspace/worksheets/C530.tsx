@@ -10,12 +10,12 @@ const C530 = () => {
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
 
-  const [nomorLai, setNomorLai] = useState('00002');
+  const [nomorLai, setNomorLai] = useState('');
   const [tanggalLai, setTanggalLai] = useState('');
-  const [noIjinAp, setNoIjinAp] = useState('0001');
+  const [noIjinAp, setNoIjinAp] = useState('');
   const [pihakDituju, setPihakDituju] = useState('');
-  const [noIndukKap, setNoIndukKap] = useState('26.2.1974');
-  const [lokasiOpini, setLokasiOpini] = useState('Jakarta');
+  const [noIndukKap, setNoIndukKap] = useState('');
+  const [lokasiOpini, setLokasiOpini] = useState('');
   
   const [penekananSuatuHal, setPenekananSuatuHal] = useState(false);
   const [halLain, setHalLain] = useState(false);
@@ -79,7 +79,7 @@ const C530 = () => {
              </div>
 
              <div className="text-gray-700">Penandatangan LAI <span className="ml-2 font-normal">:</span></div>
-             <div className="font-normal">{engagement.partnerName || 'AGUS'}</div>
+             <div className="font-normal">{engagement.partnerName || '-'}</div>
 
              <div className="text-gray-700">No Ijin AP <span className="ml-2 font-normal">:</span></div>
              <div>
@@ -92,7 +92,7 @@ const C530 = () => {
              </div>
 
              <div className="text-gray-700">Tipe Perikatan <span className="ml-2 font-normal">:</span></div>
-             <div className="font-normal">Perikatan Tahun Pertama</div>
+             <div className="font-normal">{engagement.engagementType || 'Perikatan Tahun Pertama'}</div>
              
              <div></div><div></div>
 
