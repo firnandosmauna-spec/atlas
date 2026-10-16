@@ -162,6 +162,13 @@ const AdminDashboard = () => {
         ? [...cachedUsers] 
         : (dbUsers.length > 0 ? [...dbUsers] : [...DEFAULT_INITIAL_USERS]);
 
+      // Ensure all 9 standard default roles are present
+      for (const defUser of DEFAULT_INITIAL_USERS) {
+        if (!combined.some(u => u.roles?.name === defUser.roles?.name || (u.email && defUser.email && u.email.toLowerCase() === defUser.email.toLowerCase()))) {
+          combined.push(defUser);
+        }
+      }
+
       // If db has users not present locally, add them
       for (const dbu of dbUsers) {
         if (!combined.some(u => u.id === dbu.id || (u.email && dbu.email && u.email.toLowerCase() === dbu.email.toLowerCase()))) {

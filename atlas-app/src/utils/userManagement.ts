@@ -35,24 +35,64 @@ export const DEFAULT_INITIAL_USERS: UserData[] = [
   {
     id: 'usr-3',
     email: 'auditor@kap.com',
-    full_name: 'Nando Manager',
+    full_name: 'Nando Manager, S.E., M.Ak.',
     role_id: 'role-3',
     password: 'Audit2026!',
     roles: { name: 'Manager' }
   },
   {
     id: 'usr-4',
+    email: 'supervisor@kap.com',
+    full_name: 'Bambang Supervisor, S.E., Ak.',
+    role_id: 'role-4',
+    password: 'Audit2026!',
+    roles: { name: 'Supervisor' }
+  },
+  {
+    id: 'usr-5',
     email: 'dwisafitriana99@gmail.com',
-    full_name: 'Auditor Atlas',
+    full_name: 'Dwi Safitriana (Auditor Atlas)',
     role_id: 'role-5',
     password: 'dwisafitriana',
     roles: { name: 'Ketua Tim' }
+  },
+  {
+    id: 'usr-6',
+    email: 'rudi.substantif@kap.com',
+    full_name: 'Rudi Substantif, S.Ak.',
+    role_id: 'role-6',
+    password: 'Audit2026!',
+    roles: { name: 'Anggota Tim 1' }
+  },
+  {
+    id: 'usr-7',
+    email: 'siti.rahma@kap.com',
+    full_name: 'Siti Rahma, S.E., M.Ak.',
+    role_id: 'role-7',
+    password: 'Audit2026!',
+    roles: { name: 'Anggota Tim 2' }
+  },
+  {
+    id: 'usr-8',
+    email: 'budi.pratama@kap.com',
+    full_name: 'Budi Pratama, S.E.',
+    role_id: 'role-8',
+    password: 'Audit2026!',
+    roles: { name: 'Anggota Tim dst' }
+  },
+  {
+    id: 'usr-9',
+    email: 'hendra.support@kap.com',
+    full_name: 'Hendra IT Specialist',
+    role_id: 'role-9',
+    password: 'Audit2026!',
+    roles: { name: 'Tenaga Pendukung' }
   }
 ];
 
 /**
  * Synchronous fetch from localStorage to ensure instant rendering with zero delay.
- * Automatically seeds default master users if storage is empty.
+ * Automatically seeds default master users if storage is empty, and merges any missing roles.
  */
 export const getSynchronizedKAPUsersSync = (): UserData[] => {
   let cachedUsers: UserData[] = [];
@@ -82,6 +122,19 @@ export const getSynchronizedKAPUsersSync = (): UserData[] => {
       localStorage.setItem(STORAGE_KEY_ADMIN_USERS, JSON.stringify(cachedUsers));
     } catch (e) {
       console.error('Error saving initial users to localStorage', e);
+    }
+  } else {
+    // If cache exists but misses any of the 9 roles, merge missing defaults
+    const missingRoles = DEFAULT_INITIAL_USERS.filter(def => 
+      !cachedUsers.some(u => u.roles?.name === def.roles?.name || (u.email && def.email && u.email.toLowerCase() === def.email.toLowerCase()))
+    );
+    if (missingRoles.length > 0) {
+      cachedUsers = [...cachedUsers, ...missingRoles];
+      try {
+        localStorage.setItem(STORAGE_KEY_ADMIN_USERS, JSON.stringify(cachedUsers));
+      } catch (e) {
+        console.error('Error merging missing role users to localStorage', e);
+      }
     }
   }
 
