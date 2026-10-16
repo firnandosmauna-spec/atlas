@@ -50,22 +50,22 @@ const WorkspaceLayout = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 w-[240px] bg-slate-900 text-white flex flex-col h-full z-30 transition-all duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:-ml-[240px]'}`}>
+      <aside className={`fixed lg:static inset-y-0 left-0 w-[240px] bg-slate-900 text-white flex flex-col h-full z-30 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform shadow-2xl lg:shadow-none ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:-ml-[240px]'}`}>
 
         {/* Top Bar */}
         <div className="h-14 flex items-center justify-between px-3 border-b border-slate-800 bg-slate-950 shrink-0">
           <NavLink 
             to="/dashboard"
             onClick={() => { if (window.innerWidth < 1024) setIsSidebarOpen(false); }}
-            className="flex items-center gap-2 text-xs font-semibold text-blue-400 hover:text-white px-2 py-1.5 rounded hover:bg-slate-800 transition-colors min-h-[44px]"
+            className="flex items-center gap-2 text-xs font-semibold text-blue-400 hover:text-white px-2 py-1.5 rounded-lg hover:bg-slate-800 hover:translate-x-0.5 active:scale-95 transition-all duration-200 min-h-[44px]"
             title="Kembali ke Dashboard Utama"
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
             <span>Dashboard Utama</span>
           </NavLink>
           <button 
             type="button"
-            className="lg:hidden text-slate-400 hover:text-white p-2 rounded min-h-[44px] min-w-[44px] flex items-center justify-center" 
+            className="lg:hidden text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center" 
             onClick={() => setIsSidebarOpen(false)}
             aria-label="Tutup navigasi"
           >
@@ -78,23 +78,23 @@ const WorkspaceLayout = () => {
           <NavLink
             to="/dashboard"
             onClick={() => { if (window.innerWidth < 1024) setIsSidebarOpen(false); }}
-            className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-blue-300 hover:text-white hover:bg-slate-800 rounded transition-colors min-h-[44px]"
+            className="group flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-blue-300 hover:text-white hover:bg-slate-800 hover:translate-x-1 active:scale-95 rounded-lg transition-all duration-200 min-h-[44px]"
           >
-            <Home size={15} />
+            <Home size={15} className="group-hover:scale-110 transition-transform duration-200" />
             <span>Dashboard Utama</span>
           </NavLink>
           <NavLink
             to="/engagements"
             onClick={() => { if (window.innerWidth < 1024) setIsSidebarOpen(false); }}
-            className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors min-h-[44px]"
+            className="group flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 hover:translate-x-1 active:scale-95 rounded-lg transition-all duration-200 min-h-[44px]"
           >
-            <FolderOpen size={15} />
+            <FolderOpen size={15} className="group-hover:scale-110 transition-transform duration-200" />
             <span>Daftar Perikatan</span>
           </NavLink>
         </div>
 
         {/* Client Info */}
-        <div className="px-4 py-3 border-b border-slate-800 shrink-0">
+        <div className="px-4 py-3 border-b border-slate-800 shrink-0 bg-slate-950/20">
           <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mb-1">Klien Aktif</p>
           <p className="text-sm font-semibold text-white truncate leading-tight" title={engagement.clientName}>
             {engagement.clientName}
@@ -103,7 +103,7 @@ const WorkspaceLayout = () => {
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-4 px-2 flex flex-col gap-0.5">
+        <nav className="flex-1 overflow-y-auto py-4 px-2 flex flex-col gap-1">
 
           {/* General links */}
           {topNavItems.map(item => (
@@ -113,20 +113,29 @@ const WorkspaceLayout = () => {
               end={item.end}
               onClick={() => { if (window.innerWidth < 1024) setIsSidebarOpen(false); }}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors rounded min-h-[44px] ${
+                `relative group flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-all duration-200 ease-out min-h-[44px] ${
                   isActive
-                    ? 'bg-slate-700 text-white font-semibold'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-slate-800 text-white font-semibold border border-slate-700 shadow-xs'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60 hover:translate-x-1 active:scale-95'
                 }`
               }
             >
-              {item.icon}
-              <span>{item.label}</span>
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-5 bg-cyan-400 rounded-full shadow-[0_0_6px_rgba(34,211,238,0.8)]" />
+                  )}
+                  <div className={`shrink-0 transition-transform duration-200 ${isActive ? 'text-cyan-300' : 'group-hover:scale-110 group-hover:text-slate-200'}`}>
+                    {item.icon}
+                  </div>
+                  <span>{item.label}</span>
+                </>
+              )}
             </NavLink>
           ))}
 
           {/* Divider + Audit Cycle label */}
-          <div className="mt-4 mb-2 px-3">
+          <div className="mt-4 mb-1.5 px-3">
             <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">Siklus Audit</p>
           </div>
 
@@ -137,45 +146,56 @@ const WorkspaceLayout = () => {
               to={item.to}
               onClick={() => { if (window.innerWidth < 1024) setIsSidebarOpen(false); }}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2.5 text-sm transition-colors group rounded min-h-[44px] ${
+                `relative group flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-all duration-200 ease-out min-h-[44px] ${
                   isActive
-                    ? 'bg-blue-600 text-white font-semibold border-l-2 border-white'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800 border-l-2 border-transparent'
+                    ? 'bg-gradient-to-r from-blue-600 via-blue-600/95 to-blue-700/80 text-white font-semibold shadow-sm border border-blue-500/50'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60 hover:translate-x-1 active:scale-95'
                 }`
               }
             >
-              <span className={`text-[10px] font-bold w-6 shrink-0 text-center`}>
-                {item.code}
-              </span>
-              <span className="truncate text-xs">{item.label}</span>
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span className="absolute left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-cyan-300 rounded-full shadow-[0_0_8px_rgba(103,232,249,0.9)] animate-in fade-in duration-300" />
+                  )}
+                  <span className={`text-[10px] font-bold w-6 shrink-0 text-center py-0.5 rounded transition-colors ${
+                    isActive 
+                      ? 'bg-blue-800/80 text-cyan-200 border border-blue-400/40' 
+                      : 'bg-slate-800/80 text-slate-300 border border-slate-700/60 group-hover:border-slate-600 group-hover:text-white'
+                  }`}>
+                    {item.code}
+                  </span>
+                  <span className="truncate text-xs">{item.label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
         {/* Status strip at bottom */}
-        <div className="px-4 py-3 border-t border-slate-800 shrink-0">
+        <div className="px-4 py-3 border-t border-slate-800 shrink-0 bg-slate-950/20">
           <div className="flex justify-between items-center mb-1.5">
             <span className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Progress Perikatan</span>
-            <span className="text-[10px] font-bold text-slate-300">{engagement.progress || 0}%</span>
+            <span className="text-[10px] font-bold text-cyan-300">{engagement.progress || 0}%</span>
           </div>
-          <div className="h-1 bg-slate-700 w-full">
+          <div className="h-1.5 bg-slate-800 rounded-full w-full overflow-hidden">
             <div
-              className="h-1 bg-blue-500 transition-all duration-500"
+              className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-700 ease-[cubic-bezier(0.4,0,0.2,1)]"
               style={{ width: `${engagement.progress || 0}%` }}
             />
           </div>
         </div>
 
         {/* Workspace Sidebar Logout button */}
-        <div className="p-2 border-t border-slate-800 shrink-0">
+        <div className="p-2 border-t border-slate-800 shrink-0 bg-slate-950/40">
           <button
             type="button"
             onClick={handleLogout}
             title="Keluar"
             aria-label="Keluar dari akun"
-            className="flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-red-400 hover:text-red-200 hover:bg-red-950/40 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 min-h-[44px]"
+            className="group flex items-center gap-2.5 w-full px-3 py-2 text-xs font-medium text-red-400 hover:text-white hover:bg-red-600/30 hover:border-red-500/40 border border-transparent rounded-lg hover:translate-x-1 active:scale-95 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 min-h-[44px]"
           >
-            <LogOut size={16} />
+            <LogOut size={16} className="group-hover:-translate-x-0.5 transition-transform duration-200" />
             <span>Keluar</span>
           </button>
         </div>
