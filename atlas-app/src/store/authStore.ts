@@ -16,6 +16,9 @@ export interface User {
   email: string;
   role: Role;
   organizationId: string;
+  noAp?: string;
+  noIndukKap?: string;
+  phone?: string;
 }
 
 interface AuthState {
@@ -147,7 +150,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         // Fetch custom user data
         const { data: userData } = await supabase
           .from('users')
-          .select('id, email, full_name, roles (name)')
+          .select('id, email, full_name, no_ap, no_induk_kap, phone, roles (name)')
           .eq('id', session.user.id)
           .maybeSingle();
           
@@ -157,7 +160,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             email: session.user.email || '',
             name: userData?.full_name || 'User',
             role: (userData?.roles?.name as any) || 'Auditor',
-            organizationId: 'kap-123'
+            organizationId: 'kap-123',
+            noAp: userData?.no_ap || '',
+            noIndukKap: userData?.no_induk_kap || '',
+            phone: userData?.phone || ''
           },
           isAuthenticated: true,
           isLoading: false
@@ -171,7 +177,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         if (event === 'SIGNED_IN' && session?.user) {
           const { data: userData } = await supabase
             .from('users')
-            .select('id, email, full_name, roles (name)')
+            .select('id, email, full_name, no_ap, no_induk_kap, phone, roles (name)')
             .eq('id', session.user.id)
             .maybeSingle();
             
@@ -181,7 +187,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               email: session.user.email || '',
               name: userData?.full_name || 'User',
               role: (userData?.roles?.name as any) || 'Auditor',
-              organizationId: 'kap-123'
+              organizationId: 'kap-123',
+              noAp: userData?.no_ap || '',
+              noIndukKap: userData?.no_induk_kap || '',
+              phone: userData?.phone || ''
             },
             isAuthenticated: true
           });

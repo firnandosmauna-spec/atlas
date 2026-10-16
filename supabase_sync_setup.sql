@@ -209,3 +209,67 @@ UPDATE public.users SET
   role_id = '11111111-1111-1111-1111-111111111109', 
   role_name = 'Tenaga Pendukung'
 WHERE LOWER(email) = 'hendra.support@kap.com';
+
+-- =========================================================================
+-- 5. TABEL SYSTEM_SETTINGS (Pengaturan Sistem, Branding & Identitas KAP)
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS public.system_settings (
+    id TEXT PRIMARY KEY DEFAULT 'default',
+    app_name TEXT NOT NULL DEFAULT 'AUDIT FLOW',
+    app_short_name TEXT NOT NULL DEFAULT 'KAP Frido',
+    tagline TEXT DEFAULT 'Audit Tool & Linked Archive System - KAP Fridolinus Peno',
+    institution_name TEXT DEFAULT 'KAP Fridolinus Peno',
+    version TEXT DEFAULT '1.0.0',
+    data JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow all system_settings" ON public.system_settings;
+DROP POLICY IF EXISTS "Allow select system_settings" ON public.system_settings;
+DROP POLICY IF EXISTS "Allow insert system_settings" ON public.system_settings;
+DROP POLICY IF EXISTS "Allow update system_settings" ON public.system_settings;
+DROP POLICY IF EXISTS "Allow delete system_settings" ON public.system_settings;
+
+CREATE POLICY "Allow all system_settings" ON public.system_settings FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+-- Kolom tambahan pada tabel users untuk profil lisensi KAP dan kontak auditor
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS no_ap TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS no_induk_kap TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS phone TEXT;
+
+-- Seed konfigurasi default pengaturan sistem
+INSERT INTO public.system_settings (id, app_name, app_short_name, tagline, institution_name, version)
+VALUES (
+    'default', 
+    'AUDIT FLOW', 
+    'KAP Frido', 
+    'Audit Tool & Linked Archive System - KAP Fridolinus Peno', 
+    'KAP Fridolinus Peno', 
+    '1.0.0'
+)
+ON CONFLICT (id) DO UPDATE SET 
+    app_name = EXCLUDED.app_name,
+    app_short_name = EXCLUDED.app_short_name,
+    tagline = EXCLUDED.tagline,
+    institution_name = EXCLUDED.institution_name,
+    version = EXCLUDED.version,
+    updated_at = NOW();
+
+-- Update data profil lisensi untuk Partner dan Auditor
+UPDATE public.users SET 
+    no_ap = 'AP.0543',
+    no_induk_kap = '26.2.1974'
+WHERE LOWER(email) = 'partner@kap.com';
+
+UPDATE public.users SET 
+    no_ap = 'AP.0001',
+    no_induk_kap = '26.2.1974'
+WHERE LOWER(email) = 'admin@kap.com';
+
+UPDATE public.users SET 
+    no_ap = 'AP.0999',
+    no_induk_kap = '26.2.1974'
+WHERE LOWER(email) IN ('dwisafitriana99@gmail.com', 'auditor@kap.com', 'auditor99@kap.com');
+

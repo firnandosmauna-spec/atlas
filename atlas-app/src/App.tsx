@@ -26,16 +26,17 @@ import SquareSnakeDemo from './components/ui/demo';
 
 function App() {
   const { initialize, isLoading } = useAuthStore();
-  const { appName, tagline } = useAppConfigStore();
+  const { appName, tagline, fetchFromSupabase } = useAppConfigStore();
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
     initialize();
+    fetchFromSupabase();
     const timer = setTimeout(() => {
       setAppReady(true);
     }, 600);
     return () => clearTimeout(timer);
-  }, [initialize]);
+  }, [initialize, fetchFromSupabase]);
 
   useEffect(() => {
     if (appName) {
