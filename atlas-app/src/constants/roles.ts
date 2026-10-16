@@ -21,7 +21,7 @@ export interface RoleDefinition {
 
 export const SYSTEM_ROLES: RoleDefinition[] = [
   {
-    id: 'role-1',
+    id: '11111111-1111-1111-1111-111111111101',
     number: 1,
     name: 'Admin',
     description: 'Mengelola akses akun, master role, hak akses pengguna, dan konfigurasi master sistem.',
@@ -30,7 +30,7 @@ export const SYSTEM_ROLES: RoleDefinition[] = [
     level: 1
   },
   {
-    id: 'role-2',
+    id: '11111111-1111-1111-1111-111111111102',
     number: 2,
     name: 'Partner/Akuntan Publik',
     description: 'Penanggung jawab perikatan (Signing Partner), memegang izin AP (PPPK), reviu akhir KKP, dan menandatangani Laporan Auditor Independen (LAI).',
@@ -39,7 +39,7 @@ export const SYSTEM_ROLES: RoleDefinition[] = [
     level: 2
   },
   {
-    id: 'role-3',
+    id: '11111111-1111-1111-1111-111111111103',
     number: 3,
     name: 'Manager',
     description: 'Mengelola manajemen engagement, perancangan strategi audit, pengawasan alokasi waktu dan tim, serta reviu menyeluruh KKP.',
@@ -48,7 +48,7 @@ export const SYSTEM_ROLES: RoleDefinition[] = [
     level: 3
   },
   {
-    id: 'role-4',
+    id: '11111111-1111-1111-1111-111111111104',
     number: 4,
     name: 'Supervisor',
     description: 'Supervisi teknis lapangan, mengarahkan metodologi pengujian, memonitor kepatuhan prosedur SA/SPM, dan memvalidasi temuan audit.',
@@ -57,7 +57,7 @@ export const SYSTEM_ROLES: RoleDefinition[] = [
     level: 4
   },
   {
-    id: 'role-5',
+    id: '11111111-1111-1111-1111-111111111105',
     number: 5,
     name: 'Ketua Tim',
     description: 'Memimpin pelaksanaan audit lapangan sehari-hari, mendistribusikan prosedur KKP kepada anggota tim, dan melakukan reviu awal.',
@@ -66,7 +66,7 @@ export const SYSTEM_ROLES: RoleDefinition[] = [
     level: 5
   },
   {
-    id: 'role-6',
+    id: '11111111-1111-1111-1111-111111111106',
     number: 6,
     name: 'Anggota Tim 1',
     description: 'Melaksanakan pengujian substantif akun-akun berisiko tinggi/signifikan, prosedur analitis, dan penyusunan kertas kerja utama.',
@@ -75,7 +75,7 @@ export const SYSTEM_ROLES: RoleDefinition[] = [
     level: 6
   },
   {
-    id: 'role-7',
+    id: '11111111-1111-1111-1111-111111111107',
     number: 7,
     name: 'Anggota Tim 2',
     description: 'Melaksanakan pengujian pengendalian (Test of Controls/TOC), verifikasi transaksi rutin, dan dokumentasi kertas kerja pendukung.',
@@ -84,7 +84,7 @@ export const SYSTEM_ROLES: RoleDefinition[] = [
     level: 7
   },
   {
-    id: 'role-8',
+    id: '11111111-1111-1111-1111-111111111108',
     number: 8,
     name: 'Anggota Tim dst',
     description: 'Melaksanakan pengujian rincian saldo (TOD), konfirmasi pihak ketiga, stock opname fisik, dan sampling bukti transaksi audit.',
@@ -93,7 +93,7 @@ export const SYSTEM_ROLES: RoleDefinition[] = [
     level: 8
   },
   {
-    id: 'role-9',
+    id: '11111111-1111-1111-1111-111111111109',
     number: 9,
     name: 'Tenaga Pendukung',
     description: 'Mendukung input data dasar klien, tabulasi voucher/dokumen fisik, rekonsiliasi data mentah, dan administrasi kearsipan audit.',

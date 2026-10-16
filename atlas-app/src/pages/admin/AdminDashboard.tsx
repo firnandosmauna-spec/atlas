@@ -27,7 +27,11 @@ import {
   KeyRound,
   Edit3,
   Filter,
-  AlertTriangle
+  AlertTriangle,
+  Cloud,
+  RefreshCw,
+  ExternalLink,
+  Database
 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuthStore } from '../../store/authStore';
@@ -37,8 +41,21 @@ import {
   type UserData, 
   STORAGE_KEY_ADMIN_USERS, 
   STORAGE_KEY_USER_ROLES, 
-  DEFAULT_INITIAL_USERS 
+  DEFAULT_INITIAL_USERS,
+  syncAllUsersToSupabase
 } from '../../utils/userManagement';
+
+// Helper valid UUID v4 generator
+const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 // Helper icon mapping for the 9 KAP hierarchy roles
 const getRoleIcon = (number: number) => {
@@ -65,6 +82,11 @@ const AdminDashboard = () => {
   const [saveStatus, setSaveStatus] = useState<{ id: string; status: 'saving' | 'saved' | 'error' } | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Cloud Sync state
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+  const [showSqlModal, setShowSqlModal] = useState(false);
+  const [cloudSyncStatus, setCloudSyncStatus] = useState({ total: 9, synced: 0 });
   
   // 1. CREATE State (Tambah Anggota)
   const [isAddingUser, setIsAddingUser] = useState(false);
@@ -148,7 +170,7 @@ const AdminDashboard = () => {
       try {
         const { data: usersData, error } = await supabase
           .from('users')
-          .select('id, email, full_name, role_id, roles (name)');
+          .select('id, email, full_name, role_id, is_active, roles (name)');
 
         if (!error && usersData && usersData.length > 0) {
           dbUsers = usersData;
@@ -182,25 +204,34 @@ const AdminDashboard = () => {
           id: user.id,
           email: user.email,
           full_name: user.name,
-          role_id: SYSTEM_ROLES.find(r => r.name === user.role)?.id || 'role-1',
+          role_id: SYSTEM_ROLES.find(r => r.name === user.role)?.id || '11111111-1111-1111-1111-111111111101',
           password: 'Audit2026!',
           roles: { name: user.role }
         });
       }
 
-      // Apply roles map and role normalization
+      // Apply roles map and role normalization & cloud sync badge
       const finalizedUsers = combined.map(u => {
-        const savedRoleName = localRolesMap[u.id] || (u.email ? localRolesMap[u.email.toLowerCase()] : undefined);
+        const dbMatch = dbUsers.find(d => 
+          (u.email && d.email && d.email.toLowerCase() === u.email.toLowerCase()) || 
+          d.id === u.id
+        );
+        const resolvedId = dbMatch ? dbMatch.id : u.id;
+        const isSynced = !!dbMatch;
+
+        const savedRoleName = localRolesMap[resolvedId] || (u.email ? localRolesMap[u.email.toLowerCase()] : undefined);
         if (savedRoleName) {
           const matchedDef = SYSTEM_ROLES.find(r => r.name === savedRoleName);
           return {
             ...u,
+            id: resolvedId,
             role_id: matchedDef?.id || u.role_id,
-            roles: { name: savedRoleName }
+            roles: { name: savedRoleName },
+            isSyncedWithCloud: isSynced
           };
         }
         
-        let roleName = u.roles?.name || '';
+        let roleName = u.roles?.name || dbMatch?.roles?.name || '';
         if (!roleName || roleName === 'Auditor') {
           roleName = u.email === 'admin@kap.com' ? 'Admin' : 'Ketua Tim';
         } else if (roleName === 'Partner') {
@@ -210,12 +241,16 @@ const AdminDashboard = () => {
         const matchedDef = SYSTEM_ROLES.find(r => r.name === roleName);
         return {
           ...u,
+          id: resolvedId,
           role_id: matchedDef?.id || u.role_id,
-          roles: { name: roleName }
+          roles: { name: roleName },
+          isSyncedWithCloud: isSynced
         };
       });
 
       setUsers(finalizedUsers);
+      const syncedCount = finalizedUsers.filter(u => u.isSyncedWithCloud).length;
+      setCloudSyncStatus({ total: finalizedUsers.length, synced: syncedCount });
       
       // Update cache
       try {
@@ -227,6 +262,33 @@ const AdminDashboard = () => {
       console.error('Fatal error loading admin data:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // SYNC: Push all users to Supabase Cloud
+  const handleSyncAllToSupabase = async () => {
+    setIsSyncingCloud(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const result = await syncAllUsersToSupabase(users);
+      if (result.failed === 0 && result.success > 0) {
+        setSuccessMessage(`Berhasil menyinkronkan seluruh ${result.success} akun tim KAP ke database Supabase Cloud!`);
+        setTimeout(() => setSuccessMessage(''), 5000);
+      } else if (result.success > 0 && result.failed > 0) {
+        setSuccessMessage(`${result.success} akun berhasil disinkronkan. ${result.failed} akun memerlukan eksekusi SQL di Supabase.`);
+        setShowSqlModal(true);
+      } else if (result.failed > 0) {
+        setErrorMessage(`Gagal menyimpan ${result.failed} akun ke Supabase karena batasan foreign key/RLS. Buka panduan SQL berikut.`);
+        setShowSqlModal(true);
+      }
+      await fetchData();
+    } catch (err: any) {
+      console.error('Error syncing all users to Supabase:', err);
+      setErrorMessage('Terjadi kendala saat menghubungkan ke Supabase. Periksa skrip SQL.');
+      setShowSqlModal(true);
+    } finally {
+      setIsSyncingCloud(false);
     }
   };
 
@@ -270,10 +332,20 @@ const AdminDashboard = () => {
     }
 
     try {
-      await supabase
+      const { error: updErr } = await supabase
         .from('users')
         .update({ role_id: matchedRoleDef?.id || null })
         .eq('id', userId);
+
+      if (updErr) {
+        const targetUser = users.find(u => u.id === userId);
+        if (targetUser?.email) {
+          await supabase
+            .from('users')
+            .update({ role_id: matchedRoleDef?.id || null })
+            .eq('email', targetUser.email.toLowerCase());
+        }
+      }
     } catch (dbErr) {
       console.warn('Supabase DB update fallback (persisted locally):', dbErr);
     }
@@ -314,13 +386,7 @@ const AdminDashboard = () => {
     setIsSubmittingNewUser(true);
     setErrorMessage('');
 
-    let newId: string;
-    try {
-      newId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `usr-${Date.now()}`;
-    } catch {
-      newId = `usr-${Date.now()}`;
-    }
-
+    const newId = generateUUID();
     const matchedRoleDef = SYSTEM_ROLES.find(r => r.name === roleName);
 
     const addedUser: UserData = {
@@ -329,7 +395,8 @@ const AdminDashboard = () => {
       full_name: fullName,
       password: password,
       role_id: matchedRoleDef?.id || null,
-      roles: { name: roleName }
+      roles: { name: roleName },
+      isSyncedWithCloud: false
     };
 
     const updatedList = [addedUser, ...users];
@@ -361,10 +428,17 @@ const AdminDashboard = () => {
         id: newId,
         email: email,
         full_name: fullName,
-        role_id: matchedRoleDef?.id || null
+        role_id: matchedRoleDef?.id || null,
+        is_active: true
       });
       if (insertErr) {
         console.warn('Supabase insert note (fallback to local storage):', insertErr.message);
+        if (insertErr.code === '23503' || insertErr.code === '42501') {
+          setShowSqlModal(true);
+        }
+      } else {
+        setUsers(prev => prev.map(u => u.id === newId ? { ...u, isSyncedWithCloud: true } : u));
+        setCloudSyncStatus(prev => ({ ...prev, total: prev.total + 1, synced: prev.synced + 1 }));
       }
     } catch (insertErr) {
       console.warn('Supabase insert note (offline/fallback):', insertErr);
@@ -459,7 +533,7 @@ const AdminDashboard = () => {
     }
 
     try {
-      await supabase
+      const { error: updateErr } = await supabase
         .from('users')
         .update({
           full_name: trimmedName,
@@ -467,6 +541,16 @@ const AdminDashboard = () => {
           role_id: matchedRoleDef?.id || null
         })
         .eq('id', editingUser.id);
+
+      if (updateErr) {
+        await supabase
+          .from('users')
+          .update({
+            full_name: trimmedName,
+            role_id: matchedRoleDef?.id || null
+          })
+          .eq('email', trimmedEmail);
+      }
     } catch (err) {
       console.warn('Supabase update notice:', err);
     }
@@ -637,11 +721,34 @@ const AdminDashboard = () => {
             
             {/* Table Header Bar with Search & Role Filter */}
             <div className="bg-slate-50/90 border-b border-slate-200/80 px-3.5 py-2.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-2.5">
-              <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
+              <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-start flex-wrap">
                 <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800">
                   <Users size={14} className="text-slate-700" />
                   <span>Daftar Pengguna ({filteredUsers.length})</span>
                 </div>
+
+                {/* Cloud Sync Status Indicator */}
+                <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
+                  cloudSyncStatus.synced === cloudSyncStatus.total && cloudSyncStatus.total > 0
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                }`}>
+                  <Cloud size={12} className={cloudSyncStatus.synced === cloudSyncStatus.total ? 'text-emerald-600' : 'text-amber-600'} />
+                  <span>{cloudSyncStatus.synced}/{cloudSyncStatus.total} di Supabase</span>
+                </div>
+
+                {/* Cloud Sync Button */}
+                <button
+                  type="button"
+                  onClick={handleSyncAllToSupabase}
+                  disabled={isSyncingCloud}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-300 px-2.5 py-1 rounded-lg transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+                  title="Sinkronkan seluruh akun lokal ke database Supabase Cloud"
+                >
+                  <RefreshCw size={12} className={isSyncingCloud ? 'animate-spin text-blue-600' : 'text-slate-600'} />
+                  <span>{isSyncingCloud ? 'Menyinkronkan...' : 'Sinkronkan ke Supabase'}</span>
+                </button>
+
                 {!isAddingUser && (
                   <button 
                     onClick={() => {
@@ -866,7 +973,7 @@ const AdminDashboard = () => {
                       <th className="px-3.5 py-2.5 font-bold">Email Akun</th>
                       <th className="px-3.5 py-2.5 font-bold">Penugasan Role KAP</th>
                       <th className="px-3.5 py-2.5 font-bold">Kata Sandi Awal</th>
-                      <th className="px-3.5 py-2.5 font-bold text-center">Status</th>
+                      <th className="px-3.5 py-2.5 font-bold text-center">Supabase Cloud</th>
                       <th className="px-3.5 py-2.5 font-bold text-center w-24">Aksi CRUD</th>
                     </tr>
                   </thead>
@@ -949,14 +1056,21 @@ const AdminDashboard = () => {
                               ) : (
                                 <span className="text-rose-600 font-bold text-[11px]">Gagal</span>
                               )
-                            ) : isCurrentUser ? (
-                              <span className="text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded font-mono">
-                                Akun Anda
+                            ) : u.isSyncedWithCloud ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full" title="Akun ini tersimpan & tersinkron di tabel users Supabase">
+                                <CheckCircle2 size={11} className="text-emerald-600" />
+                                Tersimpan
                               </span>
                             ) : (
-                              <span className="text-emerald-600 font-mono text-[10px] font-semibold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                                Aktif
-                              </span>
+                              <button
+                                type="button"
+                                onClick={handleSyncAllToSupabase}
+                                className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full cursor-pointer transition-colors"
+                                title="Klik untuk menyinkronkan ke Supabase"
+                              >
+                                <AlertTriangle size={11} className="text-amber-500" />
+                                Hanya Lokal (Sinkronkan)
+                              </button>
                             )}
                           </td>
 
@@ -1346,6 +1460,73 @@ const AdminDashboard = () => {
                   className="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition-colors cursor-pointer shadow-2xs"
                 >
                   Hapus Anggota
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL 4: SUPABASE SQL SYNC HELPER MODAL */}
+      {/* ========================================================================= */}
+      {showSqlModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden animate-scale-up">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-blue-50 text-blue-900">
+              <div className="flex items-center gap-2">
+                <Database size={18} className="text-blue-600" />
+                <h3 className="font-bold text-sm">Sinkronisasi Akun Tim KAP ke Supabase</h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setShowSqlModal(false)}
+                className="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 text-xs text-slate-700">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 leading-relaxed">
+                <p className="font-semibold mb-1 flex items-center gap-1.5">
+                  <AlertCircle size={14} className="text-amber-600 shrink-0" />
+                  Mengapa sebagian akun belum tersimpan di Supabase?
+                </p>
+                <p className="text-[11px] text-amber-700">
+                  Secara bawaan, Supabase menerapkan batasan relasi kaku (<code className="font-mono bg-amber-100 px-1 rounded">users_id_fkey</code>) dan tabel roles yang masih kosong. Untuk mengizinkan penyimpanan 9 akun KAP, skrip SQL perlu dieksekusi sekali di Supabase.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="font-bold text-slate-900">
+                  Langkah Mudah (Hanya 1 Menit):
+                </p>
+                <ol className="list-decimal pl-4 space-y-1.5 text-slate-600 text-[11px]">
+                  <li>Buka <strong>Supabase SQL Editor</strong> dengan tombol di bawah.</li>
+                  <li>Buka file <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-slate-800">supabase_sync_setup.sql</code> di proyek ini, lalu salin seluruh kodenya.</li>
+                  <li>Tempel di SQL Editor Supabase, lalu klik <strong>Run</strong>.</li>
+                  <li>Kembali ke halaman ini dan klik tombol <strong>"Sinkronkan ke Supabase"</strong>. Seluruh akun akan langsung berstatus hijau (Tersimpan)!</li>
+                </ol>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-slate-200 gap-2">
+                <a
+                  href="https://supabase.com/dashboard/project/oxnigsxfiionzgjvzykz/sql"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition-colors flex items-center gap-1.5 text-xs shadow-2xs"
+                >
+                  <ExternalLink size={13} />
+                  <span>Buka Supabase SQL Editor</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setShowSqlModal(false)}
+                  className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition-colors text-xs cursor-pointer"
+                >
+                  Tutup
                 </button>
               </div>
             </div>

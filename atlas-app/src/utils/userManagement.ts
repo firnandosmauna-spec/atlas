@@ -6,7 +6,10 @@ export interface UserData {
   email: string;
   full_name: string;
   role_id: string | null;
+  role_name?: string;
   password?: string;
+  is_active?: boolean;
+  isSyncedWithCloud?: boolean;
   roles?: {
     name: string;
   };
@@ -17,74 +20,74 @@ export const STORAGE_KEY_USER_ROLES = 'atlas_user_roles_map';
 
 export const DEFAULT_INITIAL_USERS: UserData[] = [
   {
-    id: 'usr-1',
+    id: '148b975e-2e29-4101-a6d3-b19b3e3847fd',
     email: 'admin@kap.com',
     full_name: 'Ahmad Partner AP',
-    role_id: 'role-1',
+    role_id: '11111111-1111-1111-1111-111111111101',
     password: 'password123',
     roles: { name: 'Admin' }
   },
   {
-    id: 'usr-2',
+    id: 'a0000000-0000-0000-0000-000000000002',
     email: 'partner@kap.com',
     full_name: 'Drs. Fridolinus Peno, Ak., M.M., CA., CPA.',
-    role_id: 'role-2',
+    role_id: '11111111-1111-1111-1111-111111111102',
     password: 'Audit2026!',
     roles: { name: 'Partner/Akuntan Publik' }
   },
   {
-    id: 'usr-3',
+    id: '49cfea98-0d37-4ed7-a859-19edf1ddc0e1',
     email: 'auditor@kap.com',
     full_name: 'Nando Manager, S.E., M.Ak.',
-    role_id: 'role-3',
+    role_id: '11111111-1111-1111-1111-111111111103',
     password: 'Audit2026!',
     roles: { name: 'Manager' }
   },
   {
-    id: 'usr-4',
+    id: 'a0000000-0000-0000-0000-000000000004',
     email: 'supervisor@kap.com',
     full_name: 'Bambang Supervisor, S.E., Ak.',
-    role_id: 'role-4',
+    role_id: '11111111-1111-1111-1111-111111111104',
     password: 'Audit2026!',
     roles: { name: 'Supervisor' }
   },
   {
-    id: 'usr-5',
+    id: 'c9027978-43fd-43fb-aa79-c8e92237c872',
     email: 'dwisafitriana99@gmail.com',
     full_name: 'Dwi Safitriana (Auditor Atlas)',
-    role_id: 'role-5',
+    role_id: '11111111-1111-1111-1111-111111111105',
     password: 'dwisafitriana',
     roles: { name: 'Ketua Tim' }
   },
   {
-    id: 'usr-6',
+    id: 'a0000000-0000-0000-0000-000000000006',
     email: 'rudi.substantif@kap.com',
     full_name: 'Rudi Substantif, S.Ak.',
-    role_id: 'role-6',
+    role_id: '11111111-1111-1111-1111-111111111106',
     password: 'Audit2026!',
     roles: { name: 'Anggota Tim 1' }
   },
   {
-    id: 'usr-7',
+    id: 'a0000000-0000-0000-0000-000000000007',
     email: 'siti.rahma@kap.com',
     full_name: 'Siti Rahma, S.E., M.Ak.',
-    role_id: 'role-7',
+    role_id: '11111111-1111-1111-1111-111111111107',
     password: 'Audit2026!',
     roles: { name: 'Anggota Tim 2' }
   },
   {
-    id: 'usr-8',
+    id: 'a0000000-0000-0000-0000-000000000008',
     email: 'budi.pratama@kap.com',
     full_name: 'Budi Pratama, S.E.',
-    role_id: 'role-8',
+    role_id: '11111111-1111-1111-1111-111111111108',
     password: 'Audit2026!',
     roles: { name: 'Anggota Tim dst' }
   },
   {
-    id: 'usr-9',
+    id: 'a0000000-0000-0000-0000-000000000009',
     email: 'hendra.support@kap.com',
     full_name: 'Hendra IT Specialist',
-    role_id: 'role-9',
+    role_id: '11111111-1111-1111-1111-111111111109',
     password: 'Audit2026!',
     roles: { name: 'Tenaga Pendukung' }
   }
@@ -194,6 +197,93 @@ export const getSynchronizedKAPUsers = async (): Promise<UserData[]> => {
   }
 
   return localUsers;
+};
+
+/**
+ * Synchronizes all users and master roles into Supabase database.
+ * Returns the number of successful syncs and any errors.
+ */
+export const syncAllUsersToSupabase = async (usersToSync: UserData[]): Promise<{
+  success: number;
+  failed: number;
+  errors: string[];
+}> => {
+  let success = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  // 1. Try to seed roles if not already present
+  try {
+    const rolePayload = SYSTEM_ROLES.map(r => ({ id: r.id, name: r.name }));
+    await supabase.from('roles').upsert(rolePayload, { onConflict: 'id' });
+  } catch (rErr) {
+    console.warn('Roles upsert notice:', rErr);
+  }
+
+  // 2. Fetch existing users from Supabase to match by email or id
+  let existingDbUsers: any[] = [];
+  try {
+    const { data, error } = await supabase.from('users').select('id, email, full_name, role_id');
+    if (!error && data) {
+      existingDbUsers = data;
+    }
+  } catch (err) {
+    console.warn('Error querying existing users:', err);
+  }
+
+  // 3. Upsert / update each user
+  for (const u of usersToSync) {
+    const matchedRole = SYSTEM_ROLES.find(r => r.name === u.roles?.name || r.id === u.role_id);
+    const roleId = matchedRole ? matchedRole.id : u.role_id;
+    const dbMatch = existingDbUsers.find(d => 
+      (u.email && d.email && d.email.toLowerCase() === u.email.toLowerCase()) || 
+      d.id === u.id
+    );
+
+    try {
+      if (dbMatch) {
+        // Update existing row
+        const { error: updErr } = await supabase
+          .from('users')
+          .update({
+            full_name: u.full_name,
+            role_id: roleId,
+            is_active: true
+          })
+          .eq('id', dbMatch.id);
+
+        if (updErr) {
+          failed++;
+          errors.push(`${u.email || u.full_name}: ${updErr.message}`);
+        } else {
+          success++;
+        }
+      } else {
+        // Insert new row
+        const { error: insErr } = await supabase
+          .from('users')
+          .insert({
+            id: u.id,
+            email: u.email,
+            full_name: u.full_name,
+            role_id: roleId,
+            is_active: true
+          });
+
+        if (insErr) {
+          failed++;
+          errors.push(`${u.email || u.full_name}: ${insErr.message}`);
+        } else {
+          success++;
+        }
+      }
+    } catch (err: any) {
+      failed++;
+      errors.push(`${u.email || u.full_name}: ${err?.message || 'Gagal tersambung'}`);
+    }
+  }
+
+  return { success, failed, errors };
 };
 
 // --- Role filtering utilities based on the 9 KAP SPAP Roles ---
