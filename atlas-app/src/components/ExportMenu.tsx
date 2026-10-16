@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Download, FileSpreadsheet, FileText, FileDown, Archive, ChevronDown, CheckCircle } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText, FileDown, Archive, ChevronDown, CheckCircle, Printer } from 'lucide-react';
 
 interface ExportMenuProps {
   worksheetCode?: string;
@@ -52,6 +52,16 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ worksheetCode, clientName = "Kl
           </div>
           
           <div className="py-1">
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                window.print();
+              }}
+              className="group flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-atlas-blue transition-colors font-medium border-b border-gray-100"
+            >
+              <Printer className="mr-3 text-blue-600 group-hover:text-atlas-blue" size={18} />
+              Cetak Kertas Kerja (Print)
+            </button>
             <button
               onClick={() => handleExport('excel', `ATLAS_Format_${worksheetCode || 'Global'}.xlsx`)}
               className="group flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-atlas-blue transition-colors"

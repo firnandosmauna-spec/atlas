@@ -213,13 +213,67 @@ const WorksheetContainer: React.FC<WorksheetContainerProps> = ({
       <div className={`flex-1 flex flex-col h-full min-w-0 ${activePanel !== 'none' ? 'md:pr-0' : ''}`}>
         
         {/* Content Area - starts immediately without duplicate top bar */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 flex flex-col relative min-h-0">
-          <div className="p-4 sm:p-6 w-full space-y-6 flex-1">
+        <div className="flex-1 overflow-y-auto bg-gray-50 flex flex-col relative min-h-0 print:overflow-visible print:bg-white print:p-0">
+          <div className="p-4 sm:p-6 w-full space-y-6 flex-1 print:p-0 print:space-y-4">
+            
+            {/* Official Audit Print Header - Only visible during print */}
+            <div className="hidden print:block mb-6 pb-4 border-b-2 border-slate-900 break-inside-avoid">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">KAP FRIDOLINUS PENO</h2>
+                  <p className="text-[10px] text-slate-600">Kantor Akuntan Publik • Izin Usaha KMK RI No. 345/KM.1/2020</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-xs font-mono font-bold bg-slate-100 border border-slate-400 px-2 py-0.5 rounded">
+                    KKP: {code}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-3 text-center border-y border-slate-300 py-2">
+                <h1 className="text-base font-bold text-slate-900 tracking-tight uppercase">
+                  {name}
+                </h1>
+                <p className="text-xs text-slate-700 mt-0.5">
+                  Klien: <strong>{engagement?.clientName || '-'}</strong> | Periode: {engagement?.auditPeriod || engagement?.fiscalYear || '-'} | Standar: {engagement?.accountingStandard || 'SAK UMUM'}
+                </p>
+              </div>
+              <div className="grid grid-cols-4 gap-2 mt-2 text-[10px] text-slate-800 bg-slate-50 p-2 border border-slate-300">
+                <div><strong>No. Perikatan:</strong> {engagement?.id || '-'}</div>
+                <div><strong>Auditor:</strong> {engagement?.auditorName || 'Auditor'}</div>
+                <div><strong>Reviewer:</strong> {reviewer || engagement?.managerName || 'Manager'}</div>
+                <div><strong>Status KKP:</strong> {worksheetStatus}</div>
+              </div>
+            </div>
+
             {children}
+
+            {/* Official Audit Print Sign-off Footer - Only visible during print */}
+            <div className="hidden print:block mt-8 pt-4 border-t-2 border-slate-900 break-inside-avoid">
+              <div className="grid grid-cols-3 gap-6 text-center text-xs">
+                <div className="border border-slate-400 p-3 rounded">
+                  <p className="font-semibold text-slate-600 uppercase text-[9px] mb-8">Dibuat Oleh (Auditor)</p>
+                  <p className="font-bold border-t border-slate-300 pt-1 text-slate-900">{engagement?.auditorName || 'Auditor'}</p>
+                  <p className="text-[9px] text-slate-500">Tanggal: {new Date().toLocaleDateString('id-ID')}</p>
+                </div>
+                <div className="border border-slate-400 p-3 rounded">
+                  <p className="font-semibold text-slate-600 uppercase text-[9px] mb-8">Direview Oleh (Reviewer)</p>
+                  <p className="font-bold border-t border-slate-300 pt-1 text-slate-900">{reviewer || engagement?.managerName || 'Manager'}</p>
+                  <p className="text-[9px] text-slate-500">Tanggal: {new Date().toLocaleDateString('id-ID')}</p>
+                </div>
+                <div className="border border-slate-400 p-3 rounded">
+                  <p className="font-semibold text-slate-600 uppercase text-[9px] mb-8">Disetujui Oleh (Partner)</p>
+                  <p className="font-bold border-t border-slate-300 pt-1 text-slate-900">{engagement?.partnerName || 'Partner'}</p>
+                  <p className="text-[9px] text-slate-500">Tanggal: {new Date().toLocaleDateString('id-ID')}</p>
+                </div>
+              </div>
+              <div className="mt-3 text-center text-[9px] text-slate-500">
+                Dokumen Kertas Kerja Audit Elektronik ATLAS • Sifat: Rahasia & Hak Milik KAP • Dicetak pada {new Date().toLocaleString('id-ID')}
+              </div>
+            </div>
           </div>
 
           {/* Worksheet Sections Standard Header (Moved to bottom) */}
-          <div className="w-full bg-white border-t border-gray-200 px-4 sm:px-6 py-2 flex items-center space-x-6 text-xs text-gray-500 overflow-x-auto shadow-xs sticky bottom-0 z-10 mt-auto">
+          <div className="bottom-section-bar no-print w-full bg-white border-t border-gray-200 px-4 sm:px-6 py-2 flex items-center space-x-6 text-xs text-gray-500 overflow-x-auto shadow-xs sticky bottom-0 z-10 mt-auto">
             <a href="#instructions" className="hover:text-atlas-blue font-medium whitespace-nowrap">1. Instructions</a>
             <a href="#input" className="hover:text-atlas-blue font-medium whitespace-nowrap">2. Input</a>
             <a href="#calculation" className="hover:text-atlas-blue font-medium whitespace-nowrap">3. Calculation</a>
@@ -231,7 +285,7 @@ const WorksheetContainer: React.FC<WorksheetContainerProps> = ({
       </div>
 
       {/* Right Tools Sidebar (Floating or docked) */}
-      <div className="bg-white border-l border-gray-200 w-16 flex flex-col items-center py-4 space-y-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
+      <div className="no-print bg-white border-l border-gray-200 w-16 flex flex-col items-center py-4 space-y-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
         <button onClick={() => togglePanel('evidence')} className={`p-3 rounded-xl transition-colors ${activePanel === 'evidence' ? 'bg-blue-50 text-atlas-blue' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'}`} title="Evidence / Attachments">
           <Paperclip size={24} />
         </button>

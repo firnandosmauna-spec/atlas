@@ -11,3 +11,66 @@
 body {
   @apply bg-atlas-gray text-atlas-dark antialiased;
 }
+
+/* ============================================================== */
+/* Audit Working Paper Print Styles                              */
+/* ============================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 10mm 12mm 10mm;
+  }
+
+  /* Hide navigation, sidebar, drawers, toolbars, buttons */
+  aside,
+  header,
+  nav,
+  .no-print,
+  button,
+  input[type="file"],
+  .fixed,
+  .bottom-section-bar {
+    display: none !important;
+  }
+
+  /* Reset main layouts so content expands and prints across pages */
+  body,
+  html,
+  #root,
+  main,
+  .overflow-hidden,
+  .overflow-y-auto {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-size: 10.5pt !important;
+  }
+
+  /* Avoid unwanted page breaks inside cards and tables */
+  table,
+  tr,
+  td,
+  th,
+  .card,
+  .border,
+  .break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure table borders and headers print with high contrast */
+  table,
+  th,
+  td {
+    border-color: #94a3b8 !important;
+  }
+
+  /* Force background colors to print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

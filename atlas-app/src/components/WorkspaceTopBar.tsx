@@ -22,7 +22,8 @@ import {
   Settings, 
   LogOut, 
   Info,
-  Clock
+  Clock,
+  Printer
 } from 'lucide-react';
 import { useWorksheetHeaderStore } from '../store/worksheetHeaderStore';
 import { useEngagementStore } from '../store/engagementStore';
@@ -253,6 +254,17 @@ export const WorkspaceTopBar: React.FC<WorkspaceTopBarProps> = ({
               worksheetCode={headerData.code} 
               clientName={headerData.clientName || engagement.clientName} 
             />
+
+            {/* Print / Cetak Button */}
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="px-2.5 sm:px-3 py-1.5 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-atlas-blue rounded-lg font-semibold active:scale-95 flex items-center transition-all text-xs min-h-[36px] shadow-2xs"
+              title="Cetak Kertas Kerja ini (Print / PDF)"
+            >
+              <Printer size={14} className="mr-1 text-gray-600 shrink-0" />
+              <span>Cetak</span>
+            </button>
 
             {/* Save Button */}
             <button
