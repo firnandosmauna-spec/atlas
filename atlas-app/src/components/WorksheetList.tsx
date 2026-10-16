@@ -42,34 +42,34 @@ const WorksheetList = ({ stageName, description, worksheets, stageCode }: Worksh
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-0">
+    <div className="w-full max-w-full space-y-0">
 
       {/* Stage Header */}
       {stageName && (
-        <div className="mb-10 pb-8 border-b border-gray-200">
+        <div className="mb-8 pb-6 border-b border-gray-200">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-            <div>
+            <div className="flex-1 min-w-0">
               {stageCode && (
-                <span className="text-xs font-semibold tracking-widest uppercase text-gray-400 mb-2 block">{stageCode}</span>
+                <span className="text-xs font-semibold tracking-widest uppercase text-blue-600 mb-1.5 block">{stageCode}</span>
               )}
-              <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">{stageName}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">{stageName}</h1>
               {description && (
-                <p className="text-gray-500 mt-2 max-w-2xl leading-relaxed">{description}</p>
+                <p className="text-gray-500 mt-2 max-w-5xl text-sm leading-relaxed">{description}</p>
               )}
             </div>
-            <div className="flex items-center gap-8 shrink-0">
+            <div className="flex items-center gap-6 sm:gap-8 shrink-0 bg-white p-4 rounded-xl border border-gray-200/80 shadow-2xs">
               <div className="text-right">
-                <p className="text-xs text-gray-500 uppercase tracking-wider font-semibold">Selesai</p>
+                <p className="text-[11px] text-gray-500 uppercase tracking-wider font-semibold">Selesai</p>
                 <p className="text-2xl font-bold text-gray-900">{completedCount}<span className="text-gray-400 font-normal text-lg">/{worksheets.length}</span></p>
               </div>
-              <div className="w-24">
+              <div className="w-28 sm:w-32">
                 <div className="flex justify-between mb-1">
-                  <span className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Progress</span>
+                  <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Progress</span>
                   <span className="text-xs font-bold text-gray-900">{overallProgress}%</span>
                 </div>
-                <div className="h-1.5 bg-gray-100 rounded-none w-full">
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden w-full">
                   <div
-                    className={`h-1.5 rounded-none transition-all duration-500 ${overallProgress === 100 ? 'bg-green-600' : 'bg-gray-900'}`}
+                    className={`h-full rounded-full transition-all duration-500 ${overallProgress === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-blue-600 to-cyan-500'}`}
                     style={{ width: `${overallProgress}%` }}
                   />
                 </div>
@@ -80,7 +80,7 @@ const WorksheetList = ({ stageName, description, worksheets, stageCode }: Worksh
       )}
 
       {/* Worksheet Rows */}
-      <div className="divide-y divide-gray-200 border-t border-gray-200">
+      <div className="divide-y divide-gray-200 border border-gray-200 bg-white rounded-xl shadow-2xs overflow-hidden w-full">
         {worksheets.map((ws, index) => {
           const cfg = STATUS_CONFIG[ws.status];
           const isClickable = true;
@@ -89,53 +89,53 @@ const WorksheetList = ({ stageName, description, worksheets, stageCode }: Worksh
             <div
               key={ws.id}
               onClick={() => isClickable && handleOpen(ws)}
-              className={`group flex items-center gap-6 py-4 px-2 transition-colors ${isClickable ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default opacity-60'}`}
+              className={`group flex items-center gap-4 sm:gap-6 py-4 px-4 sm:px-6 transition-all ${isClickable ? 'cursor-pointer hover:bg-slate-50/80 hover:translate-x-0.5' : 'cursor-default opacity-60'}`}
             >
               {/* Number */}
-              <span className="text-sm text-gray-300 font-semibold w-6 shrink-0 text-right">
+              <span className="text-sm text-gray-400 font-mono font-semibold w-6 shrink-0 text-right">
                 {(index + 1).toString().padStart(2, '0')}
               </span>
 
               {/* Code Badge */}
               <div className="w-20 shrink-0">
-                <span className="font-mono text-sm font-semibold text-gray-900 bg-gray-100 px-2 py-1 inline-block">
+                <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2.5 py-1 rounded-md inline-block shadow-2xs">
                   {ws.code}
                 </span>
               </div>
 
               {/* Name & Reviewer */}
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 group-hover:text-gray-700 truncate">{ws.name}</p>
+                <p className="font-semibold text-gray-900 group-hover:text-atlas-blue transition-colors truncate text-sm sm:text-base">{ws.name}</p>
                 <div className="flex items-center gap-4 mt-1">
                   {ws.reviewer ? (
-                    <span className="text-xs text-gray-500 flex items-center gap-1">
-                      <CheckCircle size={11} className="text-green-500" /> {ws.reviewer}
+                    <span className="text-xs text-gray-500 flex items-center gap-1 font-medium">
+                      <CheckCircle size={12} className="text-emerald-500" /> {ws.reviewer}
                     </span>
                   ) : (
                     <span className="text-xs text-gray-400 italic">Belum ada reviewer</span>
                   )}
                   <span className="text-xs text-gray-400 flex items-center gap-1">
-                    <Clock size={11} /> {ws.lastUpdated}
+                    <Clock size={12} /> {ws.lastUpdated}
                   </span>
                 </div>
               </div>
 
               {/* Progress */}
-              <div className="w-28 shrink-0">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1 bg-gray-100 rounded-none">
+              <div className="w-28 sm:w-36 shrink-0 hidden sm:block">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                      className={`h-1 rounded-none transition-all ${ws.progress === 100 ? 'bg-green-600' : ws.progress > 0 ? 'bg-blue-500' : 'bg-gray-200'}`}
+                      className={`h-full rounded-full transition-all ${ws.progress === 100 ? 'bg-emerald-500' : ws.progress > 0 ? 'bg-blue-600' : 'bg-gray-200'}`}
                       style={{ width: `${ws.progress}%` }}
                     />
                   </div>
-                  <span className="text-xs text-gray-500 font-medium w-8 text-right">{ws.progress}%</span>
+                  <span className="text-xs text-gray-500 font-semibold w-8 text-right">{ws.progress}%</span>
                 </div>
               </div>
 
               {/* Status */}
-              <div className="w-40 shrink-0">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+              <div className="w-36 sm:w-44 shrink-0">
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
                   <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
                   {cfg.label}
                 </span>
@@ -144,7 +144,7 @@ const WorksheetList = ({ stageName, description, worksheets, stageCode }: Worksh
               {/* Arrow */}
               <ChevronRight
                 size={18}
-                className="text-gray-300 group-hover:text-gray-600 transition-colors shrink-0"
+                className="text-gray-300 group-hover:text-atlas-blue group-hover:translate-x-1 transition-all shrink-0"
               />
             </div>
           );
@@ -153,7 +153,7 @@ const WorksheetList = ({ stageName, description, worksheets, stageCode }: Worksh
 
       {/* Empty State */}
       {worksheets.length === 0 && (
-        <div className="py-20 text-center border border-dashed border-gray-200">
+        <div className="py-20 text-center border border-dashed border-gray-200 rounded-xl bg-white">
           <FileText size={32} className="text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 font-medium">Tidak ada worksheet pada tahap ini</p>
         </div>
