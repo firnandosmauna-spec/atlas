@@ -105,11 +105,21 @@ const B130 = () => {
                 </div>
                 <div className="flex items-center">
                   <div className="w-48 font-bold text-red-600 italic text-[10px]">Materialitas Keseluruhan:</div>
-                  <input type="text" readOnly className="border border-red-300 bg-red-50 p-1 w-32 text-right font-mono text-red-700" value="75.000.000" />
+                  <input 
+                    type="text" 
+                    readOnly 
+                    className="border border-red-300 bg-red-50 p-1 w-32 text-right font-mono text-red-700" 
+                    value={engagement.materiality?.overallMateriality ? new Intl.NumberFormat('id-ID').format(engagement.materiality.overallMateriality) : '-'} 
+                  />
                 </div>
                 <div className="flex items-center">
                   <div className="w-48 font-bold text-red-600 italic text-[10px]">Performance Materiality:</div>
-                  <input type="text" readOnly className="border border-red-300 bg-red-50 p-1 w-32 text-right font-mono text-red-700" value="50.000.000" />
+                  <input 
+                    type="text" 
+                    readOnly 
+                    className="border border-red-300 bg-red-50 p-1 w-32 text-right font-mono text-red-700" 
+                    value={engagement.materiality?.performanceMateriality ? new Intl.NumberFormat('id-ID').format(engagement.materiality.performanceMateriality) : '-'} 
+                  />
                 </div>
               </div>
               

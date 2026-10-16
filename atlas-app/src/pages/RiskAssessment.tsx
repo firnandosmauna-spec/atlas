@@ -7,7 +7,7 @@ const RiskAssessment = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
 
   const worksheets: WorksheetInfo[] = [
-    { id: '1', code: 'A.210', name: 'Materialitas Awal', status: engagement.materiality ? 'Reviewed' : 'In Progress', progress: engagement.materiality ? 100 : 40, reviewer: engagement.partnerName || 'Partner', lastUpdated: 'Baru saja' },
+    { id: '1', code: 'A.210', name: 'Materialitas Awal', status: (engagement.materiality?.overallMateriality && engagement.materiality.overallMateriality > 0) ? 'Completed' : 'Not Started', progress: (engagement.materiality?.overallMateriality && engagement.materiality.overallMateriality > 0) ? 100 : 0, reviewer: (engagement.materiality?.overallMateriality && engagement.materiality.overallMateriality > 0) ? (engagement.partnerName || 'Partner') : null, lastUpdated: (engagement.materiality?.overallMateriality && engagement.materiality.overallMateriality > 0) ? 'Baru saja' : '-' },
     { id: '2', code: 'A.220', name: 'Prosedur Analitis Awal', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
     { id: '3', code: 'A.230', name: 'Pemahaman Entitas dan Lingkungan', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
     { id: '4', code: 'A.240', name: 'Inherent Risk', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },

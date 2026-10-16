@@ -115,8 +115,10 @@ const GlobalSearch = () => {
     const staticWorksheets = [
       { code: 'A.110', name: 'Analisis Penerimaan Klien' },
       { code: 'A.120', name: 'Alokasi Jam Jasa' },
-      { code: 'A.210', name: 'Pemahaman Bisnis Klien' },
+      { code: 'A.210', name: 'Materialitas Awal' },
+      { code: 'A.210.1', name: 'Mapping Akun-akun Material' },
       { code: 'A.220', name: 'Analisis Prosedur Analitis' },
+      { code: 'A.230', name: 'Pemahaman Bisnis Klien' },
       { code: 'A.240', name: 'Inherent Risk Assessment' },
       { code: 'B.140', name: 'Uji Pengendalian (TOC)' },
       { code: 'B.210', name: 'Substantive Test - Kas' },

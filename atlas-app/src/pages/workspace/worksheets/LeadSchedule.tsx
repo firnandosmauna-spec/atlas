@@ -156,9 +156,13 @@ const LeadSchedule = ({ indeks = 'A' }: { indeks?: string }) => {
           <div className="px-4 text-red-500 font-black"><ChevronRight size={32} /></div>
           <div className="flex-1 grid grid-cols-[200px_auto] gap-y-1 font-bold">
             <div>Akun yang mempertimbangkan specific materiality:</div>
-            <div className="bg-gray-100 border border-gray-300 p-1"></div>
+            <div className="bg-gray-100 border border-gray-300 p-1">
+              {engagement.materiality?.specificMaterialityAccount || '-'}
+            </div>
             <div>Specific (Rincian akun):</div>
-            <div className="bg-gray-100 border border-gray-300 p-1"></div>
+            <div className="bg-gray-100 border border-gray-300 p-1">
+              {engagement.materiality?.specificMaterialityOM ? `Rp ${new Intl.NumberFormat('id-ID').format(engagement.materiality.specificMaterialityOM)}` : '-'}
+            </div>
           </div>
         </div>
 

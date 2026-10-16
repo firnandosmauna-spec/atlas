@@ -22,6 +22,16 @@ export interface Materiality {
   pmPercentage: number;
   thresholdPercentage: number;
   rationale: string;
+  omRationale?: string;
+  pmRationale?: string;
+  kondisiEntitas?: string;
+  useSpecificMateriality?: boolean;
+  specificMaterialityAccount?: string;
+  specificMaterialityOMMargin?: number;
+  specificMaterialityPMMargin?: number;
+  specificMaterialityRationale?: string;
+  specificMaterialityOM?: number;
+  specificMaterialityPM?: number;
 }
 
 export interface ComprehensiveRisk {
@@ -264,7 +274,7 @@ export const useEngagementStore = create<EngagementState>()(
     }),
     {
       name: 'atlas_engagements_store',
-      version: 4,
+      version: 5,
       migrate: (persistedState: any) => {
         if (!persistedState) {
           return { engagements: [], auditLogs: [], attachments: [], notifications: [], reviewNotes: [] };
@@ -273,7 +283,15 @@ export const useEngagementStore = create<EngagementState>()(
           'ENG-2024-001', 'ENG-2025-DEMO', 'ENG-2018-001', 'ENG-2018-002', 'ENG-2018-003', 'ENG-2018-004',
           'ENG-2026-618', 'ENG-2026-001'
         ];
-        const existingEngs = (persistedState.engagements || []).filter((e: any) => !mockIds.includes(e.id));
+        const existingEngs = (persistedState.engagements || [])
+          .filter((e: any) => !mockIds.includes(e.id))
+          .map((e: any) => {
+            if (e.materiality && e.materiality.omPercentage === 1 && e.materiality.pmPercentage === 75 && (!e.materiality.omRationale || e.materiality.omRationale.trim() === '')) {
+              const { materiality, ...rest } = e;
+              return rest;
+            }
+            return e;
+          });
         return {
           ...persistedState,
           engagements: existingEngs,

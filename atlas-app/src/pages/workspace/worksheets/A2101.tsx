@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import type { Engagement } from "../../../store/engagementStore";
+import type { Engagement, Materiality } from "../../../store/engagementStore";
 import { useEngagementStore } from "../../../store/engagementStore";
 import WorksheetContainer from "../../../components/WorksheetContainer";
-import { CheckCircle2, AlertCircle, Calculator, FileText, ArrowLeft, Save } from "lucide-react";
+import { CheckCircle2, Calculator, FileText, ArrowLeft, Save } from "lucide-react";
 
 const A2101: React.FC = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
@@ -12,29 +12,47 @@ const A2101: React.FC = () => {
 
   const [isSaved, setIsSaved] = useState(false);
 
-  // We will assume specific materiality is stored in the engagement object.
-  // For demo purposes, we will mock it if it doesn't exist.
-  const [selectedAccount, setSelectedAccount] = useState<string>("");
-  const [smOMMargin, setSmOMMargin] = useState<number>(0);
-  const [smPMMargin, setSmPMMargin] = useState<number>(0);
-  const [rationale, setRationale] = useState<string>("");
+  const materiality = engagement.materiality;
+  const [selectedAccount, setSelectedAccount] = useState<string>(materiality?.specificMaterialityAccount || "");
+  const [smOMMargin, setSmOMMargin] = useState<number>(materiality?.specificMaterialityOMMargin || 0);
+  const [smPMMargin, setSmPMMargin] = useState<number>(materiality?.specificMaterialityPMMargin || 0);
+  const [rationale, setRationale] = useState<string>(materiality?.specificMaterialityRationale || "");
 
   const tb = engagement.trialBalance || [];
   
-  // Ambil saldo untuk base specific materiality (jika akun terpilih)
   const selectedTbItem = tb.find(item => item.name === selectedAccount);
   const baseValue = selectedTbItem ? Math.abs(selectedTbItem.endingBalance) : 0;
 
-  const calculatedSM_OM = baseValue * (smOMMargin / 100);
-  const calculatedSM_PM = calculatedSM_OM * (smPMMargin / 100);
+  const calculatedSM_OM = (baseValue > 0 && smOMMargin > 0) ? baseValue * (smOMMargin / 100) : 0;
+  const calculatedSM_PM = (calculatedSM_OM > 0 && smPMMargin > 0) ? calculatedSM_OM * (smPMMargin / 100) : 0;
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(val);
 
-  // Condition for completion
   const isCompleted = selectedAccount !== "" && smOMMargin > 0 && smPMMargin > 0 && rationale.trim() !== "";
 
   const handleSave = () => {
-    // In a real scenario, we'd save this to the engagement store
+    const updatedMateriality: Materiality = {
+      ...(engagement.materiality || {
+        overallMateriality: 0,
+        performanceMateriality: 0,
+        specificMateriality: 0,
+        threshold: 0,
+        basis: '',
+        omPercentage: 0,
+        pmPercentage: 0,
+        thresholdPercentage: 0,
+        rationale: ''
+      }),
+      specificMateriality: calculatedSM_OM,
+      specificMaterialityAccount: selectedAccount,
+      specificMaterialityOMMargin: smOMMargin,
+      specificMaterialityPMMargin: smPMMargin,
+      specificMaterialityRationale: rationale,
+      specificMaterialityOM: calculatedSM_OM,
+      specificMaterialityPM: calculatedSM_PM,
+      useSpecificMateriality: true
+    };
+    updateEngagement(engagement.id, { materiality: updatedMateriality });
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
   };
@@ -44,9 +62,9 @@ const A2101: React.FC = () => {
       code="A.210.1"
       name="Mapping Akun-akun Material"
       purpose="Melakukan perhitungan dan pertimbangan dalam menetapkan materialitas secara spesifik untuk jenis transaksi atau saldo akun tertentu."
-      status={isCompleted ? "Completed" : "In Progress"}
+      status={isCompleted ? "Completed" : (selectedAccount || smOMMargin > 0 ? "In Progress" : "Not Started")}
       reviewer={engagement.partnerName || "Menunggu Reviewer"}
-      lastUpdated="Baru saja"
+      lastUpdated={materiality?.specificMaterialityAccount ? "Baru saja" : "-"}
     >
       <div className="space-y-6">
         
@@ -155,20 +173,21 @@ const A2101: React.FC = () => {
                       Specific Overall Materiality (SM OM)
                     </td>
                     <td className="px-4 py-3 text-right font-mono text-gray-600 border-r border-gray-200 font-bold">
-                      {formatCurrency(baseValue)}
+                      {baseValue > 0 ? formatCurrency(baseValue) : '-'}
                     </td>
                     <td className="p-2 border-r border-gray-200 flex items-center justify-center">
                       <input 
                         type="number" step="0.1" 
                         className="w-20 border border-orange-300 rounded p-1 text-xs text-center outline-none bg-white font-bold"
-                        value={smOMMargin}
-                        onChange={(e) => setSmOMMargin(parseFloat(e.target.value) || 0)}
+                        value={smOMMargin > 0 ? smOMMargin : ''}
+                        placeholder="0"
+                        onChange={(e) => setSmOMMargin(e.target.value === '' ? 0 : parseFloat(e.target.value))}
                         disabled={!selectedAccount}
                       />
                       <span className="ml-1 text-xs font-bold">%</span>
                     </td>
                     <td className="px-4 py-3 text-right font-mono font-bold text-lg text-gray-800 bg-orange-100">
-                      {formatCurrency(calculatedSM_OM)}
+                      {calculatedSM_OM > 0 ? formatCurrency(calculatedSM_OM) : '-'}
                     </td>
                   </tr>
 
@@ -183,14 +202,15 @@ const A2101: React.FC = () => {
                       <input 
                         type="number" step="1" 
                         className="w-20 border border-green-300 rounded p-1 text-xs text-center outline-none bg-white font-bold"
-                        value={smPMMargin}
-                        onChange={(e) => setSmPMMargin(parseFloat(e.target.value) || 0)}
+                        value={smPMMargin > 0 ? smPMMargin : ''}
+                        placeholder="0"
+                        onChange={(e) => setSmPMMargin(e.target.value === '' ? 0 : parseFloat(e.target.value))}
                         disabled={!selectedAccount}
                       />
                       <span className="ml-1 text-xs font-bold">%</span>
                     </td>
                     <td className="px-4 py-3 text-right font-mono font-bold text-lg text-gray-800 bg-green-100">
-                      {formatCurrency(calculatedSM_PM)}
+                      {calculatedSM_PM > 0 ? formatCurrency(calculatedSM_PM) : '-'}
                     </td>
                   </tr>
                 </tbody>
@@ -230,13 +250,16 @@ const A2101: React.FC = () => {
 
         {/* Action Footer */}
         <div className="flex justify-between items-center pt-4">
-          <button onClick={() => navigate(`/workspace/${engagement.id}/worksheet/a210`)} className="text-gray-500 font-bold hover:text-gray-800 px-4 py-2 flex items-center transition-colors">
+          <button 
+            onClick={() => navigate(`/workspace/${engagement.id}/worksheet/a210`)} 
+            className="text-gray-500 font-bold hover:text-gray-800 px-4 py-2 flex items-center transition-colors min-h-[44px]"
+          >
             <ArrowLeft size={16} className="mr-2" /> Kembali ke Materialitas Awal (A.210)
           </button>
           <button 
             onClick={handleSave} 
             disabled={!isCompleted}
-            className={`px-6 py-2.5 rounded-lg font-bold shadow-md transition-colors flex items-center ${isCompleted ? 'bg-atlas-blue text-white hover:bg-blue-800' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+            className={`px-6 py-2.5 rounded-lg font-bold shadow-md transition-colors flex items-center min-h-[44px] ${isCompleted ? 'bg-atlas-blue text-white hover:bg-blue-800' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
           >
             {isSaved ? <CheckCircle2 size={18} className="mr-2" /> : <Save size={18} className="mr-2" />}
             {isSaved ? 'Tersimpan' : 'Simpan SM'}

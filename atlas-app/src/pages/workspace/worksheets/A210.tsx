@@ -3,7 +3,7 @@ import { useOutletContext, useNavigate } from 'react-router-dom';
 import type { Engagement, Materiality } from '../../../store/engagementStore';
 import { useEngagementStore } from '../../../store/engagementStore';
 import WorksheetContainer from '../../../components/WorksheetContainer';
-import { Calculator, AlertCircle, Save, CheckCircle2, ShieldAlert, ArrowLeft } from 'lucide-react';
+import { Calculator, AlertCircle, Save, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 const A210 = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
@@ -11,7 +11,6 @@ const A210 = () => {
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
 
-  // Extract financial data from Trial Balance
   const tb = engagement.trialBalance || [];
   const financialData = useMemo(() => {
     const assets = tb.filter(a => a.group === 'Aset').reduce((sum, a) => sum + Math.abs(a.endingBalance), 0);
@@ -25,20 +24,20 @@ const A210 = () => {
       netAssets: assets - liabilities,
       totalRevenue: revenue,
       cogs: cogs,
-      ebt: revenue - cogs - expenses, // Earnings Before Tax (Simplified)
-      ebitda: revenue - cogs - (expenses * 0.8), // Approximation for EBITDA
+      ebt: revenue - cogs - expenses,
+      ebitda: revenue - cogs - (expenses * 0.8),
       totalLiabilities: liabilities,
       netIncome: revenue - cogs - expenses,
     };
   }, [tb]);
 
   const defaultMateriality: Materiality = {
-    basis: 'Total Aset',
-    omPercentage: 1,
-    pmPercentage: 75,
-    thresholdPercentage: 3,
+    basis: '',
+    omPercentage: 0,
+    pmPercentage: 0,
+    thresholdPercentage: 0,
     specificMateriality: 0,
-    rationale: '', // Legacy
+    rationale: '',
     omRationale: '',
     pmRationale: '',
     overallMateriality: 0,
@@ -46,11 +45,19 @@ const A210 = () => {
     threshold: 0
   };
 
-  // Convert old structure to new if needed
-  const initialData = { ...defaultMateriality, ...(engagement.materiality || {}) };
-  const [form, setForm] = useState<any>(initialData);
-  const [kondisiEntitas, setKondisiEntitas] = useState("Normal");
-  const [useSpecificMateriality, setUseSpecificMateriality] = useState(false);
+  const rawMateriality = engagement.materiality;
+  const isOldMockDefault = rawMateriality && 
+    rawMateriality.omPercentage === 1 && 
+    rawMateriality.pmPercentage === 75 && 
+    rawMateriality.thresholdPercentage === 3 && 
+    (!rawMateriality.omRationale || rawMateriality.omRationale.trim() === '');
+
+  const cleanMateriality = isOldMockDefault ? undefined : rawMateriality;
+  const initialData = { ...defaultMateriality, ...(cleanMateriality || {}) };
+
+  const [form, setForm] = useState<Materiality>(initialData);
+  const [kondisiEntitas, setKondisiEntitas] = useState(cleanMateriality?.kondisiEntitas || "");
+  const [useSpecificMateriality, setUseSpecificMateriality] = useState(cleanMateriality?.useSpecificMateriality || false);
 
   const getBasisAmount = () => {
     switch (form.basis) {
@@ -67,18 +74,24 @@ const A210 = () => {
   };
 
   const basisAmount = getBasisAmount();
-  const calculatedOM = basisAmount * (form.omPercentage / 100);
-  const calculatedPM = calculatedOM * (form.pmPercentage / 100);
-  const calculatedThreshold = calculatedPM * (form.thresholdPercentage / 100); // Threshold is based on PM as per image: "Biasanya 3% - 5% dari materialitas pelaksanaan"
+  const calculatedOM = (form.basis && form.omPercentage > 0) ? basisAmount * (form.omPercentage / 100) : 0;
+  const calculatedPM = (calculatedOM > 0 && form.pmPercentage > 0) ? calculatedOM * (form.pmPercentage / 100) : 0;
+  const calculatedThreshold = (calculatedPM > 0 && form.thresholdPercentage > 0) ? calculatedPM * (form.thresholdPercentage / 100) : 0;
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val);
+  const formatValueOrDash = (val: number) => {
+    if (tb.length === 0 || val === 0) return '-';
+    return formatCurrency(val);
+  };
 
-  const isCompleted = form.omPercentage > 0 && form.pmPercentage > 0 && form.thresholdPercentage > 0 && 
-                      form.omRationale.trim() !== "" && form.pmRationale.trim() !== "";
+  const isCompleted = form.basis !== "" && form.omPercentage > 0 && form.pmPercentage > 0 && form.thresholdPercentage > 0 && 
+                      (form.omRationale || '').trim() !== "" && (form.pmRationale || '').trim() !== "";
 
   const handleSave = () => {
-    const updatedMateriality = {
+    const updatedMateriality: Materiality = {
       ...form,
+      kondisiEntitas,
+      useSpecificMateriality,
       overallMateriality: calculatedOM,
       performanceMateriality: calculatedPM,
       threshold: calculatedThreshold
@@ -95,9 +108,9 @@ const A210 = () => {
       code="A.210"
       name="Materialitas Awal"
       purpose="Melakukan perhitungan dan pertimbangan dalam penetapan tingkat materialitas."
-      status={isCompleted ? 'Completed' : 'In Progress'}
+      status={isCompleted ? 'Completed' : (form.basis || form.omPercentage > 0 ? 'In Progress' : 'Not Started')}
       reviewer={engagement.partnerName || 'Menunggu Reviewer'}
-      lastUpdated="Baru saja"
+      lastUpdated={cleanMateriality ? 'Baru saja' : '-'}
     >
       <div className="space-y-6">
         
@@ -127,6 +140,7 @@ const A210 = () => {
                 value={kondisiEntitas}
                 onChange={(e) => setKondisiEntitas(e.target.value)}
               >
+                <option value="">-- Pilih Kondisi Entitas --</option>
                 <option value="Normal">Normal</option>
                 <option value="Baru Mulai Operasi">Baru Mulai Operasi</option>
                 <option value="Laba Berfluktuasi">Laba Berfluktuasi</option>
@@ -149,49 +163,49 @@ const A210 = () => {
                   <tr className="hover:bg-gray-50">
                     <td className="px-4 py-2 text-center text-gray-500 border-r border-gray-200">1</td>
                     <td className="px-4 py-2 text-gray-700 border-r border-gray-200">Total Aset</td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatCurrency(financialData.totalAssets)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatValueOrDash(financialData.totalAssets)}</td>
                     <td className="bg-gray-50 border-r border-gray-200"></td><td className="bg-gray-50"></td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-4 py-2 text-center text-gray-500 border-r border-gray-200">2</td>
                     <td className="px-4 py-2 text-gray-700 border-r border-gray-200">Aset Bersih</td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatCurrency(financialData.netAssets)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatValueOrDash(financialData.netAssets)}</td>
                     <td className="bg-gray-50 border-r border-gray-200"></td><td className="bg-gray-50"></td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-4 py-2 text-center text-gray-500 border-r border-gray-200">3</td>
                     <td className="px-4 py-2 text-gray-700 border-r border-gray-200">Jumlah Pendapatan</td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatCurrency(financialData.totalRevenue)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatValueOrDash(financialData.totalRevenue)}</td>
                     <td className="bg-gray-50 border-r border-gray-200"></td><td className="bg-gray-50"></td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-4 py-2 text-center text-gray-500 border-r border-gray-200">4</td>
                     <td className="px-4 py-2 text-gray-700 border-r border-gray-200">Jumlah HPP</td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatCurrency(financialData.cogs)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatValueOrDash(financialData.cogs)}</td>
                     <td className="bg-gray-50 border-r border-gray-200"></td><td className="bg-gray-50"></td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-4 py-2 text-center text-gray-500 border-r border-gray-200">5</td>
                     <td className="px-4 py-2 text-gray-700 border-r border-gray-200">Laba sebelum pajak</td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatCurrency(Math.abs(financialData.ebt))}</td>
+                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatValueOrDash(Math.abs(financialData.ebt))}</td>
                     <td className="bg-gray-50 border-r border-gray-200"></td><td className="bg-gray-50"></td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-4 py-2 text-center text-gray-500 border-r border-gray-200">6</td>
                     <td className="px-4 py-2 text-gray-700 border-r border-gray-200">Laba sebelum bunga, pajak, penyusutan...</td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatCurrency(Math.abs(financialData.ebitda))}</td>
+                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatValueOrDash(Math.abs(financialData.ebitda))}</td>
                     <td className="bg-gray-50 border-r border-gray-200"></td><td className="bg-gray-50"></td>
                   </tr>
                   <tr className="hover:bg-gray-50">
                     <td className="px-4 py-2 text-center text-gray-500 border-r border-gray-200">7</td>
                     <td className="px-4 py-2 text-gray-700 border-r border-gray-200">Total Liabilitas</td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatCurrency(financialData.totalLiabilities)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatValueOrDash(financialData.totalLiabilities)}</td>
                     <td className="bg-gray-50 border-r border-gray-200"></td><td className="bg-gray-50"></td>
                   </tr>
                   <tr className="hover:bg-gray-50 border-b-4 border-gray-300">
                     <td className="px-4 py-2 text-center text-gray-500 border-r border-gray-200">8</td>
                     <td className="px-4 py-2 text-gray-700 border-r border-gray-200">Laba bersih setelah pajak dari operasi normal</td>
-                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatCurrency(Math.abs(financialData.netIncome))}</td>
+                    <td className="px-4 py-2 text-right font-mono text-gray-600 border-r border-gray-200">{formatValueOrDash(Math.abs(financialData.netIncome))}</td>
                     <td className="bg-gray-50 border-r border-gray-200"></td><td className="bg-gray-50"></td>
                   </tr>
 
@@ -205,6 +219,7 @@ const A210 = () => {
                         value={form.basis}
                         onChange={(e) => setForm({...form, basis: e.target.value})}
                       >
+                        <option value="">-- Pilih Acuan Dasar --</option>
                         <option value="Total Aset">Total Aset</option>
                         <option value="Aset Bersih">Aset Bersih</option>
                         <option value="Jumlah Pendapatan">Jumlah Pendapatan</option>
@@ -221,8 +236,9 @@ const A210 = () => {
                         <input 
                           type="number" step="0.1" 
                           className="w-20 border border-orange-300 rounded p-1 text-xs text-center outline-none bg-white font-bold"
-                          value={form.omPercentage}
-                          onChange={(e) => setForm({...form, omPercentage: parseFloat(e.target.value) || 0})}
+                          value={form.omPercentage > 0 ? form.omPercentage : ''}
+                          placeholder="0"
+                          onChange={(e) => setForm({...form, omPercentage: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                         />
                         <span className="ml-1 text-xs font-bold">%</span>
                       </div>
@@ -236,12 +252,14 @@ const A210 = () => {
                     <td className="p-2 border-r border-gray-200">
                       <textarea 
                         className="w-full border border-orange-300 rounded p-1 text-xs outline-none bg-white min-h-[40px]"
-                        value={form.omRationale}
+                        value={form.omRationale || ''}
                         onChange={(e) => setForm({...form, omRationale: e.target.value})}
                         placeholder="Alasan penentuan acuan..."
                       ></textarea>
                     </td>
-                    <td className="px-4 py-2 text-right font-mono font-bold text-lg text-gray-800 bg-orange-100">{formatCurrency(calculatedOM)}</td>
+                    <td className="px-4 py-2 text-right font-mono font-bold text-lg text-gray-800 bg-orange-100">
+                      {calculatedOM > 0 ? formatCurrency(calculatedOM) : '-'}
+                    </td>
                   </tr>
 
                   {/* Section 10: Performance Materiality */}
@@ -258,8 +276,9 @@ const A210 = () => {
                         <input 
                           type="number" step="1" 
                           className="w-20 border border-green-300 rounded p-1 text-xs text-center outline-none bg-white font-bold"
-                          value={form.pmPercentage}
-                          onChange={(e) => setForm({...form, pmPercentage: parseFloat(e.target.value) || 0})}
+                          value={form.pmPercentage > 0 ? form.pmPercentage : ''}
+                          placeholder="0"
+                          onChange={(e) => setForm({...form, pmPercentage: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                         />
                         <span className="ml-1 text-xs font-bold">%</span>
                       </div>
@@ -273,12 +292,14 @@ const A210 = () => {
                     <td className="p-2 border-r border-gray-200">
                       <textarea 
                         className="w-full border border-green-300 rounded p-1 text-xs outline-none bg-white min-h-[40px]"
-                        value={form.pmRationale}
+                        value={form.pmRationale || ''}
                         onChange={(e) => setForm({...form, pmRationale: e.target.value})}
                         placeholder="Alasan penentuan margin..."
                       ></textarea>
                     </td>
-                    <td className="px-4 py-2 text-right font-mono font-bold text-lg text-gray-800 bg-green-100">{formatCurrency(calculatedPM)}</td>
+                    <td className="px-4 py-2 text-right font-mono font-bold text-lg text-gray-800 bg-green-100">
+                      {calculatedPM > 0 ? formatCurrency(calculatedPM) : '-'}
+                    </td>
                   </tr>
 
                   {/* Section 11: Threshold */}
@@ -295,13 +316,16 @@ const A210 = () => {
                         <input 
                           type="number" step="0.1" 
                           className="w-20 border border-blue-300 rounded p-1 text-xs text-center outline-none bg-white font-bold"
-                          value={form.thresholdPercentage}
-                          onChange={(e) => setForm({...form, thresholdPercentage: parseFloat(e.target.value) || 0})}
+                          value={form.thresholdPercentage > 0 ? form.thresholdPercentage : ''}
+                          placeholder="0"
+                          onChange={(e) => setForm({...form, thresholdPercentage: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                         />
                         <span className="ml-1 text-xs font-bold">%</span>
                       </div>
                     </td>
-                    <td className="px-4 py-2 text-right font-mono font-bold text-lg text-gray-800 bg-blue-100">{formatCurrency(calculatedThreshold)}</td>
+                    <td className="px-4 py-2 text-right font-mono font-bold text-lg text-gray-800 bg-blue-100">
+                      {calculatedThreshold > 0 ? formatCurrency(calculatedThreshold) : '-'}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -321,7 +345,10 @@ const A210 = () => {
               {useSpecificMateriality && (
                 <div className="mt-4 p-4 border border-red-200 bg-red-50/30 rounded-xl flex items-center justify-between animate-in fade-in">
                   <span className="text-sm font-bold text-red-600">Tentukan Specific Materiality</span>
-                  <button className="bg-white border border-red-300 text-red-600 px-4 py-1.5 rounded font-bold text-sm hover:bg-red-50 transition-colors">
+                  <button 
+                    onClick={() => navigate(`/workspace/${engagement.id}/worksheet/a2101`)}
+                    className="bg-white border border-red-300 text-red-600 px-4 py-2 rounded font-bold text-sm hover:bg-red-50 transition-colors min-h-[44px]"
+                  >
                     Mapping Materialitas Saldo Akun
                   </button>
                 </div>
@@ -357,12 +384,15 @@ const A210 = () => {
 
         {/* Action Footer */}
         <div className="flex justify-between items-center pt-4">
-          <button onClick={() => navigate(`/workspace/${engagement.id}`)} className="text-gray-500 font-bold hover:text-gray-800 px-4 py-2 flex items-center transition-colors">
+          <button 
+            onClick={() => navigate(`/workspace/${engagement.id}`)} 
+            className="text-gray-500 font-bold hover:text-gray-800 px-4 py-2 flex items-center transition-colors min-h-[44px]"
+          >
             <ArrowLeft size={16} className="mr-2" /> Kembali ke Index
           </button>
           <button 
             onClick={handleSave} 
-            className="bg-atlas-blue text-white px-6 py-2.5 rounded-lg font-bold shadow-md hover:bg-blue-800 transition-colors flex items-center"
+            className="bg-atlas-blue text-white px-6 py-2.5 rounded-lg font-bold shadow-md hover:bg-blue-800 transition-colors flex items-center min-h-[44px]"
           >
             {isSaved ? <CheckCircle2 size={18} className="mr-2" /> : <Save size={18} className="mr-2" />}
             {isSaved ? 'Tersimpan' : 'Simpan Materialitas'}
