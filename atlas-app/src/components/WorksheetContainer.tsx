@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Check, Paperclip, MessageSquare, History, FileText, CheckCircle, Clock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import { Paperclip, MessageSquare, History, FileText, CheckCircle } from 'lucide-react';
 import { useEngagementStore } from '../store/engagementStore';
-import ExportMenu from './ExportMenu';
+import { useWorksheetHeaderStore } from '../store/worksheetHeaderStore';
 
 interface WorksheetContainerProps {
   code: string;
@@ -36,7 +36,6 @@ const WorksheetContainer: React.FC<WorksheetContainerProps> = ({
   children,
   validateCompletion
 }) => {
-  const navigate = useNavigate();
   const { id: engagementId } = useParams<{ id: string }>();
   const engagements = useEngagementStore((state) => state.engagements);
   const engagement = engagements.find(e => e.id === engagementId);
@@ -52,6 +51,15 @@ const WorksheetContainer: React.FC<WorksheetContainerProps> = ({
   const [saved, setSaved] = useState(false);
   const [activePanel, setActivePanel] = useState<'none' | 'evidence' | 'notes' | 'audit_trail'>('none');
   const [worksheetStatus, setWorksheetStatus] = useState(status);
+  const [notes, setNotes] = useState<ReviewNote[]>([]);
+  const [newNoteText, setNewNoteText] = useState('');
+
+  const setHeaderData = useWorksheetHeaderStore((state) => state.setHeaderData);
+  const clearHeaderData = useWorksheetHeaderStore((state) => state.clearHeaderData);
+
+  useEffect(() => {
+    setWorksheetStatus(status);
+  }, [status]);
   
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -77,9 +85,6 @@ const WorksheetContainer: React.FC<WorksheetContainerProps> = ({
       }
     }
   };
-  
-  const [notes, setNotes] = useState<ReviewNote[]>([]);
-  const [newNoteText, setNewNoteText] = useState('');
 
   const handleSave = () => {
     setSaved(true);
@@ -147,98 +152,74 @@ const WorksheetContainer: React.FC<WorksheetContainerProps> = ({
     else setActivePanel(panel);
   };
 
-  const getStatusColor = (s: string) => {
-    switch(s) {
-      case 'Not Started': return 'bg-gray-100 text-gray-600';
-      case 'In Progress': return 'bg-blue-100 text-blue-700';
-      case 'Completed': return 'bg-teal-100 text-teal-700';
-      case 'Needs Revision': return 'bg-red-100 text-red-700';
-      case 'Reviewed': return 'bg-purple-100 text-purple-700';
-      case 'Approved': return 'bg-green-100 text-green-700';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  };
+  const handleSaveRef = useRef(handleSave);
+  handleSaveRef.current = handleSave;
+
+  const handleStatusChangeRef = useRef(handleStatusChange);
+  handleStatusChangeRef.current = handleStatusChange;
+
+  const togglePanelRef = useRef(togglePanel);
+  togglePanelRef.current = togglePanel;
+
+  const validateCompletionRef = useRef(validateCompletion);
+  validateCompletionRef.current = validateCompletion;
+
+  const openNotesCount = notes.filter(n => n.status === 'Open').length;
+  const clientName = engagement?.clientName;
+
+  // Sync state & handlers to global unified top bar
+  useEffect(() => {
+    setHeaderData({
+      code,
+      name,
+      purpose,
+      status: worksheetStatus,
+      reviewer,
+      lastUpdated,
+      saved,
+      activePanel,
+      unreadNotesCount: openNotesCount,
+      clientName,
+      onSave: () => handleSaveRef.current(),
+      onStatusChange: (s) => handleStatusChangeRef.current(s),
+      onTogglePanel: (p) => togglePanelRef.current(p),
+      validateCompletion: () => validateCompletionRef.current?.() || [],
+    });
+  }, [
+    code,
+    name,
+    purpose,
+    worksheetStatus,
+    reviewer,
+    lastUpdated,
+    saved,
+    activePanel,
+    openNotesCount,
+    clientName,
+    setHeaderData
+  ]);
+
+  // Clean up store on unmount
+  useEffect(() => {
+    return () => {
+      clearHeaderData();
+    };
+  }, [clearHeaderData]);
 
   return (
-    <div className="flex flex-col md:flex-row h-full -m-6"> {/* Negative margin to break out of WorkspaceLayout padding if needed, or just normal layout */}
+    <div className="flex flex-col md:flex-row h-full w-full overflow-hidden">
       
       {/* Main Worksheet Area */}
-      <div className={`flex-1 flex flex-col h-full ${activePanel !== 'none' ? 'md:pr-0' : ''}`}>
+      <div className={`flex-1 flex flex-col h-full min-w-0 ${activePanel !== 'none' ? 'md:pr-0' : ''}`}>
         
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex flex-col md:flex-row md:items-center justify-between sticky top-0 z-10 shadow-sm">
-          <div className="flex items-center space-x-4 mb-4 md:mb-0">
-            <button onClick={() => navigate('..')} className="p-2 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors">
-              <ArrowLeft size={20} />
-            </button>
-            <div>
-              <div className="flex items-center space-x-3">
-                <span className="bg-atlas-blue text-white px-2 py-1 rounded text-sm font-bold">{code}</span>
-                <h1 className="text-xl font-bold text-gray-800">{name}</h1>
-              </div>
-              <p className="text-gray-500 mt-1 text-sm">{purpose}</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-3">
-            <div className="hidden lg:flex items-center space-x-3 text-sm mr-4 border-r border-gray-200 pr-4">
-              <div className="flex items-center text-gray-500">
-                <Clock size={14} className="mr-1" /> {lastUpdated}
-              </div>
-              <div className="flex items-center">
-                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getStatusColor(worksheetStatus)}`}>
-                  {worksheetStatus}
-                </span>
-              </div>
-              {reviewer && (
-                <div className="flex items-center text-green-600 font-medium">
-                  <CheckCircle size={14} className="mr-1" /> {reviewer}
-                </div>
-              )}
-            </div>
-
-            <ExportMenu worksheetCode={code} clientName={engagement?.clientName} />
-
-            <button onClick={handleSave} className="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center transition-colors text-sm shadow-sm">
-              {saved ? <Check size={16} className="mr-1.5 text-green-500" /> : <Save size={16} className="mr-1.5" />}
-              Save
-            </button>
-            
-            {worksheetStatus !== 'Completed' && worksheetStatus !== 'Reviewed' && worksheetStatus !== 'Approved' && (
-              <button onClick={() => handleStatusChange('Completed')} className="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center transition-colors text-sm shadow-sm">
-                <CheckCircle size={16} className="mr-1.5" />
-                Complete
-              </button>
-            )}
-
-            <button onClick={() => {
-              handleStatusChange('Reviewed');
-              setActivePanel('notes');
-            }} className="px-3 py-1.5 bg-atlas-blue text-white rounded-lg font-medium hover:bg-blue-800 flex items-center transition-colors text-sm shadow-sm">
-              <MessageSquare size={16} className="mr-1.5" />
-              Submit Review
-            </button>
-
-            <button onClick={() => togglePanel('evidence')} className="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center transition-colors text-sm shadow-sm">
-              <Paperclip size={16} className="mr-1.5" />
-              Add Evidence
-            </button>
-            
-            <button onClick={() => togglePanel('audit_trail')} className="px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center transition-colors text-sm shadow-sm">
-              <History size={16} className="mr-1.5" />
-              History
-            </button>
-          </div>
-        </div>
-
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 flex flex-col relative">
-          <div className="p-6 w-full space-y-6 flex-1">
+        {/* Content Area - starts immediately without duplicate top bar */}
+        <div className="flex-1 overflow-y-auto bg-gray-50 flex flex-col relative min-h-0">
+          <div className="p-4 sm:p-6 w-full space-y-6 flex-1">
             {children}
           </div>
 
           {/* Worksheet Sections Standard Header (Moved to bottom) */}
-          <div className="w-full bg-white border-t border-gray-200 px-6 py-3 flex items-center space-x-6 text-sm text-gray-500 overflow-x-auto shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] sticky bottom-0 z-10 mt-auto">
+          <div className="w-full bg-white border-t border-gray-200 px-4 sm:px-6 py-2 flex items-center space-x-6 text-xs text-gray-500 overflow-x-auto shadow-xs sticky bottom-0 z-10 mt-auto">
             <a href="#instructions" className="hover:text-atlas-blue font-medium whitespace-nowrap">1. Instructions</a>
             <a href="#input" className="hover:text-atlas-blue font-medium whitespace-nowrap">2. Input</a>
             <a href="#calculation" className="hover:text-atlas-blue font-medium whitespace-nowrap">3. Calculation</a>
