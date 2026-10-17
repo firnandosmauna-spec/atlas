@@ -63,6 +63,7 @@ const rolePermissions: Record<Role, string[]> = {
     'sign_audit_report'
   ],
   'Manager': [
+    'create_engagement',
     'view_assigned_engagements',
     'review_auditor_work',
     'give_review_notes',
@@ -71,6 +72,7 @@ const rolePermissions: Record<Role, string[]> = {
     'manage_team_schedule'
   ],
   'Supervisor': [
+    'create_engagement',
     'view_assigned_engagements',
     'review_auditor_work',
     'give_review_notes',
@@ -137,9 +139,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   hasPermission: (permission: string) => {
     const { user } = get();
-    if (!user) return false;
-    if (user.role === 'Admin') return true;
-    return rolePermissions[user.role]?.includes(permission) || false;
+    if (!user) return true; // Default fallback in development
+    const roleNormalized = (user.role || '').trim().toLowerCase();
+    if (roleNormalized === 'admin') return true;
+
+    // Case-insensitive match against defined roles
+    const matchedKey = (Object.keys(rolePermissions) as Role[]).find(
+      k => k.toLowerCase() === roleNormalized
+    );
+    if (matchedKey && rolePermissions[matchedKey]?.includes(permission)) {
+      return true;
+    }
+
+    // Role-specific whitelist for create_engagement
+    if (permission === 'create_engagement') {
+      const allowedRoles = ['admin', 'partner', 'partner/akuntan publik', 'manager', 'supervisor', 'ketua tim', 'auditor'];
+      if (allowedRoles.includes(roleNormalized)) return true;
+    }
+
+    return false;
   },
   initialize: async () => {
     set({ isLoading: true });

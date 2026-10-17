@@ -3,7 +3,8 @@ import { useOutletContext } from 'react-router-dom';
 import type { Engagement } from '../../store/engagementStore';
 import { useEngagementStore } from '../../store/engagementStore';
 import { useAuthStore } from '../../store/authStore';
-import { Users, Building, FileSpreadsheet, Save, CheckCircle, Edit2, X } from 'lucide-react';
+import { Users, Building, FileSpreadsheet, Save, CheckCircle, Edit2, X, Plus } from 'lucide-react';
+import EngagementFormModal from '../../components/EngagementFormModal';
 
 // ─── Field renderers ────────────────────────────────────────────────
 const FieldRow = ({
@@ -113,6 +114,7 @@ const WorkspaceBeranda = () => {
   const updateEngagement = useEngagementStore(state => state.updateEngagement);
   const { hasPermission } = useAuthStore();
   const canEdit = hasPermission('fill_worksheet');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // ── Section 1: Auditor & Tim ──
   const [editAuditor, setEditAuditor] = useState(false);
@@ -183,16 +185,29 @@ const WorkspaceBeranda = () => {
             Nomor Perikatan: <span className="font-mono font-semibold text-gray-700">{engagement.id}</span>
           </p>
         </div>
-        <div className="bg-white border border-gray-200 px-4 py-3 flex flex-col min-w-[200px]">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Overall Progress</span>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-1.5 bg-gray-100 w-32">
-              <div 
-                className="h-1.5 bg-gray-900 transition-all duration-500" 
-                style={{ width: `${engagement.progress || 0}%` }}
-              />
+        <div className="flex flex-wrap items-center gap-3">
+          {hasPermission('create_engagement') && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-atlas-blue hover:bg-blue-800 text-white px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors shadow-xs flex items-center gap-1.5 rounded cursor-pointer min-h-[44px]"
+              title="Buat perikatan audit baru"
+            >
+              <Plus size={15} />
+              <span>Buat Engagement Baru</span>
+            </button>
+          )}
+
+          <div className="bg-white border border-gray-200 px-4 py-2.5 flex flex-col min-w-[180px]">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Overall Progress</span>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-1.5 bg-gray-100 w-28">
+                <div 
+                  className="h-1.5 bg-gray-900 transition-all duration-500" 
+                  style={{ width: `${engagement.progress || 0}%` }}
+                />
+              </div>
+              <span className="text-base font-bold text-gray-900 leading-none">{engagement.progress || 0}%</span>
             </div>
-            <span className="text-lg font-bold text-gray-900 leading-none">{engagement.progress || 0}%</span>
           </div>
         </div>
       </div>
@@ -510,6 +525,13 @@ const WorkspaceBeranda = () => {
         </div>
       </div>
 
+      {isModalOpen && (
+        <EngagementFormModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          initialData={null}
+        />
+      )}
     </div>
   );
 };
