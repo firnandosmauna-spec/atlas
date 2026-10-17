@@ -8,7 +8,7 @@ import EngagementFormModal from '../components/EngagementFormModal';
 
 const Engagements = () => {
   const { engagements, duplicateEngagement, archiveEngagement, deleteEngagement, openEngagement } = useEngagementStore();
-  const { hasPermission } = useAuthStore();
+  const { hasPermission, user } = useAuthStore();
   const navigate = useNavigate();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -205,7 +205,7 @@ const Engagements = () => {
                           >
                             <Archive size={16} className="shrink-0" /> <span>Arsipkan</span>
                           </button>
-                          {(hasPermission('delete_engagement') || !user || user.role === 'Admin' || user.role === 'Auditor') && (
+                          {(hasPermission('delete_engagement') || !user || user?.role === 'Admin' || user?.role === 'Auditor') && (
                             <button 
                               onClick={() => { setEngagementToDelete(eng); setOpenDropdownId(null); }}
                               className="w-full px-4 py-3 flex items-center space-x-2.5 hover:bg-red-50 text-sm text-red-600 border-t border-gray-100 min-h-[44px] transition-colors"
