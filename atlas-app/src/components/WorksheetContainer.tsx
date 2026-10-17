@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Paperclip, MessageSquare, History, FileText, CheckCircle } from 'lucide-react';
 import { useEngagementStore } from '../store/engagementStore';
 import { useWorksheetHeaderStore } from '../store/worksheetHeaderStore';
+import WorksheetSignReviewFooter from './WorksheetSignReviewFooter';
 
 interface WorksheetContainerProps {
   code: string;
@@ -51,8 +52,27 @@ const WorksheetContainer: React.FC<WorksheetContainerProps> = ({
   const [saved, setSaved] = useState(false);
   const [activePanel, setActivePanel] = useState<'none' | 'evidence' | 'notes' | 'audit_trail'>('none');
   const [worksheetStatus, setWorksheetStatus] = useState(status);
-  const [notes, setNotes] = useState<ReviewNote[]>([]);
+  
+  // Persist review notes per engagement and worksheet
+  const notesStorageKey = `atlas_notes_v1_${engagementId || 'default'}_${code}`;
+  const [notes, setNotes] = useState<ReviewNote[]>(() => {
+    try {
+      const saved = localStorage.getItem(notesStorageKey);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return [];
+  });
   const [newNoteText, setNewNoteText] = useState('');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(notesStorageKey, JSON.stringify(notes));
+    } catch {
+      // ignore
+    }
+  }, [notes, notesStorageKey]);
 
   const setHeaderData = useWorksheetHeaderStore((state) => state.setHeaderData);
   const clearHeaderData = useWorksheetHeaderStore((state) => state.clearHeaderData);
@@ -246,6 +266,34 @@ const WorksheetContainer: React.FC<WorksheetContainerProps> = ({
             </div>
 
             {children}
+
+            {/* Tanda Tangan & Reviu + Catatan Reviu Footer (Universal for all worksheets) */}
+            <div className="no-print">
+              <WorksheetSignReviewFooter
+                engagementId={engagementId}
+                worksheetCode={code}
+                worksheetName={name}
+                defaultAuditor={engagement?.auditorName}
+                defaultReviewer={reviewer || engagement?.managerName}
+                notes={notes}
+                onAddNote={(comment) => {
+                  if (!comment.trim()) return;
+                  setNotes(prev => [
+                    ...prev,
+                    {
+                      id: Date.now().toString(),
+                      reviewer: reviewer || engagement?.managerName || 'Reviewer',
+                      date: new Date().toLocaleDateString('id-ID'),
+                      comment: comment.trim(),
+                      status: 'Open'
+                    }
+                  ]);
+                }}
+                onResolveNote={(id, resolution) => {
+                  resolveNote(id, resolution);
+                }}
+              />
+            </div>
 
             {/* Official Audit Print Sign-off Footer - Only visible during print */}
             <div className="hidden print:block mt-8 pt-4 border-t-2 border-slate-900 break-inside-avoid">
