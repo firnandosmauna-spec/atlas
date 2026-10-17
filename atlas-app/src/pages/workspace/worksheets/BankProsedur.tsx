@@ -62,7 +62,11 @@ const BankProsedur = ({ indeks = 'A' }: { indeks?: string }) => {
         {/* Top Controls */}
         <div className="flex justify-between items-end">
           <div className="space-y-2">
-            <button className="bg-yellow-400 text-yellow-900 font-bold px-4 py-1 border border-yellow-600 rounded-sm hover:bg-yellow-300">
+            <button 
+              onClick={() => navigate(`/workspace/${engagement.id}/worksheet/b120`)}
+              className="bg-yellow-400 text-yellow-900 font-bold px-4 py-1 border border-yellow-600 rounded-sm hover:bg-yellow-300 active:scale-95 transition-all cursor-pointer"
+              title="Kembali ke B.120 Procedures Mapping & Lead Schedule"
+            >
               TO I
             </button>
             <div className="flex flex-col">

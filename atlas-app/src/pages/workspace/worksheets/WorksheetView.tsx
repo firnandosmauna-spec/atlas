@@ -147,8 +147,8 @@ const WorksheetView = () => {
     const indeks = worksheetId.split('-')[1];
     return <LeadSchedule indeks={indeks} />;
   }
-  if (worksheetId.startsWith('bp-')) {
-    const indeks = worksheetId.split('-')[1];
+  if (worksheetId.startsWith('bp-') || worksheetId === 'bank-prosedur' || worksheetId === 'bank-procedures' || worksheetId === 'bp' || worksheetId === 'bankprosedur') {
+    const indeks = worksheetId.startsWith('bp-') ? worksheetId.split('-')[1] : 'A';
     return <BankProsedur indeks={indeks} />;
   }
   if (worksheetId === 'b210') {
