@@ -1,9 +1,33 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import type { Engagement } from '../../../store/engagementStore';
 import { useEngagementStore } from '../../../store/engagementStore';
 import WorksheetContainer from '../../../components/WorksheetContainer';
-import { AlertCircle, CheckCircle, ShieldAlert, FileSearch, Scale } from 'lucide-react';
+import { AlertCircle, CheckCircle, ShieldAlert, FileSearch, Scale, ChevronDown, Check, X } from 'lucide-react';
+
+export const STANDARD_INDUSTRIES = [
+  'Pertanian, Kehutanan, dan Perikanan',
+  'Pertambangan dan Penggalian',
+  'Industri Pengolahan / Manufaktur',
+  'Pengadaan Listrik, Gas, Uap/Air Panas, dan Udara Dingin',
+  'Pengelolaan Air, Air Limbah, Pengelolaan Sampah & Daur Ulang',
+  'Konstruksi',
+  'Perdagangan Besar dan Eceran; Reparasi Mobil dan Sepeda Motor',
+  'Pengangkutan dan Pergudangan / Logistik',
+  'Penyediaan Akomodasi dan Penyediaan Makan Minum (Perhotelan & F&B)',
+  'Informasi dan Komunikasi / Teknologi & Startup',
+  'Aktivitas Keuangan dan Asuransi (Perbankan, Pembiayaan, Asuransi)',
+  'Real Estat / Properti',
+  'Aktivitas Profesional, Ilmiah, dan Teknis (Konsultan, Hukum, dll)',
+  'Aktivitas Penyewaan, Ketenagakerjaan, Agen Perjalanan & Penunjang Usaha',
+  'Administrasi Pemerintahan, Pertahanan, dan Jaminan Sosial Wajib',
+  'Pendidikan',
+  'Aktivitas Kesehatan Manusia dan Aktivitas Sosial / Rumah Sakit & Farmasi',
+  'Kesenian, Hiburan, dan Rekreasi',
+  'Aktivitas Jasa Lainnya',
+  'Organisasi Nirlaba / Yayasan / Lembaga Keagamaan',
+  'Badan Layanan Umum (BLU) / BUMD / BUMN'
+];
 
 const A110 = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
@@ -13,11 +37,47 @@ const A110 = () => {
   const wsData = engagement.worksheetA110 || {};
   const [activeTab, setActiveTab] = useState('info');
   const [decision, setDecision] = useState<'Accept' | 'Reject' | null>(wsData.decision || null);
-  const [industry, setIndustry] = useState(wsData.industry || '');
+  const [industry, setIndustry] = useState(wsData.industry || engagement.clientIndustry || '');
+  const [isIndustryDropdownOpen, setIsIndustryDropdownOpen] = useState(false);
+  const industryDropdownRef = useRef<HTMLDivElement>(null);
+  const industryInputRef = useRef<HTMLInputElement>(null);
+
   const [alamat, setAlamat] = useState(wsData.boardOfDirectors || '');
   const [reason, setReason] = useState(wsData.decisionReason || '');
   const [evals, setEvals] = useState<Record<string, string>>(wsData.evaluations || { 'A.1101': '', 'A.1102': '', 'A.1103': '', 'A.1104': '' });
 
+  // Close industry dropdown when clicked outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (industryDropdownRef.current && !industryDropdownRef.current.contains(e.target as Node)) {
+        setIsIndustryDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsIndustryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  // Filtered industry options for combobox
+  const filteredIndustries = useMemo(() => {
+    if (!industry.trim()) return STANDARD_INDUSTRIES;
+    const query = industry.toLowerCase();
+    const matches = STANDARD_INDUSTRIES.filter(item => item.toLowerCase().includes(query));
+    return matches;
+  }, [industry]);
+
+  const handleSelectIndustry = (selected: string) => {
+    setIndustry(selected);
+    setIsIndustryDropdownOpen(false);
+  };
 
   const tabs = [
     { id: 'info', name: 'Informasi Klien & Perikatan', icon: <FileSearch size={16} /> },
@@ -46,6 +106,7 @@ const A110 = () => {
         decisionReason: reason,
         status: 'Pending Review'
       },
+      clientIndustry: industry,
       status: 'Pending Review' // Optional: update overall engagement status
     });
 
@@ -99,10 +160,128 @@ const A110 = () => {
                   <label className="block text-sm font-bold text-gray-700 mb-1">Nama Entitas</label>
                   <input type="text" defaultValue={engagement.clientName} className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-gray-700 focus:outline-none" readOnly />
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Bidang Usaha / Industri <span className="text-red-500">*</span></label>
-                  <input type="text" value={industry} onChange={(e) => setIndustry(e.target.value)} placeholder="Mis: Manufaktur, Jasa, Perdagangan" className="w-full border border-gray-300 rounded-lg p-2.5 text-gray-700 focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none" />
+
+                {/* Combobox: Bidang Usaha / Industri (Dropdown & Manual Input) */}
+                <div className="relative" ref={industryDropdownRef}>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="industry-input" className="block text-sm font-bold text-gray-700">
+                      Bidang Usaha / Industri <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[11px] text-gray-400">Pilih dropdown atau ketik manual</span>
+                  </div>
+
+                  <div className="relative flex items-center">
+                    <input 
+                      id="industry-input"
+                      ref={industryInputRef}
+                      type="text" 
+                      list="industry-options-datalist"
+                      value={industry} 
+                      onChange={(e) => {
+                        setIndustry(e.target.value);
+                        setIsIndustryDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsIndustryDropdownOpen(true)}
+                      placeholder="Pilih atau ketik bidang usaha..." 
+                      className="w-full border border-gray-300 rounded-lg pl-3 pr-16 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none transition-colors"
+                      autoComplete="off"
+                      role="combobox"
+                      aria-expanded={isIndustryDropdownOpen}
+                      aria-controls="industry-options-list"
+                    />
+
+                    {/* Action buttons inside right of input */}
+                    <div className="absolute right-1 flex items-center space-x-0.5">
+                      {industry && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIndustry('');
+                            industryInputRef.current?.focus();
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md transition-colors"
+                          title="Hapus isian"
+                          aria-label="Hapus isian bidang usaha"
+                        >
+                          <X size={15} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setIsIndustryDropdownOpen(prev => !prev)}
+                        className="p-2 text-gray-400 hover:text-atlas-blue hover:bg-blue-50 rounded-md transition-colors"
+                        title="Tampilkan daftar opsi industri"
+                        aria-label="Buka menu pilihan bidang usaha"
+                      >
+                        <ChevronDown size={16} className={`transition-transform duration-200 ${isIndustryDropdownOpen ? 'rotate-180 text-atlas-blue' : ''}`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Fallback Native Datalist for Browser Accessibility */}
+                  <datalist id="industry-options-datalist">
+                    {STANDARD_INDUSTRIES.map(item => (
+                      <option key={item} value={item} />
+                    ))}
+                  </datalist>
+
+                  {/* Custom Accessible Dropdown Menu */}
+                  {isIndustryDropdownOpen && (
+                    <div 
+                      id="industry-options-list"
+                      role="listbox"
+                      className="absolute z-30 left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto text-sm divide-y divide-gray-50 animate-in fade-in zoom-in-95 duration-150"
+                    >
+                      <div className="p-2 bg-gray-50/80 sticky top-0 border-b border-gray-100 flex items-center justify-between text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                        <span>Pilihan Standar ({filteredIndustries.length})</span>
+                        {industry && <span className="text-atlas-blue lowercase font-medium">isi manual aktif</span>}
+                      </div>
+
+                      {filteredIndustries.length > 0 ? (
+                        filteredIndustries.map((item) => {
+                          const isSelected = industry.trim().toLowerCase() === item.toLowerCase();
+                          return (
+                            <button
+                              key={item}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              onClick={() => handleSelectIndustry(item)}
+                              className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between transition-colors min-h-[40px] ${
+                                isSelected 
+                                  ? 'bg-blue-50/80 text-atlas-blue font-bold' 
+                                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                              }`}
+                            >
+                              <span className="truncate pr-2">{item}</span>
+                              {isSelected && <Check size={16} className="text-atlas-blue shrink-0" />}
+                            </button>
+                          );
+                        })
+                      ) : (
+                        <div className="p-4 text-center text-xs text-gray-500 space-y-1">
+                          <p className="font-medium text-gray-700">Tidak ada dalam daftar standar</p>
+                          <p className="text-gray-400">
+                            Isian manual Anda <span className="font-semibold text-gray-800">"{industry}"</span> akan tetap disimpan.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Manual Entry Hint Footer */}
+                      <div className="p-2.5 bg-slate-50 text-[11px] text-slate-500 flex items-center justify-between border-t border-gray-100">
+                        <span>Bisa ketik nama bidang usaha kustom apa saja</span>
+                        <button
+                          type="button"
+                          onClick={() => setIsIndustryDropdownOpen(false)}
+                          className="text-atlas-blue font-bold hover:underline"
+                        >
+                          Tutup
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
+
                 <div className="md:col-span-2">
                   <label className="block text-sm font-bold text-gray-700 mb-1">Susunan Dewan Komisaris & Direksi Utama <span className="text-red-500">*</span></label>
                   <textarea value={alamat} onChange={(e) => setAlamat(e.target.value)} className="w-full border border-gray-300 rounded-lg p-2.5 text-gray-700 focus:border-atlas-blue outline-none" rows={3} placeholder="Sebutkan nama dan jabatan eksekutif kunci..."></textarea>
