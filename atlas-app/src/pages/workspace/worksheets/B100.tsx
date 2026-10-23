@@ -78,35 +78,30 @@ const B100: React.FC = () => {
     >
       <div className="space-y-6 max-w-7xl mx-auto">
         
-        {/* Banner Ringkasan Minimalis Tanpa Icon */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-md text-xs font-bold font-mono bg-blue-50 text-atlas-blue border border-blue-200">
-                  B.100
-                </span>
-                <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">
-                  Risk Response Phase
-                </span>
-                <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-                  Worksheet & Pelaksanaan Audit
-                </h1>
-              </div>
-              <p className="text-xs text-slate-500 max-w-3xl leading-relaxed">
-                Pusat pengolahan angka keuangan audit, penyesuaian jurnal (CAJE/PAJE), pemetaan Lead Schedule, serta prosedur substantif.
-              </p>
+        {/* Banner Ringkasan Minimalis Tanpa Keterangan Berlebih */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded-md text-xs font-bold font-mono bg-blue-50 text-atlas-blue border border-blue-200">
+                B.100
+              </span>
+              <span className="px-2.5 py-0.5 rounded-md text-xs font-semibold bg-slate-100 text-slate-700">
+                Risk Response Phase
+              </span>
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                Worksheet & Pelaksanaan Audit
+              </h1>
             </div>
 
             <div className="shrink-0">
-              <span className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-block">
+              <span className="px-3 py-1 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 inline-block">
                 STATUS: COMPLETED
               </span>
             </div>
           </div>
 
           {/* Profil Entitas Klien - Bersih Tanpa Icon */}
-          <div className="pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+          <div className="pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
             <div>
               <span className="text-[11px] text-slate-400 block font-medium">Klien</span>
               <span className="font-semibold text-slate-800 text-xs truncate block mt-0.5">
@@ -139,43 +134,33 @@ const B100: React.FC = () => {
         {/* ======================================================== */}
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
           {/* Section Header */}
-          <div className="px-6 py-4 bg-slate-50/70 border-b border-slate-200/70 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-bold text-slate-800">
-                Kertas Kerja Pengolahan Angka Keuangan
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Alur utama rekonsiliasi angka keuangan audit dari Trial Balance hingga Laporan Keuangan Audited
-              </p>
-            </div>
+          <div className="px-6 py-3.5 bg-slate-50/70 border-b border-slate-200/70 flex items-center justify-between">
+            <h2 className="text-sm font-bold text-slate-800">
+              Kertas Kerja Pengolahan Angka Keuangan
+            </h2>
             <span className="text-[11px] font-bold font-mono px-2.5 py-1 rounded-md bg-slate-100 text-slate-600">
               B.110 s/d B.140
             </span>
           </div>
 
-          {/* Clean Row-based List (No Decorative Icons) */}
+          {/* Clean Row-based List */}
           <div className="divide-y divide-slate-100">
             {primaryMenuItems.map((item) => (
               <div
                 key={item.index}
                 onClick={() => navigate(`/workspace/${engagement?.id}/worksheet/${item.path}`)}
-                className="group px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/70 transition-colors cursor-pointer"
+                className="group px-6 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/70 transition-colors cursor-pointer"
               >
-                <div className="min-w-0 space-y-1">
-                  <div className="flex items-center gap-2.5">
-                    <span className="font-mono text-xs font-bold text-atlas-blue bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
-                      {item.index}
-                    </span>
-                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-atlas-blue transition-colors">
-                      {item.title}
-                    </h3>
-                  </div>
-                  <p className="text-xs text-slate-500 leading-relaxed pr-4">
-                    {item.desc}
-                  </p>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="font-mono text-xs font-bold text-atlas-blue bg-blue-50 px-2 py-0.5 rounded border border-blue-100 shrink-0">
+                    {item.index}
+                  </span>
+                  <h3 className="text-sm font-semibold text-slate-900 group-hover:text-atlas-blue transition-colors truncate">
+                    {item.title}
+                  </h3>
                 </div>
 
-                <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                <div className="flex items-center gap-3 shrink-0">
                   <span className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600">
                     {item.badge}
                   </span>
@@ -189,16 +174,11 @@ const B100: React.FC = () => {
         </div>
 
         {/* Prosedur Substantif Spesifik (B.210 - B.280) Bersih */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-            <div>
-              <h2 className="text-sm font-bold text-slate-800">
-                Prosedur Audit Substantif Tambahan
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Pengujian spesifik estimasi akuntansi, pihak berelasi, kelangsungan usaha, dan konfirmasi
-              </p>
-            </div>
+            <h2 className="text-sm font-bold text-slate-800">
+              Prosedur Audit Substantif Tambahan
+            </h2>
             <span className="text-xs font-semibold text-slate-400">B.210 s/d B.280</span>
           </div>
 
