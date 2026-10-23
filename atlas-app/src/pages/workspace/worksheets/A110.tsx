@@ -492,43 +492,9 @@ const A110 = () => {
 
           {/* ── SA YANG RELEVAN (SESUAI STANDAR LEMBAR KERJA ATLAS DENGAN FUNGSI CHECKLIST KERTAS KERJA) ── */}
           <div className="pt-3.5 border-t border-slate-100 flex flex-col md:flex-row md:items-start justify-between gap-3 text-xs">
-            <div className="flex flex-col sm:w-48 shrink-0 space-y-1.5">
-              <div className="font-bold text-slate-800 flex items-center justify-between sm:justify-start gap-2">
-                <span className="text-slate-900 font-bold">SA yang relevan</span>
-                <span className="text-slate-600 font-bold">:</span>
-              </div>
-              
-              {/* Badge & Quick Action */}
-              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide border flex items-center gap-1 ${
-                  isAllSAChecked 
-                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
-                    : 'bg-rose-50 text-rose-800 border-rose-300'
-                }`}>
-                  {isAllSAChecked ? <Check size={11} className="text-emerald-600" /> : <AlertTriangle size={11} className="text-rose-600" />}
-                  <span>{isAllSAChecked ? '4/4 Completed' : `${checkedSACount}/4 Uncompleted`}</span>
-                </span>
-                
-                <div className="flex items-center gap-1 text-[10px]">
-                  <button
-                    type="button"
-                    onClick={() => handleSetAllSA(true)}
-                    className="text-atlas-blue hover:underline font-semibold cursor-pointer"
-                    title="Centang semua SA yang relevan"
-                  >
-                    Semua
-                  </button>
-                  <span className="text-slate-300">/</span>
-                  <button
-                    type="button"
-                    onClick={() => handleSetAllSA(false)}
-                    className="text-slate-500 hover:text-slate-700 hover:underline font-semibold cursor-pointer"
-                    title="Kosongkan centang SA"
-                  >
-                    Kosongkan
-                  </button>
-                </div>
-              </div>
+            <div className="font-bold text-slate-800 sm:w-44 shrink-0 flex items-center justify-between sm:justify-start gap-2 pt-1.5">
+              <span className="text-slate-900 font-bold">SA yang relevan</span>
+              <span className="text-slate-600 font-bold">:</span>
             </div>
 
             {/* Checklist Items Container */}
@@ -591,13 +557,6 @@ const A110 = () => {
                   </div>
                 );
               })}
-              
-              {!isAllSAChecked && (
-                <div className="pt-1 flex items-center gap-1.5 text-[11px] text-rose-600 font-medium">
-                  <AlertTriangle size={13} className="text-rose-600 shrink-0" />
-                  <span>Kertas kerja berstatus <strong>Uncompleted</strong> sampai seluruh Standar Audit (SA) yang relevan diceklis memenuhi.</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
