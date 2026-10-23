@@ -491,14 +491,14 @@ const A110 = () => {
           </div>
 
           {/* ── SA YANG RELEVAN (SESUAI STANDAR LEMBAR KERJA ATLAS DENGAN FUNGSI CHECKLIST KERTAS KERJA) ── */}
-          <div className="pt-3.5 border-t border-slate-100 flex flex-col md:flex-row md:items-start justify-between gap-3 text-xs">
-            <div className="font-bold text-slate-800 sm:w-44 shrink-0 flex items-center justify-between sm:justify-start gap-2 pt-1.5">
+          <div className="pt-3.5 border-t border-slate-100 space-y-2.5 text-xs">
+            <div className="font-bold text-slate-800 flex items-center gap-2">
               <span className="text-slate-900 font-bold">SA yang relevan</span>
               <span className="text-slate-600 font-bold">:</span>
             </div>
 
-            {/* Checklist Items Container */}
-            <div className="flex-1 space-y-1.5">
+            {/* Checklist Items Container (Full Width) */}
+            <div className="w-full space-y-1.5">
               {RELEVANT_SA_STANDARDS.map((item) => {
                 const isChecked = !!saChecklist[item.id];
                 return (
