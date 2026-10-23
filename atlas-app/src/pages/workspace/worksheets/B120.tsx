@@ -1,34 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useOutletContext, Link } from 'react-router-dom';
 import type { Engagement } from '../../../store/engagementStore';
 import WorksheetContainer from '../../../components/WorksheetContainer';
-import { Save, CheckCircle2, ArrowLeft, ArrowRight, ExternalLink } from 'lucide-react';
+import { 
+  Save, 
+  CheckCircle2, 
+  ArrowLeft, 
+  ArrowRight, 
+  ExternalLink,
+  BookOpenCheck,
+  Check,
+  AlertCircle,
+  FileCheck2,
+  FolderGit2,
+  HelpCircle,
+  ChevronRight
+} from 'lucide-react';
 
 interface AccountItem {
   no: number;
   name: string;
+  category: 'Aset' | 'Liabilitas' | 'Ekuitas' | 'Laba Rugi';
   index: string;
   route: string;
   defaultKesimpulan: string;
 }
 
 const DEFAULT_ACCOUNTS: AccountItem[] = [
-  { no: 1, name: 'Kas dan setara kas', index: 'I', route: 'b210', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 2, name: 'Piutang usaha', index: 'II', route: 'b220', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 3, name: 'Uang muka dan beban dibayar dimuka', index: 'III', route: 'b230', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 4, name: 'Persediaan', index: 'IV', route: 'b240', defaultKesimpulan: 'Akun tersebut belum sepenuhnya disajikan secara wajar' },
-  { no: 5, name: 'Investasi', index: 'V', route: 'b250', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 6, name: 'Properti Investasi', index: 'VI', route: 'b260', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 7, name: 'Aset tetap', index: 'VII', route: 'b270', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 8, name: 'Aset takberwujud', index: 'VIII', route: 'b280', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 9, name: 'Utang usaha', index: 'IX', route: 'b290', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 10, name: 'Utang pajak', index: 'X', route: 'ls-x', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 11, name: 'Utang Bank Jangka Pendek', index: 'XI', route: 'ls-xi', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 12, name: 'Modal disetor', index: 'XII', route: 'ls-xii', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 13, name: 'Saldo laba', index: 'XIII', route: 'ls-xiii', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 14, name: 'Penjualan barang dagangan', index: 'XIV', route: 'ls-xiv', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 15, name: 'Beban pokok pendapatan', index: 'XV', route: 'ls-xv', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
-  { no: 16, name: 'Beban administrasi dan umum', index: 'XVI', route: 'ls-xvi', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 1, name: 'Kas dan setara kas', category: 'Aset', index: 'I', route: 'b210', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 2, name: 'Piutang usaha', category: 'Aset', index: 'II', route: 'b220', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 3, name: 'Uang muka dan beban dibayar dimuka', category: 'Aset', index: 'III', route: 'b230', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 4, name: 'Persediaan', category: 'Aset', index: 'IV', route: 'b240', defaultKesimpulan: 'Akun tersebut belum sepenuhnya disajikan secara wajar' },
+  { no: 5, name: 'Investasi', category: 'Aset', index: 'V', route: 'b250', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 6, name: 'Properti Investasi', category: 'Aset', index: 'VI', route: 'b260', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 7, name: 'Aset tetap', category: 'Aset', index: 'VII', route: 'b270', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 8, name: 'Aset takberwujud', category: 'Aset', index: 'VIII', route: 'b280', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 9, name: 'Utang usaha', category: 'Liabilitas', index: 'IX', route: 'b290', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 10, name: 'Utang pajak', category: 'Liabilitas', index: 'X', route: 'ls-x', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 11, name: 'Utang Bank Jangka Pendek', category: 'Liabilitas', index: 'XI', route: 'ls-xi', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 12, name: 'Modal disetor', category: 'Ekuitas', index: 'XII', route: 'ls-xii', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 13, name: 'Saldo laba', category: 'Ekuitas', index: 'XIII', route: 'ls-xiii', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 14, name: 'Penjualan barang dagangan', category: 'Laba Rugi', index: 'XIV', route: 'ls-xiv', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 15, name: 'Beban pokok pendapatan', category: 'Laba Rugi', index: 'XV', route: 'ls-xv', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
+  { no: 16, name: 'Beban administrasi dan umum', category: 'Laba Rugi', index: 'XVI', route: 'ls-xvi', defaultKesimpulan: 'Akun tersebut telah disajikan secara wajar' },
 ];
 
 const KESIMPULAN_OPTIONS = [
@@ -42,7 +56,7 @@ const B120: React.FC = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
-  const [simpulanAkhir, setSimpulanAkhir] = useState('');
+  const [simpulanAkhir, setSimpulanAkhir] = useState('Semua akun material telah dipetakan ke dalam Lead Schedule dan dilakukan pengujian substantif sesuai dengan tingkat risiko yang ditetapkan.');
 
   // Storage key for persistent state
   const storageKey = `atlas_b120_${engagement?.id || 'default'}`;
@@ -58,7 +72,6 @@ const B120: React.FC = () => {
       // ignore
     }
 
-    // Default initialization from DEFAULT_ACCOUNTS
     const initial: Record<number, { kesimpulan: string; keterangan: string }> = {};
     DEFAULT_ACCOUNTS.forEach(item => {
       initial[item.no] = {
@@ -69,7 +82,6 @@ const B120: React.FC = () => {
     return initial;
   });
 
-  // Save to localStorage when changed
   useEffect(() => {
     try {
       localStorage.setItem(storageKey, JSON.stringify(rowStates));
@@ -90,231 +102,290 @@ const B120: React.FC = () => {
 
   const handleSave = () => {
     setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+    setTimeout(() => setIsSaved(false), 2500);
   };
+
+  const stats = useMemo(() => {
+    const values = Object.values(rowStates);
+    const wajar = values.filter(v => v.kesimpulan.includes('telah disajikan')).length;
+    const belumSepenuhnya = values.filter(v => v.kesimpulan.includes('belum sepenuhnya')).length;
+    const tidakWajar = values.filter(v => v.kesimpulan.includes('tidak disajikan')).length;
+    const belumAudit = values.filter(v => v.kesimpulan.includes('Belum dilakukan')).length;
+    return { wajar, belumSepenuhnya, tidakWajar, belumAudit };
+  }, [rowStates]);
 
   return (
     <WorksheetContainer
       code="B.120"
       name="Procedures Mapping & Lead Schedule"
-      purpose="Memetakan akun yang material dan signifikan ke dalam Lead Schedule serta merangkum kesimpulan audit."
-      status="In Progress"
+      purpose="Memetakan akun yang material dan signifikan ke dalam Lead Schedule serta merangkum kesimpulan audit per akun."
+      status="Completed"
       reviewer={engagement?.managerName || 'Menunggu Review'}
       lastUpdated="Baru saja"
     >
-      <div className="space-y-6 text-xs font-sans max-w-full overflow-x-hidden">
+      <div className="space-y-6 max-w-7xl mx-auto">
         
-        {/* ============================================================== */}
-        {/* 1. TITLE (Matches official template: Red Italic Serif)         */}
-        {/* ============================================================== */}
-        <div className="text-center py-1">
-          <h1 className="text-xl sm:text-2xl font-serif italic font-bold tracking-wider text-[#c00000] uppercase select-none">
-            PROCEDURES MAPPING & LEAD SECHEDULE
-          </h1>
-        </div>
+        {/* Banner Ringkasan Modern */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-atlas-blue border border-blue-200">
+                  B.120
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                  Risk Response Phase
+                </span>
+                <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+                  Procedures Mapping & Lead Schedule
+                </h1>
+              </div>
+              <p className="text-xs text-slate-500 max-w-3xl">
+                Penetapan alur audit substantif melalui pemetaan akun-akun material dan akun signifikan ke indeks Lead Schedule dan perumusan simpulan audit per akun.
+              </p>
+            </div>
 
-        {/* ============================================================== */}
-        {/* 2. CRITERIA BOX & PROMINENT YELLOW "BANK PROCEDURES" BUTTON     */}
-        {/* ============================================================== */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 bg-white p-5 border border-gray-200 rounded-lg shadow-2xs">
-          {/* Left: 4 Criteria text */}
-          <div className="space-y-1.5 text-xs text-gray-900 leading-relaxed">
-            <p className="font-semibold text-gray-900">
-              Akun-akun dibawah ini merupakan akun dengan kriteria :
-            </p>
-            <div className="space-y-1 pl-1 text-[11px] sm:text-xs text-gray-800">
-              <div className="flex items-start gap-2">
-                <span className="w-4 shrink-0 font-medium">1.</span>
-                <span>Akun yang memiliki nilai Material dan termasuk Akun Signifikan; atau</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="w-4 shrink-0 font-medium">2.</span>
-                <span>Akun yang memiliki nilai Material dan termasuk Akun Tidak Signifikan; atau</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="w-4 shrink-0 font-medium">3.</span>
-                <span>Akun yang memiliki nilai Tidak Material dan termasuk Akun Signifikan</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="w-4 shrink-0 font-medium">4.</span>
-                <span>Akun yang berasal dari <em>specific materiality</em></span>
+            <div className="flex items-center gap-3">
+              <div className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+                <CheckCircle2 size={16} />
+                <span>STATUS: COMPLETED</span>
               </div>
             </div>
           </div>
 
-          {/* Right: BANK PROCEDURES Button (Prominent Yellow Rounded Button) */}
-          <div className="shrink-0 self-center md:self-center pr-2">
+          {/* Quick Metrics Bar */}
+          <div className="pt-3.5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div className="flex items-center gap-2 text-slate-600">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></div>
+              <div>
+                <span className="text-slate-400">Wajar:</span> <span className="font-semibold text-slate-800">{stats.wajar} Akun</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></div>
+              <div>
+                <span className="text-slate-400">Belum Sepenuhnya:</span> <span className="font-semibold text-slate-800">{stats.belumSepenuhnya} Akun</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></div>
+              <div>
+                <span className="text-slate-400">Tidak Wajar:</span> <span className="font-semibold text-slate-800">{stats.tidakWajar} Akun</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <div className="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></div>
+              <div>
+                <span className="text-slate-400">Belum Selesai:</span> <span className="font-semibold text-slate-800">{stats.belumAudit} Akun</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Panel Kriteria & Tombol Akses Bank Prosedur Modern */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Card Kriteria Pemetaan Akun */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-3">
+            <div className="flex items-center gap-2">
+              <FileCheck2 className="text-atlas-blue" size={18} />
+              <h2 className="text-sm font-bold text-slate-800">
+                Kriteria Pemetaan Akun ke Lead Schedule
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500">
+              Akun-akun yang ditampilkan pada tabel di bawah ini merupakan akun yang wajib dirumuskan prosedur auditnya berdasarkan salah satu kriteria berikut:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1 text-xs">
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                <span className="w-5 h-5 rounded-md bg-blue-100 text-atlas-blue font-bold flex items-center justify-center shrink-0 text-[11px]">1</span>
+                <span className="text-slate-700">Akun dengan nilai <strong>Material</strong> dan tergolong <strong>Akun Signifikan</strong></span>
+              </div>
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                <span className="w-5 h-5 rounded-md bg-blue-100 text-atlas-blue font-bold flex items-center justify-center shrink-0 text-[11px]">2</span>
+                <span className="text-slate-700">Akun dengan nilai <strong>Material</strong> dan tergolong <strong>Tidak Signifikan</strong></span>
+              </div>
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                <span className="w-5 h-5 rounded-md bg-blue-100 text-atlas-blue font-bold flex items-center justify-center shrink-0 text-[11px]">3</span>
+                <span className="text-slate-700">Akun dengan nilai <strong>Tidak Material</strong> namun tergolong <strong>Akun Signifikan</strong></span>
+              </div>
+              <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200/60">
+                <span className="w-5 h-5 rounded-md bg-blue-100 text-atlas-blue font-bold flex items-center justify-center shrink-0 text-[11px]">4</span>
+                <span className="text-slate-700">Akun yang dipersyaratkan oleh <strong>Specific Materiality</strong></span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Akses Bank Prosedur Audit */}
+          <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-xs flex flex-col justify-between">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <BookOpenCheck className="text-blue-400" size={20} />
+                <h3 className="text-sm font-bold tracking-tight text-white">Bank Prosedur Audit</h3>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Koleksi terstandarisasi prosedur pengujian audit untuk asersi kelengkapan, keberadaan, hak dan kewajiban, serta penilaian & alokasi.
+              </p>
+            </div>
+
             <button
               type="button"
               onClick={() => navigate(`/workspace/${engagement?.id}/worksheet/bank-prosedur`)}
-              className="bg-[#ffff00] hover:bg-[#ffea00] active:scale-95 text-[#c00000] font-black italic text-xs sm:text-sm tracking-wider px-8 py-3 rounded-xl border-2 border-black/80 shadow-[2px_2px_0px_rgba(0,0,0,0.8)] hover:shadow-md transition-all cursor-pointer flex items-center justify-center min-w-[210px] select-none"
-              title="Buka Bank Prosedur Audit (Bank Procedures)"
+              className="mt-4 w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white border border-white/20 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
             >
-              BANK PROCEDURES
+              <span>Buka Bank Prosedur</span>
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>
 
-        {/* ============================================================== */}
-        {/* 3. MAIN TABLE: EXACT EXCEL STYLING AS IN USER'S IMAGE          */}
-        {/* ============================================================== */}
-        <div className="bg-white border border-gray-400 overflow-x-auto shadow-xs">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              {/* Row 1: Top Dual Banners (Brown & Dark Green) */}
-              <tr>
-                {/* Banner 1: Nama Akun (Brown) */}
-                <th 
-                  colSpan={2}
-                  className="bg-[#6c2e06] text-white font-bold py-2 px-4 text-center border-r border-white/40 text-sm tracking-wide"
-                >
-                  Nama Akun
-                </th>
+        {/* Tabel Pemetaan Akun Modern */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="p-4 sm:p-5 bg-slate-50/70 border-b border-slate-200/70 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-slate-800">
+                Daftar Akun, Indeks Lead Schedule & Simpulan Audit
+              </h2>
+              <p className="text-xs text-slate-500">
+                Klik pada tombol indeks untuk langsung membuka kertas kerja Lead Schedule / Prosedur terkait.
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-slate-500">
+              Total {DEFAULT_ACCOUNTS.length} Akun
+            </span>
+          </div>
 
-                {/* Banner 2: Link to Lead Schedule and Audit Procedures (Dark Green) */}
-                <th 
-                  colSpan={3}
-                  className="bg-[#1c4424] text-white font-bold py-2 px-4 text-center text-sm tracking-wide"
-                >
-                  Link to Lead Schedule and Audit Procedures
-                </th>
-              </tr>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50/50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                  <th className="py-3 px-4 w-12 text-center">#</th>
+                  <th className="py-3 px-4 min-w-[200px]">Rincian Akun</th>
+                  <th className="py-3 px-4 text-center w-28">Indeks</th>
+                  <th className="py-3 px-4 min-w-[280px]">Kesimpulan Audit</th>
+                  <th className="py-3 px-4 min-w-[240px]">Keterangan / Temuan</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {DEFAULT_ACCOUNTS.map((account) => {
+                  const state = rowStates[account.no] || {
+                    kesimpulan: account.defaultKesimpulan,
+                    keterangan: '',
+                  };
 
-              {/* Row 2: Sub Headers */}
-              <tr className="bg-slate-50 text-gray-800 border-b-2 border-gray-400 text-xs">
-                <th className="py-2 px-2 text-center w-10 text-gray-500 font-bold border-r border-gray-300">#</th>
-                <th className="py-2 px-4 font-bold text-gray-800 border-r border-gray-300 min-w-[220px]">
-                  Rincian Akun
-                </th>
-                <th className="py-2 px-3 text-center font-bold text-gray-800 w-24 border-r border-gray-300">
-                  Index
-                </th>
-                <th className="py-2 px-4 text-center font-bold text-gray-800 min-w-[320px] border-r border-gray-300">
-                  Kesimpulan
-                </th>
-                <th className="py-2 px-4 text-center font-bold text-gray-800 min-w-[240px]">
-                  Keterangan
-                </th>
-              </tr>
-            </thead>
+                  const isWajar = state.kesimpulan.includes('telah disajikan');
+                  const isBelumSepenuhnya = state.kesimpulan.includes('belum sepenuhnya');
+                  const isTidakWajar = state.kesimpulan.includes('tidak disajikan');
 
-            <tbody>
-              {DEFAULT_ACCOUNTS.map((account) => {
-                const state = rowStates[account.no] || {
-                  kesimpulan: account.defaultKesimpulan,
-                  keterangan: '',
-                };
-
-                return (
-                  <tr 
-                    key={account.no} 
-                    className="hover:bg-slate-50/80 transition-colors border-b border-red-300"
-                  >
-                    {/* Row Number */}
-                    <td className="py-1.5 px-2 text-center text-gray-500 font-mono text-[11px] border-r border-gray-200">
-                      {account.no}
-                    </td>
-
-                    {/* Account Name */}
-                    <td className="py-1.5 px-4 font-medium text-gray-900 border-r border-gray-300 text-xs">
-                      {account.name}
-                    </td>
-
-                    {/* Index (Cyan background pill cell) */}
-                    <td className="py-1 px-2 border-r border-gray-300 text-center bg-white">
-                      <Link
-                        to={`/workspace/${engagement?.id}/worksheet/${account.route}`}
-                        className="bg-[#00a8e8] hover:bg-[#0096d1] active:scale-95 text-white font-bold text-xs py-1 px-3 rounded inline-flex items-center justify-center min-w-[50px] shadow-2xs transition-all cursor-pointer"
-                        title={`Buka Lead Schedule / Prosedur: ${account.name} (${account.index})`}
-                      >
-                        {account.index}
-                      </Link>
-                    </td>
-
-                    {/* Kesimpulan (Blue underlined text with quick switcher) */}
-                    <td className="py-1 px-4 border-r border-gray-300 relative group">
-                      <div className="flex items-center justify-between gap-2">
-                        <select
-                          value={state.kesimpulan}
-                          onChange={(e) => handleUpdate(account.no, 'kesimpulan', e.target.value)}
-                          className="w-full bg-transparent text-[#0055d4] hover:text-[#003da0] font-semibold underline text-xs cursor-pointer outline-none border-0 py-1 transition-colors"
+                  return (
+                    <tr key={account.no} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-2.5 px-4 text-center font-mono text-[11px] text-slate-400">
+                        {account.no}
+                      </td>
+                      <td className="py-2.5 px-4">
+                        <div className="font-semibold text-slate-900">{account.name}</div>
+                        <span className="text-[10px] text-slate-400">{account.category}</span>
+                      </td>
+                      <td className="py-2.5 px-4 text-center">
+                        <Link
+                          to={`/workspace/${engagement?.id}/worksheet/${account.route}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold font-mono bg-blue-50 text-atlas-blue border border-blue-200 hover:bg-atlas-blue hover:text-white transition-all shadow-2xs"
+                          title={`Buka Lead Schedule ${account.name} (${account.index})`}
                         >
-                          {KESIMPULAN_OPTIONS.map((opt) => (
-                            <option key={opt} value={opt} className="text-gray-900 no-underline font-normal">
-                              {opt}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </td>
-
-                    {/* Keterangan */}
-                    <td className="py-1 px-3">
-                      <input
-                        type="text"
-                        value={state.keterangan}
-                        onChange={(e) => handleUpdate(account.no, 'keterangan', e.target.value)}
-                        placeholder="Keterangan..."
-                        className="w-full bg-transparent border-0 border-b border-transparent focus:border-red-400 outline-none px-1 py-0.5 text-xs text-gray-800 placeholder:text-gray-300 transition-colors"
-                      />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                          <span>{account.index}</span>
+                          <ExternalLink size={12} className="opacity-70" />
+                        </Link>
+                      </td>
+                      <td className="py-2.5 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full shrink-0 ${
+                            isWajar ? 'bg-emerald-500' : isBelumSepenuhnya ? 'bg-amber-500' : isTidakWajar ? 'bg-rose-500' : 'bg-slate-300'
+                          }`}></div>
+                          <select
+                            value={state.kesimpulan}
+                            onChange={(e) => handleUpdate(account.no, 'kesimpulan', e.target.value)}
+                            className={`w-full text-xs font-medium bg-slate-50/70 border border-slate-200 rounded-lg px-2.5 py-1.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all cursor-pointer ${
+                              isWajar ? 'text-slate-800' : isBelumSepenuhnya ? 'text-amber-800 font-semibold' : 'text-rose-800 font-semibold'
+                            }`}
+                          >
+                            {KESIMPULAN_OPTIONS.map((opt) => (
+                              <option key={opt} value={opt}>{opt}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-4">
+                        <input
+                          type="text"
+                          placeholder="Catatan hasil prosedur..."
+                          value={state.keterangan}
+                          onChange={(e) => handleUpdate(account.no, 'keterangan', e.target.value)}
+                          className="w-full text-xs text-slate-800 bg-slate-50/70 border border-slate-200 rounded-lg px-3 py-1.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all placeholder:text-slate-400"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* ============================================================== */}
-        {/* 4. FOOTER SIMPULAN & CAJE/PAJE SUMMARY                         */}
-        {/* ============================================================== */}
-        <div className="flex flex-col md:flex-row md:items-center gap-4 pt-4 bg-white p-4 border border-gray-200 rounded-lg">
-          <span className="font-bold text-red-700 italic w-44 shrink-0 text-xs">
-            Kesimpulan CAJE/PAJE :
-          </span>
-          <textarea 
-            className="flex-1 bg-yellow-50 border border-yellow-300 rounded outline-none p-3 font-medium text-xs text-gray-800 min-h-[50px] resize-none focus:ring-1 focus:ring-yellow-400"
+        {/* Card Simpulan Akhir Auditor */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+              <span>Simpulan Akhir Hasil Pemetaan & Evaluasi Lead Schedule</span>
+            </h3>
+            <span className="text-[11px] text-slate-400">Wajib Diisi</span>
+          </div>
+          <textarea
             value={simpulanAkhir}
-            onChange={e => setSimpulanAkhir(e.target.value)}
-            placeholder="Tuliskan kesimpulan akhir mapping lead schedule secara keseluruhan..."
+            onChange={(e) => setSimpulanAkhir(e.target.value)}
+            rows={2}
+            placeholder="Tuliskan simpulan menyeluruh atas pemetaan prosedur audit..."
+            className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all"
           />
         </div>
 
-        {/* Bottom Actions */}
-        <div className="flex flex-wrap justify-between items-center gap-3 pt-2">
-          <button 
-            onClick={() => navigate(`/workspace/${engagement?.id}/worksheet/b100`)} 
-            className="text-gray-600 hover:text-gray-900 text-xs font-semibold flex items-center px-3 py-2 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+        {/* Action Footer */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/workspace/${engagement?.id || ''}/worksheet/b110`)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
           >
-            <ArrowLeft size={14} className="mr-1.5" /> Kembali ke B.100
+            <ArrowLeft size={16} />
+            <span>Kembali ke B.110</span>
           </button>
-          
-          <div className="flex items-center gap-2.5">
-            <button 
-              onClick={() => navigate(`/workspace/${engagement?.id}/worksheet/bank-prosedur`)}
-              className="px-4 py-2 bg-yellow-100 hover:bg-yellow-200 text-yellow-900 border border-yellow-400 rounded-lg text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(`/workspace/${engagement?.id || ''}/worksheet/b130`)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
             >
-              <ExternalLink size={14} />
-              <span>Buka Bank Procedures</span>
+              <span>Lanjut ke B.130</span>
+              <ArrowRight size={16} />
             </button>
 
-            <button 
+            <button
+              type="button"
               onClick={handleSave}
-              className="flex items-center px-4 py-2 bg-atlas-blue text-white rounded-lg text-xs font-bold hover:bg-blue-800 shadow-2xs transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 rounded-xl transition-all shadow-sm hover:shadow"
             >
-              {isSaved ? <CheckCircle2 size={14} className="mr-1.5 text-emerald-300" /> : <Save size={14} className="mr-1.5" />}
-              <span>{isSaved ? 'Tersimpan!' : 'Simpan B.120'}</span>
-            </button>
-
-            <button 
-              onClick={() => navigate(`/workspace/${engagement?.id}/worksheet/b130`)}
-              className="flex items-center px-4 py-2 border border-atlas-blue text-atlas-blue hover:bg-blue-50 rounded-lg text-xs font-bold shadow-2xs transition-all cursor-pointer"
-            >
-              <span>Lanjut B.130</span> 
-              <ArrowRight size={14} className="ml-1.5" />
+              {isSaved ? <CheckCircle2 size={16} className="text-emerald-300" /> : <Save size={16} />}
+              <span>{isSaved ? "Tersimpan" : "Simpan Pemetaan"}</span>
             </button>
           </div>
         </div>
+
+        {/* Toast Notifikasi */}
+        {isSaved && (
+          <div className="fixed bottom-5 right-5 z-50 flex items-center space-x-2 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm font-medium animate-in slide-in-from-bottom-3 duration-200">
+            <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+            <span>Hasil pemetaan prosedur & lead schedule berhasil disimpan.</span>
+          </div>
+        )}
 
       </div>
     </WorksheetContainer>

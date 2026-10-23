@@ -1,56 +1,67 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useOutletContext, Link } from 'react-router-dom';
-import { useEngagementStore } from '../../../store/engagementStore';
 import type { Engagement } from '../../../store/engagementStore';
 import WorksheetContainer from '../../../components/WorksheetContainer';
-import { Save, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { 
+  Save, 
+  CheckCircle2, 
+  AlertCircle, 
+  ArrowLeft, 
+  ArrowRight, 
+  Scale, 
+  Search, 
+  Filter, 
+  Layers, 
+  FileSpreadsheet,
+  Check,
+  Building2,
+  Calendar
+} from 'lucide-react';
 
-const B110 = () => {
+const B110: React.FC = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
-  const [labaRugiTahunBerjalan, setLabaRugiTahunBerjalan] = useState('');
-  const [ekuitasLainnya, setEkuitasLainnya] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
 
-  const tb = engagement.trialBalance || [];
-  const cajeData: Record<string, { debet: number, kredit: number }> = {};
+  const [labaRugiTahunBerjalan, setLabaRugiTahunBerjalan] = useState(
+    (engagement as any)?.worksheetB110?.labaRugiTahunBerjalan || ''
+  );
+  const [ekuitasLainnya, setEkuitasLainnya] = useState(
+    (engagement as any)?.worksheetB110?.ekuitasLainnya || 'none'
+  );
+
+  const tb = engagement?.trialBalance || [];
+  const cajeData: Record<string, { debet: number; kredit: number }> = {};
 
   const formatCurrency = (val: number) => {
-    if (val === 0) return '-';
+    if (!val || val === 0) return '-';
     const isNegative = val < 0;
     const absVal = Math.abs(val);
     const formatted = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(absVal);
     return isNegative ? `(${formatted})` : formatted;
   };
 
-  const calculateAuditBalance = (group: string, bookBalance: number, debet: number, kredit: number) => {
-    // Normal balance logic (simplified)
-    const isDebitNormal = ['Aset', 'Beban'].includes(group);
-    if (isDebitNormal) {
-      return bookBalance + debet - kredit;
-    } else {
-      return bookBalance - debet + kredit; // Since liability/equity/revenue are stored as negative or we treat credit as positive here? Let's just do mathematical addition if TB uses signs.
-    }
-  };
-
   const tableData = useMemo(() => {
     return tb.map((item, index) => {
       const caje = cajeData[item.name] || { debet: 0, kredit: 0 };
-      // Assuming endingBalance is already properly signed (+ for Dr, - for Cr)
-      const auditBalance = item.endingBalance + caje.debet - caje.kredit;
-      
-      // Determine Lead Schedule group mapping
+      const auditBalance = (Number(item.endingBalance) || 0) + caje.debet - caje.kredit;
+
+      // Lead Schedule mapping
       let ls = 'A';
-      if (item.group === 'Kewajiban') ls = 'C';
-      if (item.group === 'Ekuitas') ls = 'E';
-      if (item.group === 'Pendapatan') ls = 'PL1';
-      if (item.group === 'Beban') ls = 'PL2';
+      const grp = (item.group || '').toLowerCase();
+      if (grp.includes('kewajiban') || grp.includes('liabilitas')) ls = 'C';
+      else if (grp.includes('ekuitas') || grp.includes('modal')) ls = 'E';
+      else if (grp.includes('pendapatan') || grp.includes('penjualan')) ls = 'PL1';
+      else if (grp.includes('beban') || grp.includes('biaya') || grp.includes('hpp')) ls = 'PL2';
 
       return {
         noAkun: item.code || (item as any).accountCode || `100${index + 1}`,
         namaAkun: item.name,
-        saldoBook: item.endingBalance,
-        ls: ls,
+        group: item.group || 'Lainnya',
+        saldoBook: Number(item.endingBalance) || 0,
+        ls,
         cajeDebet: caje.debet,
         cajeKredit: caje.kredit,
         saldoAudit: auditBalance
@@ -58,147 +69,385 @@ const B110 = () => {
     });
   }, [tb]);
 
-  const totalAsetAudit = tableData.filter(d => ['Aset'].includes(tb.find(t => t.name === d.namaAkun)?.group || '')).reduce((sum, d) => sum + d.saldoAudit, 0);
-  const totalPasivaAudit = tableData.filter(d => ['Kewajiban', 'Ekuitas'].includes(tb.find(t => t.name === d.namaAkun)?.group || '')).reduce((sum, d) => sum + Math.abs(d.saldoAudit), 0);
-  
-  // Selisih neraca (Aset - Pasiva)
+  const filteredData = useMemo(() => {
+    return tableData.filter((row) => {
+      const matchesSearch = 
+        row.noAkun.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        row.namaAkun.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      if (selectedGroup === 'ALL') return matchesSearch;
+      return matchesSearch && row.group.toLowerCase().includes(selectedGroup.toLowerCase());
+    });
+  }, [tableData, searchQuery, selectedGroup]);
+
+  // Totals
+  const totalSaldoBook = useMemo(() => tableData.reduce((s, d) => s + d.saldoBook, 0), [tableData]);
+  const totalCajeDebet = useMemo(() => tableData.reduce((s, d) => s + d.cajeDebet, 0), [tableData]);
+  const totalCajeKredit = useMemo(() => tableData.reduce((s, d) => s + d.cajeKredit, 0), [tableData]);
+  const totalSaldoAudit = useMemo(() => tableData.reduce((s, d) => s + d.saldoAudit, 0), [tableData]);
+
+  const totalAsetAudit = tableData
+    .filter((d) => (tb.find((t) => t.name === d.namaAkun)?.group || '').toLowerCase().includes('aset'))
+    .reduce((sum, d) => sum + d.saldoAudit, 0);
+
+  const totalPasivaAudit = tableData
+    .filter((d) => {
+      const g = (tb.find((t) => t.name === d.namaAkun)?.group || '').toLowerCase();
+      return g.includes('kewajiban') || g.includes('liabilitas') || g.includes('ekuitas') || g.includes('modal');
+    })
+    .reduce((sum, d) => sum + Math.abs(d.saldoAudit), 0);
+
   const selisihNeraca = totalAsetAudit - totalPasivaAudit;
+  const isBalanced = Math.abs(selisihNeraca) === 0;
+  const isCompleted = isBalanced && tb.length > 0 && labaRugiTahunBerjalan !== '';
 
   const handleSave = () => {
     setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+    setTimeout(() => setIsSaved(false), 2500);
   };
+
+  const groups = ['ALL', 'Aset', 'Liabilitas', 'Ekuitas', 'Pendapatan', 'Beban'];
 
   return (
     <WorksheetContainer
       code="B.110"
       name="Worksheet Trial Balance (WTB)"
-      purpose="Rangkuman angka laporan keuangan dari angka saldo awal sampai dengan angka final hasil audit."
-      status="In Progress"
-      reviewer={engagement.managerName || 'Menunggu Review'}
+      purpose="Rangkuman angka laporan keuangan dari angka saldo per book, jurnal penyesuaian (CAJE/PAJE), hingga angka final hasil audit."
+      status={isCompleted ? "Completed" : "In Progress"}
+      reviewer={engagement?.managerName || 'Menunggu Review'}
       lastUpdated="Baru saja"
     >
-      <div className="space-y-4 text-xs font-sans">
+      <div className="space-y-6 max-w-7xl mx-auto">
         
-        {/* Info Box */}
-        <div className="bg-white rounded border border-gray-200 p-4 shadow-sm text-sm">
-          <p>Kertas kerja ini merupakan rangkuman angka laporan keuangan dari angka saldo awal sampai dengan angka final hasil audit setelah terdapat penyesuaian CAJE/PAJE.</p>
-        </div>
-
-        {/* Top Dropdowns */}
-        <div className="bg-green-100/50 border border-green-500 p-3 w-max">
-          <div className="font-bold text-gray-800 mb-2 border-b border-green-600 pb-1">
-            Pilihlah akun yang sesuai dengan Laba/Rugi tahun berjalan dan Ekuitas lainnya/OCI:
-          </div>
-          <div className="grid grid-cols-[180px_20px_300px] gap-y-2 items-center font-medium">
-            <div>Laba/Rugi Tahun Berjalan</div>
-            <div className="text-center">:</div>
-            <div>
-              <select className="w-full border border-gray-400 outline-none p-1 bg-white" value={labaRugiTahunBerjalan} onChange={e => setLabaRugiTahunBerjalan(e.target.value)}>
-                <option value="">- Pilih Akun -</option>
-                {tb.filter(t => t.group === 'Ekuitas').map(t => (
-                  <option key={t.name} value={t.name}>{t.name}</option>
-                ))}
-                <option value="auto_laba_ditahan">Laba Ditahan</option>
-              </select>
+        {/* Banner Ringkasan Modern */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-atlas-blue border border-blue-200">
+                  B.110
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                  Risk Response Phase
+                </span>
+                <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+                  Worksheet Trial Balance (WTB)
+                </h1>
+              </div>
+              <p className="text-xs text-slate-500 max-w-3xl">
+                Rangkuman rekonsiliasi angka laporan keuangan dari saldo buku audited tahun lalu/interim, jurnal penyesuaian CAJE & PAJE, hingga penetapan saldo final per audit.
+              </p>
             </div>
 
-            <div>Ekuitas lainnya/OCI</div>
-            <div className="text-center">:</div>
-            <div>
-              <select className="w-full border border-gray-400 outline-none p-1 bg-white" value={ekuitasLainnya} onChange={e => setEkuitasLainnya(e.target.value)}>
-                <option value="">- Pilih Akun -</option>
-                {tb.filter(t => t.group === 'Ekuitas').map(t => (
-                  <option key={t.name} value={t.name}>{t.name}</option>
-                ))}
-                <option value="none">Tidak Ada</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Main WTB Table */}
-        <div className="bg-white border border-blue-900 overflow-x-auto shadow-sm mt-4">
-          <div className="bg-blue-900 text-white font-bold py-1 px-2 text-[10px] uppercase tracking-wider text-center border-b border-blue-950">
-            WORKSHEET TRIAL BALANCE
-          </div>
-          
-          <table className="w-max min-w-full text-left border-collapse text-[10px]">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="px-2 py-3 border border-gray-300 font-bold text-red-700 text-center w-24 align-middle" rowSpan={2}>NO AKUN</th>
-                <th className="px-2 py-3 border border-gray-300 font-bold text-red-700 text-center w-64 align-middle" rowSpan={2}>NAMA AKUN</th>
-                <th className="px-2 py-3 border border-gray-300 font-bold text-red-700 text-center w-32 align-middle" rowSpan={2}>SALDO PER BOOK</th>
-                <th className="px-2 py-3 border border-gray-300 font-bold text-red-700 text-center w-24 align-middle leading-tight" rowSpan={2}>Lead Schedule</th>
-                <th className="px-2 py-1 border border-gray-300 font-bold text-red-700 text-center" colSpan={2}>JURNAL KOREKSI/REKLASIFIKASI</th>
-                <th className="px-2 py-3 border border-gray-300 font-bold text-red-700 text-center w-32 align-middle" rowSpan={2}>SALDO PER AUDIT</th>
-              </tr>
-              <tr className="bg-gray-100">
-                <th className="px-2 py-1 border border-gray-300 font-bold text-red-700 text-center w-28">DEBET</th>
-                <th className="px-2 py-1 border border-gray-300 font-bold text-red-700 text-center w-28">KREDIT</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* Control Balance Row (Neraca check) */}
-              <tr>
-                <td colSpan={6} className="bg-white border-0 border-r border-gray-300"></td>
-                <td className="px-2 py-1 border border-gray-300 bg-cyan-100 text-right font-mono font-bold text-cyan-900" title="Selisih Aset dan Pasiva (Seharusnya 0)">
-                  {selisihNeraca === 0 ? '-' : formatCurrency(selisihNeraca)}
-                </td>
-              </tr>
-
-              {/* Data Rows */}
-              {tableData.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500 bg-gray-50">
-                    Belum ada data akun Trial Balance pada perikatan ini.
-                  </td>
-                </tr>
-              ) : (
-                tableData.map((row) => (
-                  <tr key={row.noAkun} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-2 py-1 border border-gray-300 text-center font-mono text-gray-700">{row.noAkun}</td>
-                    <td className="px-2 py-1 border border-gray-300 font-bold text-gray-800">{row.namaAkun}</td>
-                    <td className="px-2 py-1 border border-gray-300 text-right font-mono">{formatCurrency(row.saldoBook)}</td>
-                    <td className="px-2 py-1 border border-gray-300 text-center font-bold text-blue-700 underline cursor-pointer hover:bg-blue-50 transition-colors">{row.ls}</td>
-                    <td className="px-2 py-1 border border-gray-300 text-right font-mono text-gray-600">{formatCurrency(row.cajeDebet)}</td>
-                    <td className="px-2 py-1 border border-gray-300 text-right font-mono text-gray-600">{formatCurrency(row.cajeKredit)}</td>
-                    <td className="px-2 py-1 border border-gray-300 text-right font-mono font-bold">{formatCurrency(row.saldoAudit)}</td>
-                  </tr>
-                ))
-              )}
+            <div className="flex items-center gap-3">
+              <div className={`px-4 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
+                isBalanced
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-amber-50 text-amber-700 border-amber-200"
+              }`}>
+                <Scale size={16} />
+                <span>{isBalanced ? "NERACA: SEIMBANG" : `SELISIH: Rp ${formatCurrency(selisihNeraca)}`}</span>
+              </div>
               
-              {/* Grand Totals */}
-              <tr className="bg-gray-200/60 font-bold">
-                <td colSpan={2} className="px-2 py-2 border border-gray-300 text-right">TOTAL</td>
-                <td className="px-2 py-2 border border-gray-300 text-right font-mono">{formatCurrency(tableData.reduce((s, d) => s + d.saldoBook, 0))}</td>
-                <td className="px-2 py-2 border border-gray-300 bg-gray-100"></td>
-                <td className="px-2 py-2 border border-gray-300 text-right font-mono">{formatCurrency(tableData.reduce((s, d) => s + d.cajeDebet, 0))}</td>
-                <td className="px-2 py-2 border border-gray-300 text-right font-mono">{formatCurrency(tableData.reduce((s, d) => s + d.cajeKredit, 0))}</td>
-                <td className="px-2 py-2 border border-gray-300 text-right font-mono">{formatCurrency(tableData.reduce((s, d) => s + d.saldoAudit, 0))}</td>
-              </tr>
-            </tbody>
-          </table>
+              <div className={`px-4 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
+                isCompleted 
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                  : "bg-slate-100 text-slate-700 border-slate-200"
+              }`}>
+                {isCompleted ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                <span>{isCompleted ? "STATUS: COMPLETED" : "STATUS: IN PROGRESS"}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Info Grid */}
+          <div className="pt-3.5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div className="flex items-center gap-2 text-slate-600">
+              <Building2 size={14} className="text-slate-400 shrink-0" />
+              <div className="truncate">
+                <span className="text-slate-400">Klien:</span> <span className="font-semibold text-slate-800">{engagement?.clientName || '-'}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <Calendar size={14} className="text-slate-400 shrink-0" />
+              <div>
+                <span className="text-slate-400">Periode:</span> <span className="font-semibold text-slate-800">{engagement?.auditPeriod || 'Tahun Berjalan'}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <FileSpreadsheet size={14} className="text-slate-400 shrink-0" />
+              <div>
+                <span className="text-slate-400">Total Akun:</span> <span className="font-semibold text-slate-800">{tb.length} Akun</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <Scale size={14} className="text-slate-400 shrink-0" />
+              <div>
+                <span className="text-slate-400">Status Neraca:</span> <span className={`font-semibold ${isBalanced ? 'text-emerald-700' : 'text-amber-700'}`}>{isBalanced ? 'Seimbang (Rp 0)' : 'Ada Selisih'}</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="w-32 border border-gray-400 mt-4 text-center">
-          <div className="bg-gray-100 border-b border-gray-400 text-[10px] py-1 font-bold">Status KKP</div>
-          <div className="bg-cyan-200 text-cyan-900 font-bold py-1.5 text-[10px]">Incompleted</div>
+        {/* 4 Kartu KPI Metrik Ringkas */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+            <span className="text-xs font-medium text-slate-500">Total Saldo Per Book</span>
+            <div className="text-lg font-bold font-mono text-slate-900 mt-1 tabular-nums">
+              Rp {formatCurrency(totalSaldoBook)}
+            </div>
+            <span className="text-[11px] text-slate-400 mt-0.5 block">Saldo sebelum penyesuaian</span>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+            <span className="text-xs font-medium text-slate-500">Penyesuaian CAJE/PAJE (Debet)</span>
+            <div className="text-lg font-bold font-mono text-atlas-blue mt-1 tabular-nums">
+              Rp {formatCurrency(totalCajeDebet)}
+            </div>
+            <span className="text-[11px] text-slate-400 mt-0.5 block">Total koreksi sisi debet</span>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+            <span className="text-xs font-medium text-slate-500">Penyesuaian CAJE/PAJE (Kredit)</span>
+            <div className="text-lg font-bold font-mono text-indigo-600 mt-1 tabular-nums">
+              Rp {formatCurrency(totalCajeKredit)}
+            </div>
+            <span className="text-[11px] text-slate-400 mt-0.5 block">Total koreksi sisi kredit</span>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+            <span className="text-xs font-medium text-slate-500">Total Saldo Per Audit</span>
+            <div className="text-lg font-bold font-mono text-emerald-700 mt-1 tabular-nums">
+              Rp {formatCurrency(totalSaldoAudit)}
+            </div>
+            <span className="text-[11px] text-slate-400 mt-0.5 block">Saldo final setelah audit</span>
+          </div>
         </div>
 
-        {/* Action */}
-        <div className="flex justify-between items-center pt-4">
-          <button onClick={() => navigate(`/workspace/${engagement.id}/worksheet/b100`)} className="text-gray-500 hover:text-gray-800 flex items-center">
-            <ArrowLeft size={14} className="mr-1" /> Kembali ke Indeks B.100
-          </button>
-          <button 
-            onClick={handleSave}
-            className="flex items-center px-4 py-2 bg-atlas-blue text-white rounded font-bold hover:bg-blue-800 shadow transition-colors"
+        {/* Card Pemetaan Akun Ekuitas & OCI */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+          <div className="flex items-center gap-2">
+            <Layers className="text-atlas-blue" size={18} />
+            <h2 className="text-sm font-bold text-slate-800">
+              Pengaturan Akun Laba/Rugi & Ekuitas Lainnya
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500">
+            Pilihlah akun yang ditunjuk untuk menampung Laba/Rugi Tahun Berjalan dan Ekuitas Lainnya (OCI) guna memastikan perhitungan otomatis ekuitas tertutup dengan benar.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700">
+                Akun Laba/Rugi Tahun Berjalan <span className="text-rose-500">*</span>
+              </label>
+              <select
+                value={labaRugiTahunBerjalan}
+                onChange={(e) => setLabaRugiTahunBerjalan(e.target.value)}
+                className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all cursor-pointer font-medium"
+              >
+                <option value="">-- Pilih Akun Laba/Rugi --</option>
+                {tb.filter((t) => (t.group || '').toLowerCase().includes('ekuitas') || (t.group || '').toLowerCase().includes('modal')).map((t) => (
+                  <option key={t.name} value={t.name}>{t.name}</option>
+                ))}
+                <option value="auto_laba_ditahan">Laba Ditahan (Retained Earnings)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-700">
+                Akun Ekuitas Lainnya / OCI
+              </label>
+              <select
+                value={ekuitasLainnya}
+                onChange={(e) => setEkuitasLainnya(e.target.value)}
+                className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all cursor-pointer font-medium"
+              >
+                <option value="none">Tidak Ada (None)</option>
+                {tb.filter((t) => (t.group || '').toLowerCase().includes('ekuitas') || (t.group || '').toLowerCase().includes('modal')).map((t) => (
+                  <option key={t.name} value={t.name}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabel Utama WTB Modern */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          {/* Header Tabel dengan Search & Filter */}
+          <div className="p-4 sm:p-5 bg-slate-50/70 border-b border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <span>Rincian Akun & Penyesuaian Audit (WTB)</span>
+                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-slate-200/70 text-slate-700">
+                  {filteredData.length} dari {tableData.length} akun
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500">
+                Data ditarik otomatis dari Trial Balance perikatan dan penyesuaian CAJE/PAJE.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Cari akun..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue w-44 sm:w-56"
+                />
+              </div>
+
+              {/* Filter Tabs */}
+              <div className="hidden md:flex items-center bg-slate-200/60 p-0.5 rounded-xl text-[11px] font-medium text-slate-600">
+                {groups.map((grp) => (
+                  <button
+                    key={grp}
+                    type="button"
+                    onClick={() => setSelectedGroup(grp)}
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                      selectedGroup === grp
+                        ? 'bg-white text-slate-900 font-bold shadow-2xs'
+                        : 'hover:text-slate-900'
+                    }`}
+                  >
+                    {grp === 'ALL' ? 'Semua' : grp}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Table Element */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50/50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                  <th className="py-3 px-4 w-28">No. Akun</th>
+                  <th className="py-3 px-4 min-w-[200px]">Nama Akun</th>
+                  <th className="py-3 px-4 text-center w-28">Lead Sched.</th>
+                  <th className="py-3 px-4 text-right min-w-[130px]">Saldo Per Book</th>
+                  <th className="py-3 px-4 text-right min-w-[120px]">Koreksi Debet</th>
+                  <th className="py-3 px-4 text-right min-w-[120px]">Koreksi Kredit</th>
+                  <th className="py-3 px-4 text-right min-w-[140px]">Saldo Per Audit</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredData.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-xs text-slate-400">
+                      {tb.length === 0 
+                        ? 'Belum ada data Trial Balance pada perikatan ini. Silakan impor data akun terlebih dahulu.'
+                        : 'Tidak ada akun yang sesuai dengan kriteria pencarian.'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredData.map((row) => (
+                    <tr key={row.noAkun} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-2.5 px-4 font-mono text-[11px] text-slate-600 font-medium">
+                        {row.noAkun}
+                      </td>
+                      <td className="py-2.5 px-4">
+                        <span className="font-semibold text-slate-900">{row.namaAkun}</span>
+                        <span className="block text-[10px] text-slate-400">{row.group}</span>
+                      </td>
+                      <td className="py-2.5 px-4 text-center">
+                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md font-mono text-xs font-bold bg-blue-50 text-atlas-blue border border-blue-200/60">
+                          {row.ls}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono text-slate-700 tabular-nums">
+                        {formatCurrency(row.saldoBook)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono tabular-nums text-slate-600">
+                        {row.cajeDebet > 0 ? (
+                          <span className="text-atlas-blue font-semibold">{formatCurrency(row.cajeDebet)}</span>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono tabular-nums text-slate-600">
+                        {row.cajeKredit > 0 ? (
+                          <span className="text-indigo-600 font-semibold">{formatCurrency(row.cajeKredit)}</span>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-mono font-bold text-slate-900 tabular-nums">
+                        {formatCurrency(row.saldoAudit)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+              
+              {/* Grand Total Row */}
+              {tableData.length > 0 && (
+                <tfoot>
+                  <tr className="bg-slate-50/90 font-bold border-t-2 border-slate-200 text-xs">
+                    <td colSpan={3} className="py-3 px-4 text-slate-900 uppercase tracking-wider text-[11px]">
+                      TOTAL SALDO
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono text-slate-900 tabular-nums">
+                      {formatCurrency(totalSaldoBook)}
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono text-atlas-blue tabular-nums">
+                      {formatCurrency(totalCajeDebet)}
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono text-indigo-600 tabular-nums">
+                      {formatCurrency(totalCajeKredit)}
+                    </td>
+                    <td className="py-3 px-4 text-right font-mono text-emerald-800 font-black tabular-nums">
+                      {formatCurrency(totalSaldoAudit)}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </div>
+
+        {/* Action Footer */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/workspace/${engagement?.id || ''}/worksheet/b100`)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
           >
-            {isSaved ? <CheckCircle2 size={14} className="mr-1.5" /> : <Save size={14} className="mr-1.5" />}
-            Simpan WTB
+            <ArrowLeft size={16} />
+            <span>Kembali ke Menu B.100</span>
           </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(`/workspace/${engagement?.id || ''}/worksheet/b120`)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
+            >
+              <span>Lanjut ke B.120</span>
+              <ArrowRight size={16} />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSave}
+              className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 rounded-xl transition-all shadow-sm hover:shadow"
+            >
+              {isSaved ? <CheckCircle2 size={16} className="text-emerald-300" /> : <Save size={16} />}
+              <span>{isSaved ? "Tersimpan" : "Simpan WTB"}</span>
+            </button>
+          </div>
         </div>
+
+        {/* Toast Notifikasi */}
+        {isSaved && (
+          <div className="fixed bottom-5 right-5 z-50 flex items-center space-x-2 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm font-medium animate-in slide-in-from-bottom-3 duration-200">
+            <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+            <span>Worksheet Trial Balance berhasil disimpan.</span>
+          </div>
+        )}
 
       </div>
     </WorksheetContainer>

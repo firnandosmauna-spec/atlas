@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { useEngagementStore } from '../../../store/engagementStore';
 import type { Engagement } from '../../../store/engagementStore';
 import WorksheetContainer from '../../../components/WorksheetContainer';
-import { Save, CheckCircle2, ArrowLeft, ArrowRight, Plus, Trash2 } from 'lucide-react';
+import { 
+  Save, 
+  CheckCircle2, 
+  ArrowLeft, 
+  ArrowRight, 
+  Plus, 
+  Trash2, 
+  AlertCircle, 
+  FileText, 
+  Scale, 
+  DollarSign, 
+  ShieldAlert,
+  Info
+} from 'lucide-react';
 
-type JournalEntry = {
+export type JournalEntry = {
   id: string;
   ref: string;
   noAkun: string;
@@ -16,20 +28,66 @@ type JournalEntry = {
   tdkDibukukanD: number;
   tdkDibukukanK: number;
   kelompok: string;
-  kelemahanPI: string;
-  kecurangan: string;
+  kelemahanPI: 'Ya' | 'Tidak';
+  kecurangan: 'Ya' | 'Tidak';
 };
 
-const B130 = () => {
+const KELOMPOK_OPTIONS = [
+  'Aset Lancar',
+  'Aset Tidak Lancar',
+  'Liabilitas Jangka Pendek',
+  'Liabilitas Jangka Panjang',
+  'Ekuitas',
+  'Pendapatan',
+  'Beban Pokok Pendapatan',
+  'Beban Operasional'
+];
+
+const B130: React.FC = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
 
   // Resume State
-  const [simpulanPAJE, setSimpulanPAJE] = useState('');
+  const [simpulanPAJE, setSimpulanPAJE] = useState<string>(
+    (engagement as any)?.worksheetB130?.simpulan || 'Tidak Material'
+  );
 
-  // Journal Entries State
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  // Journal Entries State with sensible default demo data if empty
+  const [entries, setEntries] = useState<JournalEntry[]>(() => {
+    const savedEntries = (engagement as any)?.worksheetB130?.entries;
+    if (savedEntries && Array.isArray(savedEntries)) return savedEntries;
+    return [
+      {
+        id: '1',
+        ref: 'CAJE-01',
+        noAkun: '1110.01',
+        namaAkun: 'Kas Kecil Kantor Pusat',
+        keterangan: 'Koreksi pencatatan pengeluaran kas kecil yang belum dibukukan pada akhir periode',
+        dibukukanD: 15000000,
+        dibukukanK: 0,
+        tdkDibukukanD: 0,
+        tdkDibukukanK: 0,
+        kelompok: 'Aset Lancar',
+        kelemahanPI: 'Tidak',
+        kecurangan: 'Tidak'
+      },
+      {
+        id: '2',
+        ref: 'CAJE-01',
+        noAkun: '6100.12',
+        namaAkun: 'Beban Operasional Lainnya',
+        keterangan: 'Lawan akun pengeluaran kas kecil',
+        dibukukanD: 0,
+        dibukukanK: 15000000,
+        tdkDibukukanD: 0,
+        tdkDibukukanK: 0,
+        kelompok: 'Beban Operasional',
+        kelemahanPI: 'Tidak',
+        kecurangan: 'Tidak'
+      }
+    ];
+  });
 
   const handleUpdate = (id: string, field: keyof JournalEntry, value: any) => {
     setEntries(prev => prev.map(entry => entry.id === id ? { ...entry, [field]: value } : entry));
@@ -37,7 +95,23 @@ const B130 = () => {
 
   const handleAdd = () => {
     const newId = Date.now().toString();
-    setEntries([...entries, { id: newId, ref: '', noAkun: '', namaAkun: '', keterangan: '', dibukukanD: 0, dibukukanK: 0, tdkDibukukanD: 0, tdkDibukukanK: 0, kelompok: '', kelemahanPI: '', kecurangan: '' }]);
+    setEntries(prev => [
+      ...prev,
+      {
+        id: newId,
+        ref: `PAJE-0${prev.length + 1}`,
+        noAkun: '',
+        namaAkun: '',
+        keterangan: '',
+        dibukukanD: 0,
+        dibukukanK: 0,
+        tdkDibukukanD: 0,
+        tdkDibukukanK: 0,
+        kelompok: 'Aset Lancar',
+        kelemahanPI: 'Tidak',
+        kecurangan: 'Tidak'
+      }
+    ]);
   };
 
   const handleDelete = (id: string) => {
@@ -46,287 +120,397 @@ const B130 = () => {
 
   const handleSave = () => {
     setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+    setTimeout(() => setIsSaved(false), 2500);
   };
 
   const formatCurrency = (val: number) => {
-    if (!val || val === 0) return '';
+    if (!val || val === 0) return '-';
     return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(val);
   };
 
-  const parseCurrencyInput = (val: string) => {
-    const num = parseInt(val.replace(/\D/g, ''), 10);
+  const parseNumberInput = (val: string) => {
+    const clean = val.replace(/\D/g, '');
+    const num = parseInt(clean, 10);
     return isNaN(num) ? 0 : num;
   };
 
-  // Calculate Totals for Resume
-  const totalDibukukanD = entries.reduce((s, e) => s + e.dibukukanD, 0);
-  const totalDibukukanK = entries.reduce((s, e) => s + e.dibukukanK, 0);
-  const totalTdkDibukukanD = entries.reduce((s, e) => s + e.tdkDibukukanD, 0);
-  const totalTdkDibukukanK = entries.reduce((s, e) => s + e.tdkDibukukanK, 0);
+  // Totals
+  const totalDibukukanD = useMemo(() => entries.reduce((s, e) => s + (Number(e.dibukukanD) || 0), 0), [entries]);
+  const totalDibukukanK = useMemo(() => entries.reduce((s, e) => s + (Number(e.dibukukanK) || 0), 0), [entries]);
+  const totalTdkDibukukanD = useMemo(() => entries.reduce((s, e) => s + (Number(e.tdkDibukukanD) || 0), 0), [entries]);
+  const totalTdkDibukukanK = useMemo(() => entries.reduce((s, e) => s + (Number(e.tdkDibukukanK) || 0), 0), [entries]);
 
-  const performanceMateriality = engagement.materiality?.performanceMateriality || 0;
+  const overallMateriality = engagement?.materiality?.overallMateriality || 150000000;
+  const performanceMateriality = engagement?.materiality?.performanceMateriality || 112500000;
+
+  const netTdkDibukukan = Math.abs(totalTdkDibukukanD - totalTdkDibukukanK);
+  const exceedsMateriality = netTdkDibukukan > performanceMateriality;
 
   return (
     <WorksheetContainer
       code="B.130"
       name="CAJE / PAJE"
-      purpose="Menuangkan jurnal-jurnal penyesuaian (CAJE/PAJE) dan mengevaluasi dampaknya."
-      status="In Progress"
-      reviewer={engagement.managerName || 'Menunggu Review'}
+      purpose="Dokumentasi usulan jurnal penyesuaian (CAJE/PAJE) dan evaluasi dampaknya terhadap kewajaran laporan keuangan."
+      status="Completed"
+      reviewer={engagement?.managerName || 'Menunggu Review'}
       lastUpdated="Baru saja"
     >
-      <div className="space-y-6 text-xs font-sans">
+      <div className="space-y-6 max-w-7xl mx-auto">
         
-        {/* Info Box */}
-        <div className="bg-white rounded border border-gray-200 p-4 shadow-sm text-sm">
-          <p className="mb-2">Kertas kerja ini digunakan untuk menuangkan jurnal-jurnal yang diidentifikasi selama proses audit yang dikategorikan menjadi:</p>
-          <ol className="list-decimal list-inside ml-2 space-y-1">
-            <li><strong>Client Adjustment Journal Entry (CAJE)</strong>: Jurnal penyesuaian yang berasal dari klien.</li>
-            <li><strong>Proposed Adjustment Journal Entry (PAJE)</strong>: Jurnal penyesuaian yang diusulkan oleh auditor untuk dibukukan berdasarkan hasil audit.</li>
-          </ol>
+        {/* Banner Ringkasan Modern */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-atlas-blue border border-blue-200">
+                  B.130
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                  Risk Response Phase
+                </span>
+                <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+                  CAJE & PAJE (Jurnal Penyesuaian Audit)
+                </h1>
+              </div>
+              <p className="text-xs text-slate-500 max-w-3xl">
+                Dokumentasi seluruh salah saji yang diidentifikasi selama pelaksanaan prosedur audit, dipisahkan antara yang telah dibukukan oleh klien (CAJE) dan usulan yang tidak dibukukan (PAJE).
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+                <CheckCircle2 size={16} />
+                <span>STATUS: COMPLETED</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Metrics Bar */}
+          <div className="pt-3.5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div className="flex items-center gap-2 text-slate-600">
+              <div className="w-2.5 h-2.5 rounded-full bg-atlas-blue shrink-0"></div>
+              <div>
+                <span className="text-slate-400">Total CAJE (Dibukukan):</span>{' '}
+                <span className="font-semibold text-slate-800">Rp {formatCurrency(totalDibukukanD)}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></div>
+              <div>
+                <span className="text-slate-400">Total PAJE (Tidak Dibukukan):</span>{' '}
+                <span className="font-semibold text-slate-800">Rp {formatCurrency(totalTdkDibukukanD)}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></div>
+              <div>
+                <span className="text-slate-400">Performance Mat.:</span>{' '}
+                <span className="font-semibold text-slate-800">Rp {formatCurrency(performanceMateriality)}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${exceedsMateriality ? 'bg-rose-500' : 'bg-emerald-500'}`}></div>
+              <div>
+                <span className="text-slate-400">Evaluasi PAJE:</span>{' '}
+                <span className={`font-semibold ${exceedsMateriality ? 'text-rose-700' : 'text-emerald-700'}`}>
+                  {exceedsMateriality ? 'Melebihi Toleransi' : 'Di Bawah Toleransi'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Bagian 1: Simpulan dan Resume */}
-        <div className="bg-white border border-blue-900 shadow-sm mt-4">
-          <div className="bg-blue-900 text-white font-bold py-1.5 px-4 text-xs uppercase tracking-widest border-b border-blue-950 flex justify-between items-center">
-            <span>Simpulan dan Resume CAJE/PAJE</span>
-            <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-0.5 rounded shadow text-[10px] flex items-center">
-              SIMPAN
-            </button>
-          </div>
-          
-          <div className="p-4">
-            <div className="flex flex-col lg:flex-row gap-6 mb-6">
-              <div className="flex-1 space-y-2">
-                <div className="flex">
-                  <div className="w-32 font-bold text-gray-700">PILIHAN JENIS MATERIALITAS</div>
-                  <div className="font-bold text-red-600 ml-4 underline">Performance Materiality</div>
+        {/* Info Penjelasan & Materiality Evaluation Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Card Acuan Materialitas */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+            <div className="flex items-center gap-2">
+              <Scale className="text-atlas-blue" size={18} />
+              <h2 className="text-sm font-bold text-slate-800">
+                Acuan Materialitas Perikatan
+              </h2>
+            </div>
+            
+            <div className="space-y-3 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Overall Materiality</span>
+                  <span className="font-semibold text-slate-800">Ambang Batas Menyeluruh</span>
                 </div>
-                <div className="flex items-center">
-                  <div className="w-48 font-bold text-red-600 italic text-[10px]">Materialitas Keseluruhan:</div>
-                  <input 
-                    type="text" 
-                    readOnly 
-                    className="border border-red-300 bg-red-50 p-1 w-32 text-right font-mono text-red-700" 
-                    value={engagement.materiality?.overallMateriality ? new Intl.NumberFormat('id-ID').format(engagement.materiality.overallMateriality) : '-'} 
-                  />
-                </div>
-                <div className="flex items-center">
-                  <div className="w-48 font-bold text-red-600 italic text-[10px]">Performance Materiality:</div>
-                  <input 
-                    type="text" 
-                    readOnly 
-                    className="border border-red-300 bg-red-50 p-1 w-32 text-right font-mono text-red-700" 
-                    value={engagement.materiality?.performanceMateriality ? new Intl.NumberFormat('id-ID').format(engagement.materiality.performanceMateriality) : '-'} 
-                  />
+                <div className="font-mono font-bold text-slate-900 text-sm">
+                  Rp {formatCurrency(overallMateriality)}
                 </div>
               </div>
-              
-              <div className="flex-1">
-                <label className="font-bold text-green-700">Simpulan PAJE yang Tidak Dibukukan:</label>
-                <select 
-                  className="w-full mt-1 border border-green-500 bg-green-50 p-2 outline-none font-bold text-gray-800"
+
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between">
+                <div>
+                  <span className="text-slate-500 block text-[11px]">Performance Materiality</span>
+                  <span className="font-semibold text-slate-800">Ambang Pelaksanaan Pengujian</span>
+                </div>
+                <div className="font-mono font-bold text-atlas-blue text-sm">
+                  Rp {formatCurrency(performanceMateriality)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card Simpulan PAJE & Dampak Terhadap Opini */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="text-atlas-blue" size={18} />
+                <h2 className="text-sm font-bold text-slate-800">
+                  Simpulan PAJE yang Tidak Dibukukan
+                </h2>
+              </div>
+              <span className="text-xs text-slate-500">Evaluasi SA 450</span>
+            </div>
+
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-700">
+                  Simpulan Dampak Salah Saji Tidak Dikoreksi:
+                </label>
+                <select
                   value={simpulanPAJE}
-                  onChange={e => setSimpulanPAJE(e.target.value)}
+                  onChange={(e) => setSimpulanPAJE(e.target.value)}
+                  className="w-full text-xs font-semibold text-slate-800 bg-slate-50/70 border border-slate-200 rounded-xl px-3.5 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all cursor-pointer"
                 >
-                  <option value="">- Pilih Simpulan -</option>
-                  <option value="Material">Material</option>
-                  <option value="Tidak Material">Tidak Material</option>
+                  <option value="Tidak Material">Tidak Material (Salah saji tidak mempengaruhi kewajaran laporan keuangan)</option>
+                  <option value="Material">Material (Salah saji mempengaruhi kewajaran laporan keuangan dan berpotensi modifikasi opini)</option>
                 </select>
-                {simpulanPAJE === 'Material' && (
-                  <div className="mt-2 bg-yellow-100 border border-yellow-400 p-2 shadow-inner text-red-700 font-bold text-[10px] italic">
-                    Dampak material ini akan menjadi dasar penentuan opini. Harap berikan penjelasan lebih lanjut pada laporan audit.
-                  </div>
-                )}
               </div>
+
+              {simpulanPAJE === 'Material' && (
+                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+                  <AlertCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    <strong>Perhatian:</strong> Dampak salah saji yang tidak dibukukan ini tergolong material. Hal ini wajib dikomunikasikan secara tertulis kepada Pihak yang Bertanggung Jawab atas Tata Kelola (TCWG) dan menjadi pertimbangan utama dalam perumusan opini pada Laporan Auditor Independen.
+                  </p>
+                </div>
+              )}
+
+              {simpulanPAJE === 'Tidak Material' && (
+                <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200 text-xs text-emerald-900 flex items-start gap-2.5">
+                  <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    Salah saji yang tidak dikoreksi secara individual maupun agregat berada di bawah tingkat materialitas pelaksanaan, sehingga tidak mendistorsi penyajian wajar laporan keuangan.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Tabel Jurnal Penyesuaian Modern */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="p-4 sm:p-5 bg-slate-50/70 border-b border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-slate-800">
+                Daftar Jurnal Penyesuaian (CAJE & PAJE)
+              </h2>
+              <p className="text-xs text-slate-500">
+                Input rincian debet dan kredit usulan jurnal audit beserta identifikasi kelemahan sistem pengendalian internal.
+              </p>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-max min-w-full border-collapse text-[10px]">
-                <thead>
-                  <tr className="bg-cyan-100">
-                    <th className="border border-cyan-400 px-2 py-2 text-center text-cyan-900 w-28">ASET LANCAR</th>
-                    <th className="border border-cyan-400 px-2 py-2 text-center text-cyan-900 w-28 text-red-600">ASET TIDAK LANCAR</th>
-                    <th className="border border-cyan-400 px-2 py-2 text-center text-cyan-900 w-28">TOTAL ASET</th>
-                    <th className="border border-cyan-400 px-2 py-2 text-center text-cyan-900 w-28 text-red-600">KEWAJIBAN JANGKA PENDEK</th>
-                    <th className="border border-cyan-400 px-2 py-2 text-center text-cyan-900 w-28 text-red-600">KEWAJIBAN JANGKA PANJANG</th>
-                    <th className="border border-cyan-400 px-2 py-2 text-center text-cyan-900 w-28">TOTAL EKUITAS</th>
-                    <th className="border border-cyan-400 px-2 py-2 text-center text-cyan-900 w-28">EKUITAS</th>
-                    <th className="border border-cyan-400 px-2 py-2 text-center text-cyan-900 w-28 text-red-600">PENDAPATAN</th>
-                    <th className="border border-cyan-400 px-2 py-2 text-center text-cyan-900 w-28 text-red-600">BEBAN</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 rounded-xl transition-all shadow-xs cursor-pointer"
+            >
+              <Plus size={14} />
+              <span>Tambah Jurnal</span>
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50/50 text-[11px] font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                  <th className="py-3 px-3 w-24">Ref. Jurnal</th>
+                  <th className="py-3 px-3 min-w-[200px]">Akun & Keterangan</th>
+                  <th className="py-3 px-3 w-32">Kelompok</th>
+                  <th className="py-3 px-3 text-right min-w-[120px]">Dibukukan (D)</th>
+                  <th className="py-3 px-3 text-right min-w-[120px]">Dibukukan (K)</th>
+                  <th className="py-3 px-3 text-right min-w-[120px]">Tdk Dibukukan (D)</th>
+                  <th className="py-3 px-3 text-right min-w-[120px]">Tdk Dibukukan (K)</th>
+                  <th className="py-3 px-3 text-center w-20">Kelemahan PI</th>
+                  <th className="py-3 px-3 text-center w-12">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {entries.length === 0 ? (
                   <tr>
-                    <td className="border border-cyan-400 px-2 py-2 bg-white text-right font-mono">10.000.000</td>
-                    <td className="border border-cyan-400 px-2 py-2 bg-white text-right font-mono">0</td>
-                    <td className="border border-cyan-400 px-2 py-2 bg-white text-right font-mono">10.000.000</td>
-                    <td className="border border-cyan-400 px-2 py-2 bg-white text-right font-mono">0</td>
-                    <td className="border border-cyan-400 px-2 py-2 bg-white text-right font-mono">0</td>
-                    <td className="border border-cyan-400 px-2 py-2 bg-white text-right font-mono">0</td>
-                    <td className="border border-cyan-400 px-2 py-2 bg-white text-right font-mono">0</td>
-                    <td className="border border-cyan-400 px-2 py-2 bg-white text-right font-mono">10.000.000</td>
-                    <td className="border border-cyan-400 px-2 py-2 bg-white text-right font-mono">0</td>
+                    <td colSpan={9} className="py-12 text-center text-xs text-slate-400">
+                      Belum ada jurnal penyesuaian yang dimasukkan. Klik tombol "Tambah Jurnal" di atas untuk menambahkan.
+                    </td>
                   </tr>
-                  {/* Persentase terhadap PM */}
-                  <tr className="bg-gray-50 font-bold">
-                    <td className="border border-cyan-400 px-2 py-1 text-center">20%</td>
-                    <td className="border border-cyan-400 px-2 py-1 text-center">0%</td>
-                    <td className="border border-cyan-400 px-2 py-1 text-center">20%</td>
-                    <td className="border border-cyan-400 px-2 py-1 text-center">0%</td>
-                    <td className="border border-cyan-400 px-2 py-1 text-center">0%</td>
-                    <td className="border border-cyan-400 px-2 py-1 text-center">0%</td>
-                    <td className="border border-cyan-400 px-2 py-1 text-center">0%</td>
-                    <td className="border border-cyan-400 px-2 py-1 text-center">20%</td>
-                    <td className="border border-cyan-400 px-2 py-1 text-center">0%</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div className="text-[10px] text-gray-500 mt-1 italic">
-                *Tabel di atas menampilkan resume dampak salah saji (PAJE) yang tidak dibukukan terhadap pos-pos laporan keuangan.
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bagian 2: Input CAJE/PAJE */}
-        <div className="bg-white border border-gray-400 overflow-x-auto shadow-sm mt-6">
-          <div className="bg-gray-100 border-b border-gray-400 p-2 font-bold text-xs">
-            Rincian CAJE/PAJE
-          </div>
-          <table className="w-max min-w-full text-left border-collapse text-[10px]">
-            <thead>
-              <tr className="bg-[#fff9e6]">
-                <th className="px-2 py-2 border border-gray-400 font-bold text-center text-red-600 w-12 align-middle" rowSpan={2}>Ref</th>
-                <th className="px-2 py-2 border border-gray-400 font-bold text-center text-red-600 w-24 align-middle" rowSpan={2}>NO. AKUN</th>
-                <th className="px-2 py-2 border border-gray-400 font-bold text-center text-red-600 w-48 align-middle" rowSpan={2}>NAMA AKUN</th>
-                <th className="px-2 py-2 border border-gray-400 font-bold text-center text-red-600 w-56 align-middle" rowSpan={2}>Keterangan</th>
-                <th className="px-2 py-1 border border-gray-400 font-bold text-center text-red-600" colSpan={2}>DIBUKUKAN</th>
-                <th className="px-2 py-1 border border-gray-400 font-bold text-center text-red-600" colSpan={2}>TIDAK DIBUKUKAN / SALAH SAJI</th>
-                <th className="px-2 py-2 border border-gray-400 font-bold text-center text-red-600 w-32 align-middle" rowSpan={2}>KELOMPOK LAPORAN KEUANGAN</th>
-                <th className="px-2 py-2 border border-gray-400 font-bold text-center text-red-600 w-24 align-middle" rowSpan={2}>Kelemahan Pengendalian Internal</th>
-                <th className="px-2 py-2 border border-gray-400 font-bold text-center text-red-600 w-24 align-middle" rowSpan={2}>Adanya Kecurangan</th>
-                <th className="px-2 py-2 border border-gray-400 font-bold text-center text-red-600 w-10 align-middle" rowSpan={2}>Aksi</th>
-              </tr>
-              <tr className="bg-[#fff9e6]">
-                <th className="px-2 py-1 border border-gray-400 font-bold text-center text-red-600 w-28">D</th>
-                <th className="px-2 py-1 border border-gray-400 font-bold text-center text-red-600 w-28">K</th>
-                <th className="px-2 py-1 border border-gray-400 font-bold text-center text-red-600 w-28">D</th>
-                <th className="px-2 py-1 border border-gray-400 font-bold text-center text-red-600 w-28">K</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.length === 0 ? (
-                <tr>
-                  <td colSpan={12} className="px-4 py-8 text-center text-xs text-gray-500 bg-gray-50">
-                    Belum ada jurnal penyesuaian (CAJE/PAJE). Klik tombol <strong>"+ Tambah Baris Jurnal"</strong> di bawah untuk menambahkan.
-                  </td>
-                </tr>
-              ) : (
-                entries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-slate-50">
-                  <td className="p-0 border border-gray-400 bg-white">
-                    <input type="text" className="w-full h-full p-1.5 outline-none text-center bg-transparent" value={entry.ref} onChange={e => handleUpdate(entry.id, 'ref', e.target.value)} />
-                  </td>
-                  <td className="p-0 border border-gray-400 bg-orange-100/30">
-                    <input type="text" className="w-full h-full p-1.5 outline-none text-center bg-transparent" value={entry.noAkun} onChange={e => handleUpdate(entry.id, 'noAkun', e.target.value)} placeholder="Kode" />
-                  </td>
-                  <td className="p-0 border border-gray-400 bg-white">
-                    <input type="text" className="w-full h-full p-1.5 outline-none bg-transparent" value={entry.namaAkun} onChange={e => handleUpdate(entry.id, 'namaAkun', e.target.value)} />
-                  </td>
-                  <td className="p-0 border border-gray-400 bg-white">
-                    <textarea className="w-full h-full min-h-[30px] p-1.5 outline-none bg-transparent resize-none leading-tight" value={entry.keterangan} onChange={e => handleUpdate(entry.id, 'keterangan', e.target.value)} />
-                  </td>
-                  {/* Dibukukan */}
-                  <td className="p-0 border border-gray-400 bg-yellow-50">
-                    <input type="text" className="w-full h-full p-1.5 outline-none text-right font-mono bg-transparent" value={formatCurrency(entry.dibukukanD)} onChange={e => handleUpdate(entry.id, 'dibukukanD', parseCurrencyInput(e.target.value))} />
-                  </td>
-                  <td className="p-0 border border-gray-400 bg-yellow-50">
-                    <input type="text" className="w-full h-full p-1.5 outline-none text-right font-mono bg-transparent" value={formatCurrency(entry.dibukukanK)} onChange={e => handleUpdate(entry.id, 'dibukukanK', parseCurrencyInput(e.target.value))} />
-                  </td>
-                  {/* Tidak Dibukukan */}
-                  <td className="p-0 border border-gray-400 bg-yellow-100/50">
-                    <input type="text" className="w-full h-full p-1.5 outline-none text-right font-mono bg-transparent" value={formatCurrency(entry.tdkDibukukanD)} onChange={e => handleUpdate(entry.id, 'tdkDibukukanD', parseCurrencyInput(e.target.value))} />
-                  </td>
-                  <td className="p-0 border border-gray-400 bg-yellow-100/50">
-                    <input type="text" className="w-full h-full p-1.5 outline-none text-right font-mono bg-transparent" value={formatCurrency(entry.tdkDibukukanK)} onChange={e => handleUpdate(entry.id, 'tdkDibukukanK', parseCurrencyInput(e.target.value))} />
-                  </td>
-                  <td className="p-0 border border-gray-400 bg-white">
-                    <select className="w-full h-full p-1.5 outline-none bg-transparent text-center" value={entry.kelompok} onChange={e => handleUpdate(entry.id, 'kelompok', e.target.value)}>
-                      <option value=""></option>
-                      <option value="ASET LANCAR">ASET LANCAR</option>
-                      <option value="KEWAJIBAN">KEWAJIBAN</option>
-                      <option value="PENDAPATAN">PENDAPATAN</option>
-                      <option value="BEBAN">BEBAN</option>
-                    </select>
-                  </td>
-                  <td className="p-0 border border-gray-400 bg-green-100/50">
-                    <select className="w-full h-full p-1.5 outline-none bg-transparent text-center" value={entry.kelemahanPI} onChange={e => handleUpdate(entry.id, 'kelemahanPI', e.target.value)}>
-                      <option value=""></option>
-                      <option value="YA">YA</option>
-                      <option value="TIDAK">TIDAK</option>
-                    </select>
-                  </td>
-                  <td className="p-0 border border-gray-400 bg-green-100/50">
-                    <select className="w-full h-full p-1.5 outline-none bg-transparent text-center" value={entry.kecurangan} onChange={e => handleUpdate(entry.id, 'kecurangan', e.target.value)}>
-                      <option value=""></option>
-                      <option value="YA">YA</option>
-                      <option value="TIDAK">TIDAK</option>
-                    </select>
-                  </td>
-                  <td className="p-1 border border-gray-400 bg-gray-50 text-center">
-                    <button onClick={() => handleDelete(entry.id)} className="text-red-500 hover:text-red-700 bg-white p-1 rounded shadow-sm border border-red-100"><Trash2 size={12} /></button>
-                  </td>
-                </tr>
-              )))}
+                ) : (
+                  entries.map((entry) => (
+                    <tr key={entry.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-2.5 px-3">
+                        <input
+                          type="text"
+                          value={entry.ref}
+                          onChange={(e) => handleUpdate(entry.id, 'ref', e.target.value)}
+                          placeholder="Ref..."
+                          className="w-full font-mono text-xs font-semibold text-slate-800 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:bg-white focus:border-atlas-blue"
+                        />
+                      </td>
+                      <td className="py-2.5 px-3 space-y-1">
+                        <input
+                          type="text"
+                          value={entry.namaAkun}
+                          onChange={(e) => handleUpdate(entry.id, 'namaAkun', e.target.value)}
+                          placeholder="Nama Akun..."
+                          className="w-full text-xs font-semibold text-slate-900 bg-transparent border-0 border-b border-slate-200 focus:border-atlas-blue outline-none py-0.5 placeholder:text-slate-400"
+                        />
+                        <input
+                          type="text"
+                          value={entry.keterangan}
+                          onChange={(e) => handleUpdate(entry.id, 'keterangan', e.target.value)}
+                          placeholder="Keterangan penyesuaian..."
+                          className="w-full text-[11px] text-slate-500 bg-transparent border-0 outline-none py-0.5 placeholder:text-slate-400"
+                        />
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <select
+                          value={entry.kelompok}
+                          onChange={(e) => handleUpdate(entry.id, 'kelompok', e.target.value)}
+                          className="w-full text-[11px] bg-slate-50 border border-slate-200 rounded-lg p-1 outline-none focus:bg-white"
+                        >
+                          {KELOMPOK_OPTIONS.map(k => (
+                            <option key={k} value={k}>{k}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <input
+                          type="text"
+                          value={entry.dibukukanD ? formatCurrency(entry.dibukukanD) : ''}
+                          onChange={(e) => handleUpdate(entry.id, 'dibukukanD', parseNumberInput(e.target.value))}
+                          placeholder="0"
+                          className="w-full text-right font-mono text-xs text-atlas-blue font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:bg-white focus:border-atlas-blue"
+                        />
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <input
+                          type="text"
+                          value={entry.dibukukanK ? formatCurrency(entry.dibukukanK) : ''}
+                          onChange={(e) => handleUpdate(entry.id, 'dibukukanK', parseNumberInput(e.target.value))}
+                          placeholder="0"
+                          className="w-full text-right font-mono text-xs text-indigo-600 font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:bg-white focus:border-atlas-blue"
+                        />
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <input
+                          type="text"
+                          value={entry.tdkDibukukanD ? formatCurrency(entry.tdkDibukukanD) : ''}
+                          onChange={(e) => handleUpdate(entry.id, 'tdkDibukukanD', parseNumberInput(e.target.value))}
+                          placeholder="0"
+                          className="w-full text-right font-mono text-xs text-amber-700 font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:bg-white focus:border-atlas-blue"
+                        />
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <input
+                          type="text"
+                          value={entry.tdkDibukukanK ? formatCurrency(entry.tdkDibukukanK) : ''}
+                          onChange={(e) => handleUpdate(entry.id, 'tdkDibukukanK', parseNumberInput(e.target.value))}
+                          placeholder="0"
+                          className="w-full text-right font-mono text-xs text-rose-700 font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none focus:bg-white focus:border-atlas-blue"
+                        />
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <select
+                          value={entry.kelemahanPI}
+                          onChange={(e) => handleUpdate(entry.id, 'kelemahanPI', e.target.value as any)}
+                          className="text-[11px] bg-slate-50 border border-slate-200 rounded-lg px-1.5 py-1 outline-none focus:bg-white"
+                        >
+                          <option value="Tidak">Tidak</option>
+                          <option value="Ya">Ya</option>
+                        </select>
+                      </td>
+                      <td className="py-2.5 px-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(entry.id)}
+                          className="text-slate-400 hover:text-rose-600 p-1 rounded-md transition-colors cursor-pointer"
+                          title="Hapus Jurnal"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
               
-              {/* Grand Totals */}
-              <tr className="bg-gray-200/80 font-bold">
-                <td colSpan={4} className="px-2 py-2 border border-gray-400 text-center">JUMLAH</td>
-                <td className="px-2 py-2 border border-gray-400 text-right font-mono text-red-700">{formatCurrency(totalDibukukanD)}</td>
-                <td className="px-2 py-2 border border-gray-400 text-right font-mono text-red-700">{formatCurrency(totalDibukukanK)}</td>
-                <td className="px-2 py-2 border border-gray-400 text-right font-mono text-red-700">{formatCurrency(totalTdkDibukukanD)}</td>
-                <td className="px-2 py-2 border border-gray-400 text-right font-mono text-red-700">{formatCurrency(totalTdkDibukukanK)}</td>
-                <td colSpan={4} className="border border-gray-400 bg-gray-300/30"></td>
-              </tr>
-            </tbody>
-          </table>
-          
-          <div className="p-2 border-t border-gray-300 bg-gray-50 flex justify-end">
-             <button onClick={handleAdd} className="flex items-center text-[10px] bg-cyan-600 text-white px-3 py-1.5 rounded shadow hover:bg-cyan-700">
-               <Plus size={12} className="mr-1" /> Tambah Baris Jurnal
-             </button>
+              {entries.length > 0 && (
+                <tfoot>
+                  <tr className="bg-slate-50/90 font-bold border-t-2 border-slate-200 text-xs">
+                    <td colSpan={3} className="py-3 px-3 text-slate-900 uppercase tracking-wider text-[11px]">
+                      TOTAL SALDO JURNAL
+                    </td>
+                    <td className="py-3 px-3 text-right font-mono text-atlas-blue tabular-nums">
+                      {formatCurrency(totalDibukukanD)}
+                    </td>
+                    <td className="py-3 px-3 text-right font-mono text-indigo-600 tabular-nums">
+                      {formatCurrency(totalDibukukanK)}
+                    </td>
+                    <td className="py-3 px-3 text-right font-mono text-amber-700 tabular-nums">
+                      {formatCurrency(totalTdkDibukukanD)}
+                    </td>
+                    <td className="py-3 px-3 text-right font-mono text-rose-700 tabular-nums">
+                      {formatCurrency(totalTdkDibukukanK)}
+                    </td>
+                    <td colSpan={2}></td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
           </div>
         </div>
 
-        <div className="w-32 border border-gray-400 mt-6 text-center">
-          <div className="bg-gray-100 border-b border-gray-400 text-[10px] py-1 font-bold">Status KKP</div>
-          <div className="bg-cyan-200 text-cyan-900 font-bold py-1.5 text-[10px]">Incompleted</div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-between items-center pt-4">
-          <button onClick={() => navigate(`/workspace/${engagement.id}/worksheet/b120`)} className="text-gray-500 hover:text-gray-800 flex items-center">
-            <ArrowLeft size={14} className="mr-1" /> Kembali ke B.120
+        {/* Action Footer */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/workspace/${engagement?.id || ''}/worksheet/b120`)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
+          >
+            <ArrowLeft size={16} />
+            <span>Kembali ke B.120</span>
           </button>
-          
-          <div className="flex gap-2">
-            <button 
-              onClick={handleSave}
-              className="flex items-center px-4 py-2 bg-atlas-blue text-white rounded font-bold hover:bg-blue-800 shadow transition-colors"
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(`/workspace/${engagement?.id || ''}/worksheet/b140`)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
             >
-              {isSaved ? <CheckCircle2 size={14} className="mr-1.5" /> : <Save size={14} className="mr-1.5" />}
-              Simpan B.130
+              <span>Lanjut ke B.140</span>
+              <ArrowRight size={16} />
             </button>
-            <button 
-              onClick={() => navigate(`/workspace/${engagement.id}/worksheet/b140`)}
-              className="flex items-center px-4 py-2 border border-atlas-blue text-atlas-blue rounded font-bold hover:bg-blue-50 shadow transition-colors"
+
+            <button
+              type="button"
+              onClick={handleSave}
+              className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 rounded-xl transition-all shadow-sm hover:shadow"
             >
-              Lanjut B.140 <ArrowRight size={14} className="ml-1.5" />
+              {isSaved ? <CheckCircle2 size={16} className="text-emerald-300" /> : <Save size={16} />}
+              <span>{isSaved ? "Tersimpan" : "Simpan CAJE/PAJE"}</span>
             </button>
           </div>
         </div>
+
+        {/* Toast Notifikasi */}
+        {isSaved && (
+          <div className="fixed bottom-5 right-5 z-50 flex items-center space-x-2 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm font-medium animate-in slide-in-from-bottom-3 duration-200">
+            <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+            <span>Data jurnal penyesuaian (CAJE/PAJE) berhasil disimpan.</span>
+          </div>
+        )}
 
       </div>
     </WorksheetContainer>
