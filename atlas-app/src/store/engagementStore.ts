@@ -149,6 +149,18 @@ export interface WorksheetA1104 {
   status: string;
 }
 
+export interface WorksheetA140 {
+  answers: Record<string, string>;
+  contohFiles: string[];
+  lampiranFiles: string[];
+  simpulan: string;
+  modificationReason: string;
+  teamData: any[];
+  isCompleted: boolean;
+  status: string;
+  saChecklist?: Record<string, boolean>;
+}
+
 export interface Engagement {
   id: string;
   clientId: string;
@@ -188,6 +200,7 @@ export interface Engagement {
   worksheetA1102?: WorksheetA1102;
   worksheetA1103?: WorksheetA1103;
   worksheetA1104?: WorksheetA1104;
+  worksheetA140?: WorksheetA140;
 }
 
 export interface ReviewNote {
