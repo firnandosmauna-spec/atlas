@@ -139,6 +139,14 @@ export interface WorksheetA1103 {
   status: string;
 }
 
+export interface WorksheetA1104 {
+  answers: Record<string, 'Ya' | 'Tidak' | 'N/A' | ''>;
+  lampiranFiles: string[];
+  acceptanceReason: string;
+  isCompleted: boolean;
+  status: string;
+}
+
 export interface Engagement {
   id: string;
   clientId: string;
@@ -177,6 +185,7 @@ export interface Engagement {
   worksheetA1101?: WorksheetA1101;
   worksheetA1102?: WorksheetA1102;
   worksheetA1103?: WorksheetA1103;
+  worksheetA1104?: WorksheetA1104;
 }
 
 export interface ReviewNote {
@@ -563,6 +572,18 @@ export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [
           peran: 'Staf'
         }
       ],
+      isCompleted: true,
+      status: 'Completed'
+    },
+    worksheetA1104: {
+      answers: {
+        '1': 'Ya',
+        '2': 'Tidak',
+        '3a': 'Tidak',
+        '3b': 'Tidak'
+      },
+      lampiranFiles: ['Surat_komunikasi_auditor_pendahulu.pdf'],
+      acceptanceReason: 'Walaupun auditor pendahulu tidak memberikan surat balasan tapi mereka setuju untuk dilakukan review kertas dan tidak keberatan profesional dan fee auditor sudah dilunasi oleh manajemen',
       isCompleted: true,
       status: 'Completed'
     }
