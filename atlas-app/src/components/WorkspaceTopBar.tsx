@@ -95,6 +95,8 @@ export const WorkspaceTopBar: React.FC<WorkspaceTopBarProps> = ({
       case 'Not Started': return 'bg-gray-100 text-gray-700 border border-gray-300';
       case 'In Progress': return 'bg-blue-100 text-blue-800 border border-blue-200';
       case 'Completed': return 'bg-teal-100 text-teal-800 border border-teal-200';
+      case 'Uncompleted':
+      case 'Incompleted': return 'bg-rose-100 text-rose-800 border border-rose-200';
       case 'Needs Revision': return 'bg-red-100 text-red-800 border border-red-200';
       case 'Reviewed': return 'bg-purple-100 text-purple-800 border border-purple-200';
       case 'Approved': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';

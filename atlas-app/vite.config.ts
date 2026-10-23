@@ -2,7 +2,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import path from 'path'
 
-// https://vite.dev/config/
+// Vite Configuration for ATLAS
 export default defineConfig({
   plugins: [react()],
   resolve: {

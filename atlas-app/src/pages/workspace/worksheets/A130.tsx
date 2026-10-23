@@ -1,218 +1,571 @@
-import React, { useState, useMemo } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useOutletContext, useNavigate, useParams } from "react-router-dom";
 import type { Engagement } from "../../../store/engagementStore";
+import { useEngagementStore } from "../../../store/engagementStore";
 import WorksheetContainer from "../../../components/WorksheetContainer";
-import { CheckCircle2, AlertCircle, FileText, Upload, ShieldAlert, ArrowLeft, Download, Trash2 } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Save, 
+  CheckCircle2, 
+  AlertCircle,
+  Upload, 
+  Plus, 
+  Trash2, 
+  Download,
+  FileText,
+  ShieldCheck,
+  Paperclip,
+  Check,
+  X
+} from "lucide-react";
 
 const A130: React.FC = () => {
-  const { engagement } = useOutletContext<{ engagement: Engagement }>();
+  const context = useOutletContext<{ engagement?: Engagement }>();
+  const { id: paramId } = useParams<{ id: string }>();
+  const engagements = useEngagementStore((state) => state.engagements);
+  const updateEngagement = useEngagementStore((state) => state.updateEngagement);
+  const engagement = context?.engagement || engagements.find((e) => e.id === paramId) || engagements[0];
   const navigate = useNavigate();
 
-  // Kriteria Surat Perikatan (SA 210)
-  const [criteria, setCriteria] = useState([
-    { id: 1, text: "Tujuan dan ruang lingkup audit atas laporan keuangan", answer: "" },
-    { id: 2, text: "Tanggung jawab auditor", answer: "" },
-    { id: 3, text: "Tanggung jawab manajemen", answer: "" },
-    { id: 4, text: "Identifikasi kerangka pelaporan keuangan yang berlaku untuk penyusunan laporan keuangan", answer: "" },
-    { id: 5, text: "Suatu pengacuan ke bentuk dan isi laporan yang diharapkan akan dikeluarkan oleh auditor", answer: "" },
-  ]);
+  const wsData = (engagement as any)?.worksheetA130 || {};
 
-  const [modificationReason, setModificationReason] = useState("");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  // Form state - 15 kriteria pokok SA 210
+  const [answers, setAnswers] = useState<Record<string, string>>({
+    qa: wsData.answers?.qa ?? "Ya",
+    qb: wsData.answers?.qb ?? "Ya",
+    qc: wsData.answers?.qc ?? "Ya",
+    qd1: wsData.answers?.qd1 ?? "Ya",
+    qd2: wsData.answers?.qd2 ?? "Ya",
+    qd3_1: wsData.answers?.qd3_1 ?? "Ya",
+    qd3_2: wsData.answers?.qd3_2 ?? "Ya",
+    qd3_3: wsData.answers?.qd3_3 ?? "Ya",
+    qe: wsData.answers?.qe ?? "Ya",
+    qf: wsData.answers?.qf ?? "Ya",
+    qg: wsData.answers?.qg ?? "Ya",
+    qh: wsData.answers?.qh ?? "Ya",
+    qi: wsData.answers?.qi ?? "Ya",
+    qj: wsData.answers?.qj ?? "Ya",
+    qk: wsData.answers?.qk ?? "Ya",
+  });
 
-  const handleUpdateAnswer = (id: number, value: string) => {
-    setCriteria(prev => prev.map(c => c.id === id ? { ...c, answer: value } : c));
+  const [contohFiles, setContohFiles] = useState<string[]>(
+    wsData.contohFiles ?? []
+  );
+
+  const [lampiranFiles, setLampiranFiles] = useState<string[]>(
+    wsData.lampiranFiles ?? ["Surat_Perikatan_PT_Makmur.pdf"]
+  );
+
+  const [simpulanManual, setSimpulanManual] = useState<string>(
+    wsData.simpulan ?? "Surat Perikatan Memadai"
+  );
+
+  const [catatanPenjelasan, setCatatanPenjelasan] = useState<string>(
+    wsData.catatanPenjelasan ?? wsData.modificationReason ?? ""
+  );
+
+  const [isSaved, setIsSaved] = useState(false);
+
+  const handleAnswerChange = (key: string, value: string) => {
+    setAnswers((prev) => {
+      const next = { ...prev, [key]: value };
+      const hasNo = Object.values(next).some((ans) => ans === "Tidak");
+      const allFilled = Object.values(next).every((ans) => ans !== "");
+      if (allFilled) {
+        setSimpulanManual(hasNo ? "Surat Perikatan Tidak Memadai" : "Surat Perikatan Memadai");
+      }
+      return next;
+    });
   };
 
-  const isAllAnswered = criteria.every(c => c.answer !== "");
-  const hasNoAnswers = criteria.some(c => c.answer === "Tidak");
-  
-  // Logic untuk simpulan
-  // Memadai jika: Semua dijawab "Ya"
-  // Tidak Memadai jika: Belum lengkap ATAU ada yang dijawab "Tidak"
+  const totalCriteria = Object.keys(answers).length;
+  const answeredCount = Object.values(answers).filter((val) => val !== "").length;
+  const isAllAnswered = answeredCount === totalCriteria;
+  const hasNoAnswers = Object.values(answers).some((val) => val === "Tidak");
   const isMemadai = isAllAnswered && !hasNoAnswers;
-  
-  // Perlu penjelasan modifikasi jika: ada yang dijawab "Tidak"
-  const needsModification = hasNoAnswers;
+  const isCompleted = isAllAnswered && !hasNoAnswers;
+  const statusKKP = isCompleted ? "Completed" : "Uncompleted";
 
-  // Status KKP = Completed jika (Memadai dan file terupload) ATAU (Tidak Memadai, alasan modifikasi terisi, dan file terupload)
-  const isCompleted = isAllAnswered && 
-                      (isMemadai || (!isMemadai && modificationReason.trim() !== "")) &&
-                      uploadedFile !== null;
+  const handleAddContohFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const fileName = e.target.files[0].name;
+      setContohFiles((prev) => [...prev, fileName]);
+    }
+  };
+
+  const handleDeleteContoh = (index: number) => {
+    setContohFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddLampiranFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const fileName = e.target.files[0].name;
+      setLampiranFiles((prev) => [...prev, fileName]);
+    }
+  };
+
+  const handleDeleteLampiran = (index: number) => {
+    setLampiranFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDownloadFile = (fileName: string) => {
+    const element = document.createElement("a");
+    const file = new Blob([`Dokumen Audit: ${fileName}\n\nSurat Perikatan Audit resmi sesuai standar SA 210.`], {
+      type: "text/plain",
+    });
+    element.href = URL.createObjectURL(file);
+    element.download = fileName.endsWith(".pdf") ? fileName.replace(".pdf", ".txt") : `${fileName}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  const handleSave = () => {
+    if (engagement?.id) {
+      updateEngagement(engagement.id, {
+        worksheetA130: {
+          answers,
+          contohFiles,
+          lampiranFiles,
+          simpulan: simpulanManual,
+          catatanPenjelasan,
+          modificationReason: catatanPenjelasan,
+          isCompleted,
+          status: statusKKP,
+        },
+      } as any);
+    }
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2500);
+  };
+
+  // Helper render tombol toggle Ya / Tidak
+  const renderToggle = (key: string) => {
+    const currentVal = answers[key];
+    return (
+      <div className="inline-flex p-1 bg-slate-100 rounded-lg border border-slate-200/80 shrink-0">
+        <button
+          type="button"
+          onClick={() => handleAnswerChange(key, "Ya")}
+          className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+            currentVal === "Ya"
+              ? "bg-emerald-600 text-white shadow-xs font-bold"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+          }`}
+        >
+          <Check size={12} className={currentVal === "Ya" ? "opacity-100" : "opacity-0"} />
+          <span>Ya</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleAnswerChange(key, "Tidak")}
+          className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+            currentVal === "Tidak"
+              ? "bg-rose-600 text-white shadow-xs font-bold"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+          }`}
+        >
+          <X size={12} className={currentVal === "Tidak" ? "opacity-100" : "opacity-0"} />
+          <span>Tidak</span>
+        </button>
+      </div>
+    );
+  };
 
   return (
     <WorksheetContainer
       code="A.130"
       name="Surat Perikatan"
-      purpose="Menganalisis surat perikatan yang akan ditandatangani oleh KAP dengan klien untuk memastikan kesesuaian dengan standar."
-      status={isCompleted ? "Completed" : "In Progress"}
-      reviewer={engagement.managerName || "Menunggu Reviewer"}
+      purpose="Menganalisis surat perikatan audit yang ditandatangani KAP dengan klien untuk memastikan kesesuaian dengan standar SA 210."
+      status={statusKKP}
+      reviewer={engagement?.managerName || "Menunggu Reviewer"}
       lastUpdated="Baru saja"
     >
-      <div className="space-y-6">
-        
-        {/* Info Card */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col md:flex-row gap-6 shadow-sm">
-          <div className="flex-1 space-y-4">
-            <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Standar Auditing yang Relevan</h3>
-              <ul className="text-sm text-gray-700 font-medium space-y-1">
-                <li className="flex items-start"><ShieldAlert size={16} className="mr-2 text-atlas-blue shrink-0 mt-0.5" /> SA 210 : Persetujuan atas Ketentuan Perikatan Audit</li>
-              </ul>
+      <div className="space-y-6 max-w-7xl mx-auto">
+        {/* Banner Ringkasan Modern */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-atlas-blue border border-blue-200">
+                SA 210
+              </span>
+              <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+                Evaluasi Kelengkapan Surat Perikatan
+              </h1>
             </div>
-            <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">
-              Kertas kerja ini untuk menganalisis surat perikatan yang akan ditandatangani oleh KAP dengan klien. Terdapat beberapa pertanyaan sebagai kontrol untuk memastikan bahwa isi dan kelengkapan surat perikatan yang dibuat telah sesuai dengan standar yang berlaku.
+            <p className="text-xs text-slate-500">
+              Pastikan seluruh klausul pokok dan tanggung jawab manajemen telah termaktub secara tertulis dalam surat perikatan.
             </p>
           </div>
-          
-          <div className="md:w-1/3 bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col justify-center items-center text-center">
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Status KKP</h4>
-            {isCompleted ? (
-              <div className="flex flex-col items-center">
-                <CheckCircle2 size={32} className="text-green-500 mb-2" />
-                <span className="text-green-700 font-black text-lg">COMPLETED</span>
+
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <div className="text-xs text-slate-500">Progress Evaluasi</div>
+              <div className="text-sm font-bold text-slate-800">
+                {answeredCount} dari {totalCriteria} kriteria ({Math.round((answeredCount / totalCriteria) * 100)}%)
               </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <AlertCircle size={32} className="text-amber-500 mb-2" />
-                <span className="text-amber-700 font-black text-lg">INCOMPLETED</span>
-              </div>
-            )}
+            </div>
+            <div className={`px-4 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
+              isCompleted 
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                : "bg-rose-50 text-rose-700 border-rose-200"
+            }`}>
+              {isCompleted ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+              <span>{isCompleted ? "STATUS: COMPLETED" : "STATUS: UNCOMPLETED"}</span>
+            </div>
           </div>
         </div>
 
-        {/* Analisis Kriteria */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-          <div className="bg-slate-50 border-b border-gray-100 px-6 py-4">
-            <h2 className="text-lg font-bold text-gray-800 flex items-center">
-              <FileText size={20} className="mr-2 text-atlas-blue" />
-              Kontrol Kelengkapan Surat Perikatan
-            </h2>
+        {/* Card Kuesioner Kontrol Kriteria */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="px-6 py-4 bg-slate-50/70 border-b border-slate-200/70 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="text-atlas-blue" size={18} />
+              <h2 className="text-sm font-bold text-slate-800">
+                Pastikan dalam Surat Perikatan, setidaknya tersaji:
+              </h2>
+            </div>
+            <span className="text-xs text-slate-500 font-medium">
+              Hasil Analisis (Ya / Tidak)
+            </span>
           </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border-collapse">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 font-bold text-gray-600 w-16 text-center">No</th>
-                  <th className="px-6 py-4 font-bold text-gray-600">Kriteria Surat Perikatan</th>
-                  <th className="px-6 py-4 font-bold text-gray-600 w-48 text-center bg-blue-50/50">Tercantum (Ya/Tidak)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {criteria.map((item, idx) => (
-                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-center font-bold text-gray-400">{idx + 1}</td>
-                    <td className="px-6 py-4 text-gray-700 font-medium">{item.text}</td>
-                    <td className="px-6 py-4 bg-blue-50/20">
-                      <select 
-                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-atlas-blue/20 outline-none text-center font-bold shadow-sm ${
-                          item.answer === "Ya" ? "bg-green-100 border-green-300 text-green-700" : 
-                          item.answer === "Tidak" ? "bg-red-100 border-red-300 text-red-700" : 
-                          "border-gray-300 bg-white"
-                        }`}
-                        value={item.answer}
-                        onChange={(e) => handleUpdateAnswer(item.id, e.target.value)}
-                      >
-                        <option value="" disabled>-</option>
-                        <option value="Ya">Ya</option>
-                        <option value="Tidak">Tidak</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          <div className="divide-y divide-slate-100 text-sm text-slate-800">
+            {/* a */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">a.</span>
+                <span className="text-slate-700 font-medium">Penanggalan Surat sesuai dengan tanggal yang disepakati</span>
+              </div>
+              {renderToggle("qa")}
+            </div>
+
+            {/* b */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">b.</span>
+                <span className="text-slate-700 font-medium">Penomoran surat sesuai dengan tertib administrasi yang berlaku</span>
+              </div>
+              {renderToggle("qb")}
+            </div>
+
+            {/* c */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">c.</span>
+                <span className="text-slate-700 font-medium">Penjelasan tujuan dan ruang lingkup audit</span>
+              </div>
+              {renderToggle("qc")}
+            </div>
+
+            {/* d Header */}
+            <div className="px-6 py-3 bg-slate-50/40 text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-2">
+              <span className="w-5 font-bold text-slate-400">d.</span>
+              <span>Persetujuan dan Pengakuan Tanggung Jawab Manajemen atas:</span>
+            </div>
+
+            {/* d.1 */}
+            <div className="px-6 py-3.5 pl-12 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="font-semibold text-slate-400 text-xs shrink-0">d.1</span>
+                <span className="text-slate-700 font-medium">Penyusunan laporan keuangan sesuai kerangka pelaporan keuangan yang berlaku</span>
+              </div>
+              {renderToggle("qd1")}
+            </div>
+
+            {/* d.2 */}
+            <div className="px-6 py-3.5 pl-12 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="font-semibold text-slate-400 text-xs shrink-0">d.2</span>
+                <span className="text-slate-700 font-medium">Pengendalian internal agar laporan keuangan bebas dari salah saji material</span>
+              </div>
+              {renderToggle("qd2")}
+            </div>
+
+            {/* d.3 Header */}
+            <div className="px-6 py-2 pl-12 bg-slate-50/30 text-xs font-semibold text-slate-500">
+              d.3 Memberikan kepada auditor akses:
+            </div>
+
+            {/* d.3 - 1 */}
+            <div className="px-6 py-3 pl-16 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-2.5 pr-4">
+                <span className="text-slate-300 font-bold">•</span>
+                <span className="text-slate-700">Akses ke semua informasi yang relevan</span>
+              </div>
+              {renderToggle("qd3_1")}
+            </div>
+
+            {/* d.3 - 2 */}
+            <div className="px-6 py-3 pl-16 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-2.5 pr-4">
+                <span className="text-slate-300 font-bold">•</span>
+                <span className="text-slate-700">Informasi tambahan yang diperlukan</span>
+              </div>
+              {renderToggle("qd3_2")}
+            </div>
+
+            {/* d.3 - 3 */}
+            <div className="px-6 py-3 pl-16 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-2.5 pr-4">
+                <span className="text-slate-300 font-bold">•</span>
+                <span className="text-slate-700">Akses ke semua personil entitas</span>
+              </div>
+              {renderToggle("qd3_3")}
+            </div>
+
+            {/* e */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">e.</span>
+                <span className="text-slate-700 font-medium">Bentuk komunikasi yang diharapkan dalam penyampaian hasil audit</span>
+              </div>
+              {renderToggle("qe")}
+            </div>
+
+            {/* f */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">f.</span>
+                <span className="text-slate-700 font-medium">Ekspektasi penyampaian representasi tertulis dari manajemen</span>
+              </div>
+              {renderToggle("qf")}
+            </div>
+
+            {/* g */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">g.</span>
+                <span className="text-slate-700 font-medium">Penyediaan draft laporan keuangan tepat waktu</span>
+              </div>
+              {renderToggle("qg")}
+            </div>
+
+            {/* h */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4 max-w-3xl">
+                <span className="w-5 font-bold text-slate-400 shrink-0">h.</span>
+                <span className="text-slate-700 font-medium leading-relaxed">
+                  Pengacuan ke bentuk dan isi laporan yang akan dikeluarkan oleh auditor dan suatu pernyataan bahwa
+                  dalam kondisi tertentu terdapat kemungkinan laporan yang dikeluarkan berbeda bentuk dan isinya dengan yang diharapkan.
+                </span>
+              </div>
+              {renderToggle("qh")}
+            </div>
+
+            {/* i */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">i.</span>
+                <span className="text-slate-700 font-medium">Klausul kerahasiaan kecuali diminta oleh Hukum/Regulator/Asosiasi Profesi</span>
+              </div>
+              {renderToggle("qi")}
+            </div>
+
+            {/* j */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">j.</span>
+                <span className="text-slate-700 font-medium">Tidak menjanjikan opini wajar tanpa pengecualian</span>
+              </div>
+              {renderToggle("qj")}
+            </div>
+
+            {/* k */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">k.</span>
+                <span className="text-slate-700 font-medium">Perhatian khusus terhadap peraturan perundang-undangan yang berlaku bagi klien</span>
+              </div>
+              {renderToggle("qk")}
+            </div>
           </div>
         </div>
 
-        {/* Dokumen & Simpulan (Gambar 23) */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-          <div className="bg-slate-50 border-b border-gray-100 px-6 py-4">
-            <h2 className="text-lg font-bold text-gray-800 flex items-center">
-              <CheckCircle2 size={20} className="mr-2 text-atlas-blue" />
-              Dokumentasi & Simpulan
-            </h2>
-          </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              
-              {/* Contoh Format */}
-              <div className="border border-red-200 rounded-xl p-5 bg-white shadow-sm flex flex-col justify-between">
-                <h4 className="text-sm font-bold text-red-600 mb-4 text-center border-b border-red-100 pb-2">Contoh Format Surat Perikatan</h4>
-                <button className="w-full flex items-center justify-center space-x-2 bg-gray-50 border border-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-100 transition-colors font-medium">
-                  <Download size={18} />
-                  <span>Download Template</span>
-                </button>
-              </div>
-
-              {/* Lampiran Surat */}
-              <div className="border border-red-200 rounded-xl p-5 bg-white shadow-sm flex flex-col justify-between">
-                <h4 className="text-sm font-bold text-red-600 mb-4 text-center border-b border-red-100 pb-2">Lampiran Surat Perikatan Audit</h4>
-                {uploadedFile ? (
-                  <div className="w-full flex items-center justify-between bg-green-50 border border-green-200 text-green-700 p-3 rounded-lg">
-                    <span className="text-sm truncate pr-2 font-medium">{uploadedFile.name}</span>
-                    <button onClick={() => setUploadedFile(null)} className="text-green-600 hover:text-green-800 shrink-0">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="w-full flex flex-col items-center justify-center bg-gray-50 border border-dashed border-gray-300 text-gray-500 py-4 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                    <Upload size={20} className="mb-2" />
-                    <span className="text-sm font-medium">Upload File</span>
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files.length > 0) {
-                          setUploadedFile(e.target.files[0]);
-                        }
-                      }}
-                    />
-                  </label>
-                )}
-              </div>
-
-              {/* Simpulan Kotak */}
-              <div className="border border-red-200 rounded-xl p-5 bg-white shadow-sm flex flex-col justify-center">
-                <h4 className="text-sm font-bold text-red-600 mb-4 text-center border-b border-red-100 pb-2">Simpulan</h4>
-                <div className="text-center">
-                  {!isAllAnswered ? (
-                    <div className="text-red-500 font-bold bg-red-50 p-2 rounded-lg border border-red-100 inline-block">Surat Perikatan Tidak Memadai</div>
-                  ) : isMemadai ? (
-                    <div className="text-green-600 font-bold bg-green-50 p-2 rounded-lg border border-green-100 inline-block">Surat Perikatan Memadai</div>
-                  ) : (
-                    <div className="text-red-500 font-bold bg-red-50 p-2 rounded-lg border border-red-100 inline-block">Surat Perikatan Tidak Memadai</div>
-                  )}
+        {/* Grid 3 Kotak Dokumentasi & Simpulan Modern */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: Contoh Format */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 bg-blue-50 text-atlas-blue rounded-lg">
+                  <FileText size={16} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Contoh Format
+                  </h3>
+                  <p className="text-[11px] text-slate-500">Format acuan resmi Surat Perikatan</p>
                 </div>
               </div>
 
+              <div className="space-y-1.5 min-h-[60px]">
+                {contohFiles.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic py-2">Belum ada file contoh ditambahkan.</p>
+                ) : (
+                  contohFiles.map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 group">
+                      <span
+                        onClick={() => handleDownloadFile(file)}
+                        className="text-xs text-atlas-blue font-medium hover:underline cursor-pointer truncate max-w-[180px]"
+                        title={file}
+                      >
+                        {file}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteContoh(idx)}
+                        className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
-            {/* Kotak Penjelasan Modifikasi */}
-            {needsModification && (
-              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                <label className="block text-sm font-bold text-red-600 mb-2">Jelaskan bagaimana KAP memodifikasi surat perikatan</label>
-                <textarea 
-                  className="w-full border-2 border-yellow-400 bg-yellow-100/50 rounded-xl p-4 text-gray-800 focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none min-h-[120px] shadow-sm"
-                  placeholder="Kriteria surat perikatan tidak lengkap. Jelaskan modifikasi yang dilakukan..."
-                  value={modificationReason}
-                  onChange={(e) => setModificationReason(e.target.value)}
-                ></textarea>
+            <div className="pt-3 border-t border-slate-100 mt-3">
+              <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-atlas-blue bg-blue-50/70 hover:bg-blue-100 border border-blue-200 cursor-pointer transition-all">
+                <Plus size={14} />
+                <span>Tambah File Contoh</span>
+                <input type="file" className="hidden" onChange={handleAddContohFile} />
+              </label>
+            </div>
+          </div>
+
+          {/* Card 2: Lampiran Surat Perikatan */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                  <Paperclip size={16} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Lampiran Dokumen
+                  </h3>
+                  <p className="text-[11px] text-slate-500">Berkas surat perikatan bertandatangan</p>
+                </div>
               </div>
-            )}
+
+              <div className="space-y-1.5 min-h-[60px]">
+                {lampiranFiles.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic py-2">Belum ada berkas lampiran diunggah.</p>
+                ) : (
+                  lampiranFiles.map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 group">
+                      <span
+                        onClick={() => handleDownloadFile(file)}
+                        className="text-xs text-emerald-700 font-semibold hover:underline cursor-pointer truncate max-w-[180px]"
+                        title={file}
+                      >
+                        {file}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteLampiran(idx)}
+                        className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 mt-3">
+              <label className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50/70 hover:bg-emerald-100 border border-emerald-200 cursor-pointer transition-all">
+                <Upload size={14} />
+                <span>Upload Surat Perikatan</span>
+                <input type="file" className="hidden" onChange={handleAddLampiranFile} />
+              </label>
+            </div>
+          </div>
+
+          {/* Card 3: Simpulan Evaluasi */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className={`p-2 rounded-lg ${isMemadai ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+                  <ShieldCheck size={16} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Simpulan Evaluasi
+                  </h3>
+                  <p className="text-[11px] text-slate-500">Hasil telaah kesesuaian standar</p>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl border bg-slate-50/70 border-slate-200 mb-2">
+                <div className="text-xs text-slate-500 font-medium mb-1">Status Simpulan:</div>
+                <select
+                  value={simpulanManual}
+                  onChange={(e) => setSimpulanManual(e.target.value)}
+                  className={`w-full bg-white border rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none cursor-pointer transition-all ${
+                    simpulanManual.includes("Tidak")
+                      ? "border-rose-300 text-rose-700"
+                      : "border-emerald-300 text-emerald-700"
+                  }`}
+                >
+                  <option value="Surat Perikatan Memadai">Surat Perikatan Memadai</option>
+                  <option value="Surat Perikatan Tidak Memadai">Surat Perikatan Tidak Memadai</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="text-[11px] text-slate-500 italic">
+              {isMemadai 
+                ? "✓ Seluruh 15 kriteria pokok SA 210 telah terpenuhi secara memadai."
+                : "⚠ Terdapat kriteria yang belum terpenuhi atau memerlukan modifikasi tertulis."}
+            </div>
           </div>
         </div>
 
-        {/* Action Footer */}
-        <div className="flex justify-between items-center pt-4">
-          <button onClick={() => navigate(`/workspace/${engagement.id}`)} className="text-gray-500 font-bold hover:text-gray-800 px-4 py-2 flex items-center transition-colors">
-            <ArrowLeft size={16} className="mr-2" /> Kembali ke Index
-          </button>
+        {/* Card Catatan / Penjelasan Tambahan */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-2">
+          <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+            Catatan Auditor / Penjelasan Modifikasi Surat Perikatan
+          </label>
+          <textarea
+            value={catatanPenjelasan}
+            onChange={(e) => setCatatanPenjelasan(e.target.value)}
+            placeholder="Tuliskan catatan evaluasi prosedur, pengecualian, atau modifikasi klausul surat perikatan di sini..."
+            className="w-full bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-800 outline-none focus:border-atlas-blue focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 transition-all min-h-[90px] resize-y placeholder:text-slate-400"
+          />
         </div>
 
+        {/* Action Footer */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/workspace/${engagement?.id || ""}`)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-xs cursor-pointer"
+          >
+            <ArrowLeft size={15} />
+            <span>Kembali ke Index</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 transition-all shadow-xs cursor-pointer"
+          >
+            {isSaved ? <CheckCircle2 size={15} className="text-emerald-300" /> : <Save size={15} />}
+            <span>{isSaved ? "Tersimpan" : "Simpan KKP A.130"}</span>
+          </button>
+        </div>
       </div>
+
+      {/* Toast Notifikasi Simpan */}
+      {isSaved && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center space-x-2 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm font-medium animate-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+          <span>Kertas Kerja A.130 berhasil disimpan.</span>
+        </div>
+      )}
     </WorksheetContainer>
   );
 };

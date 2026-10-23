@@ -1,24 +1,68 @@
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { useEngagementStore } from '../../store/engagementStore';
 import type { Engagement, Account } from '../../store/engagementStore';
-import { Upload, Plus, Save, ArrowLeft, Search, Filter, AlertTriangle, CheckCircle, Calculator, Trash2 } from 'lucide-react';
+import { 
+  Upload, 
+  Plus, 
+  Save, 
+  ArrowLeft, 
+  Search, 
+  Filter, 
+  AlertTriangle, 
+  CheckCircle, 
+  Calculator, 
+  Trash2,
+  Sparkles,
+  Building2,
+  FileText,
+  BarChart3,
+  TrendingUp,
+  DollarSign,
+  Layers,
+  CheckCircle2
+} from 'lucide-react';
 import ExcelImportModal from '../../components/ExcelImportModal';
 import ExportMenu from '../../components/ExportMenu';
+import { GovernmentFinancialStatements } from '../../components/financial-statements/GovernmentFinancialStatements';
+import { 
+  SAP_GROUPS, 
+  SAP_SUBGROUPS, 
+  SAP_SAMPLE_TRIAL_BALANCE,
+  calculateLO,
+  calculateLRA,
+  calculateLAK,
+  calculateLPSAL
+} from '../../utils/sapFinancialStatements';
 
-const GROUPS = ['Aset', 'Liabilitas', 'Ekuitas', 'Pendapatan', 'Beban'];
-const SUB_GROUPS = ['Aset Lancar', 'Aset Tidak Lancar', 'Liabilitas Jangka Pendek', 'Liabilitas Jangka Panjang', 'Modal', 'Pendapatan Usaha', 'Pendapatan Lain-lain', 'Beban Operasional', 'Beban Pokok Penjualan'];
+type ActiveTab = 'TB' | 'LO' | 'LRA' | 'LAK' | 'LPSAL';
 
-const TrialBalance = () => {
+const ALL_GROUPS = [
+  ...SAP_GROUPS,
+  'Aset Lancar',
+  'Aset Tetap',
+  'Liabilitas',
+  'Pendapatan',
+  'Beban'
+];
+
+const TrialBalance: React.FC = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
   const navigate = useNavigate();
   const updateEngagement = useEngagementStore(state => state.updateEngagement);
   
+  const [activeTab, setActiveTab] = useState<ActiveTab>('TB');
   const [accounts, setAccounts] = useState<Account[]>(engagement.trialBalance || []);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(Math.abs(val));
@@ -27,6 +71,7 @@ const TrialBalance = () => {
   const handleSave = () => {
     updateEngagement(engagement.id, { trialBalance: accounts });
     setIsSaved(true);
+    showToast('Seluruh data Neraca Saldo dan pemetaan Laporan Keuangan berhasil disimpan!');
     setTimeout(() => setIsSaved(false), 3000);
   };
 
@@ -39,21 +84,37 @@ const TrialBalance = () => {
       id: Date.now().toString(),
       code: '',
       name: '',
-      group: '',
-      subGroup: '',
+      group: 'Pendapatan-LO',
+      subGroup: 'Pendapatan Asli Daerah (PAD) - LO',
+      statementType: 'LO',
       debit: 0,
       credit: 0,
-      endingBalance: 0
+      endingBalance: 0,
+      budget: 0
     };
     setAccounts([newAccount, ...accounts]);
   };
 
-  const handleEditAccount = (id: string, field: keyof Account, value: string | number) => {
+  const handleLoadSAPTemplate = () => {
+    setAccounts(SAP_SAMPLE_TRIAL_BALANCE);
+    showToast('Template standar SAP (PP 71/2010) dengan laporan LO, LRA, LAK, dan LPSAL berhasil dimuat!');
+  };
+
+  const handleEditAccount = (id: string, field: keyof Account, value: any) => {
     setAccounts(prev => prev.map(acc => {
       if (acc.id === id) {
         const updated = { ...acc, [field]: value };
         if (field === 'debit' || field === 'credit') {
           updated.endingBalance = (Number(updated.debit) || 0) - (Number(updated.credit) || 0);
+        }
+        if (field === 'group') {
+          const defaultSub = SAP_SUBGROUPS[value]?.[0] || '';
+          updated.subGroup = defaultSub;
+          if (value === 'Pendapatan-LO' || value === 'Beban-LO') updated.statementType = 'LO';
+          else if (value === 'Pendapatan-LRA' || value === 'Belanja-LRA' || value === 'Pembiayaan-LRA') updated.statementType = 'LRA';
+          else if (value === 'Arus Kas / Transitoris') updated.statementType = 'LAK';
+          else if (value === 'Saldo Anggaran Lebih') updated.statementType = 'LPSAL';
+          else updated.statementType = 'Neraca';
         }
         return updated;
       }
@@ -65,234 +126,373 @@ const TrialBalance = () => {
     setAccounts(prev => prev.filter(acc => acc.id !== id));
   };
 
-  // Calculations
+  // Calculations for Summary
   const totalDebit = accounts.reduce((sum, acc) => sum + acc.debit, 0);
   const totalCredit = accounts.reduce((sum, acc) => sum + acc.credit, 0);
-  const isBalanced = totalDebit === totalCredit;
+  const isBalanced = Math.abs(totalDebit - totalCredit) < 1;
   
-  const totalPendapatan = accounts.filter(a => a.group === 'Pendapatan').reduce((sum, a) => sum + Math.abs(a.endingBalance), 0);
-  const totalBeban = accounts.filter(a => a.group === 'Beban').reduce((sum, a) => sum + Math.abs(a.endingBalance), 0);
-  const profitLoss = totalPendapatan - totalBeban;
+  const lo = calculateLO(accounts);
+  const lra = calculateLRA(accounts);
+  const lak = calculateLAK(accounts, lra);
+  const lpsal = calculateLPSAL(accounts, lra.silpa);
+
+  const tabs: { id: ActiveTab; label: string; icon: any; count?: number; badge?: string }[] = [
+    { id: 'TB', label: 'Neraca Saldo (Trial Balance)', icon: Calculator, count: accounts.length },
+    { id: 'LO', label: 'LO (Laporan Operasional)', icon: TrendingUp, badge: 'Akrual' },
+    { id: 'LRA', label: 'LRA (Realisasi Anggaran)', icon: BarChart3, badge: 'Kas' },
+    { id: 'LAK', label: 'LAK (Laporan Arus Kas)', icon: DollarSign, badge: 'Direct' },
+    { id: 'LPSAL', label: 'LPSAL (Perubahan SAL)', icon: FileText, badge: 'SiLPA' },
+  ];
 
   return (
-    <div className="h-full flex flex-col -m-6 bg-gray-50">
+    <div className="h-full flex flex-col -m-6 bg-slate-50 font-sans">
       
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-8 py-5 shrink-0 z-10 sticky top-0 shadow-sm flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <button onClick={() => navigate('..')} className="p-2 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors">
-            <ArrowLeft size={20} />
+      {/* ── TOP HEADER BAR ── */}
+      <div className="bg-white border-b border-slate-200 px-6 sm:px-8 py-4 shrink-0 z-10 sticky top-0 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center space-x-3.5">
+          <button 
+            onClick={() => navigate('..')} 
+            className="p-2 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+            title="Kembali ke Workspace"
+          >
+            <ArrowLeft size={18} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Financial Statement & Trial Balance</h1>
-            <p className="text-gray-500 text-sm mt-1">
-              {engagement.clientName} | Tahun: {engagement.auditPeriod || engagement.fiscalYear} 
-              <span className="mx-2">|</span> Mata Uang: <strong>{engagement.currency}</strong> 
-              <span className="mx-2">|</span> Satuan: <strong>{engagement.presentationUnit}</strong>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                Financial Statement & Trial Balance
+              </h1>
+              <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
+                SAP PP 71/2010 & PELITA
+              </span>
+            </div>
+            <p className="text-slate-500 text-xs mt-0.5">
+              {engagement.clientName} | Periode: {engagement.auditPeriod || engagement.fiscalYear || '2025'} 
+              <span className="mx-1.5 text-slate-300">|</span> Standar: <strong className="text-slate-800">{engagement.accountingStandard || 'SAP'}</strong>
+              <span className="mx-1.5 text-slate-300">|</span> Mata Uang: <strong className="text-slate-800">{engagement.currency}</strong> ({engagement.presentationUnit})
             </p>
           </div>
         </div>
         
-        <div className="flex space-x-3">
-          <div className="flex border border-gray-200 p-1 mr-4">
-            <button onClick={handleOpenImport} className="flex items-center px-4 py-2 bg-gray-100 font-semibold text-sm text-gray-900 transition-colors hover:bg-gray-200">
-              <Upload size={16} className="mr-2" /> Import Excel/CSV
-            </button>
-            <button onClick={handleAddManual} className="flex items-center px-4 py-2 hover:bg-gray-50 text-sm font-medium text-gray-600 transition-colors">
-              <Plus size={16} className="mr-2" /> Input Manual
-            </button>
-          </div>
+        {/* Action Buttons */}
+        <div className="flex items-center space-x-2 flex-wrap">
+          <button 
+            onClick={handleLoadSAPTemplate} 
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-atlas-blue border border-blue-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+            title="Muat data contoh neraca saldo SAP lengkap untuk LO, LRA, LAK, dan LPSAL"
+          >
+            <Sparkles size={14} className="text-blue-600" />
+            <span className="hidden sm:inline">Muat Template SAP</span>
+            <span className="sm:hidden">Template SAP</span>
+          </button>
+
+          <button 
+            onClick={handleOpenImport} 
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-slate-200"
+          >
+            <Upload size={14} />
+            <span>Import Excel</span>
+          </button>
+
+          <button 
+            onClick={handleAddManual} 
+            className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-100 text-slate-700 text-xs font-medium rounded-lg transition-colors border border-slate-200 cursor-pointer"
+          >
+            <Plus size={14} />
+            <span>Tambah Akun</span>
+          </button>
+
           <ExportMenu worksheetCode="TrialBalance" clientName={engagement?.clientName} />
-          <button onClick={handleSave} className="px-5 py-2 bg-gray-950 text-white font-semibold hover:bg-gray-800 flex items-center transition-colors">
-            {isSaved ? <CheckCircle size={18} className="mr-2" /> : <Save size={18} className="mr-2" />}
-            {isSaved ? 'Tersimpan' : 'Simpan Pemetaan'}
+
+          <button 
+            onClick={handleSave} 
+            className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-2xs flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            {isSaved ? <CheckCircle size={15} /> : <Save size={15} />}
+            <span>{isSaved ? 'Tersimpan' : 'Simpan'}</span>
           </button>
         </div>
       </div>
 
-      {/* Warnings & Alerts */}
-      <div className="px-8 pt-6 pb-2 shrink-0 space-y-3">
+      {/* ── TOAST NOTIFICATION ── */}
+      {toastMessage && (
+        <div className="mx-6 sm:mx-8 mt-3 bg-emerald-50 border border-emerald-200 text-emerald-900 px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-2xs animate-in fade-in duration-150">
+          <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* ── WARNINGS & ALERTS ── */}
+      <div className="px-6 sm:px-8 pt-3 shrink-0 space-y-2">
         {!isBalanced && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 flex items-start">
-            <AlertTriangle className="text-red-500 mr-3 shrink-0" size={20} />
+          <div className="bg-rose-50 border-l-4 border-rose-500 p-3 sm:p-3.5 rounded-r-lg flex items-start gap-2.5 shadow-2xs">
+            <AlertTriangle className="text-rose-600 shrink-0 mt-0.5" size={17} />
             <div>
-              <h3 className="font-bold text-red-800">Peringatan Validasi: Neraca Saldo Tidak Balance!</h3>
-              <p className="text-sm text-red-700 mt-1">Total Debit ({formatCurrency(totalDebit)}) tidak sama dengan Total Kredit ({formatCurrency(totalCredit)}). Selisih: {formatCurrency(Math.abs(totalDebit - totalCredit))}. Pastikan data telah ter-upload dengan benar sebelum masuk ke worksheet Materialitas (A.210).</p>
-            </div>
-          </div>
-        )}
-        
-        {duplicateWarning && (
-          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 flex items-start">
-            <AlertTriangle className="text-amber-500 mr-3 shrink-0" size={20} />
-            <div>
-              <h3 className="font-bold text-amber-800">Peringatan: Terdapat Duplikasi Header!</h3>
-              <p className="text-sm text-amber-700 mt-1">Sistem mendeteksi adanya duplikasi kode akun atau baris kosong (blank rows) pada file Excel/CSV. Sistem secara otomatis telah memotong baris tersebut, namun mohon periksa kembali.</p>
+              <h3 className="font-bold text-rose-900 text-xs">Peringatan: Neraca Saldo Belum Seimbang (Unbalanced)!</h3>
+              <p className="text-[11px] text-rose-700 mt-0.5 leading-relaxed">
+                Total Debit (Rp {formatCurrency(totalDebit)}) tidak sama dengan Total Kredit (Rp {formatCurrency(totalCredit)}). Selisih: <strong>Rp {formatCurrency(Math.abs(totalDebit - totalCredit))}</strong>. Pastikan seluruh transaksi dan saldo penutup telah seimbang sebelum melakukan prosedur audit materialitas.
+              </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Tools & Summary */}
-      <div className="px-8 py-4 shrink-0 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
-        
-        <div className="flex items-center space-x-3 w-full xl:w-auto">
-          <div className="relative w-full xl:w-64">
-            <input 
-              type="text" 
-              placeholder="Cari kode atau nama akun..." 
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 text-sm focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none"
-            />
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          </div>
-          <button className="p-2.5 bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 shrink-0">
-            <Filter size={18} />
-          </button>
-        </div>
-
-        <div className="flex flex-wrap space-x-4 bg-white p-3 border border-gray-200 w-full xl:w-auto">
-          <div className="px-4 border-r border-gray-200 flex items-center">
-            <Calculator className="text-gray-400 mr-3" />
-            <div>
-              <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-0.5">Total Debit</div>
-              <div className="text-base font-bold text-gray-900">{formatCurrency(totalDebit)}</div>
-            </div>
-          </div>
-          <div className="px-4 border-r border-gray-200">
-            <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-0.5">Total Kredit</div>
-            <div className="text-base font-bold text-gray-900">{formatCurrency(totalCredit)}</div>
-          </div>
-          <div className="px-4 border-r border-gray-200">
-            <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-0.5">Profit/Loss (Laba Bersih)</div>
-            <div className={`text-base font-bold ${profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {formatCurrency(profitLoss)}
-            </div>
-          </div>
-          <div className={`px-4 py-2 ml-2 flex items-center justify-center font-bold text-sm ${isBalanced ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-            {isBalanced ? 'BALANCED' : 'UNBALANCED'}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Table */}
-      <div className="flex-1 overflow-hidden px-8 pb-8">
-        <div className="h-full bg-white border border-gray-200 overflow-hidden flex flex-col">
-          <div className="overflow-auto flex-1">
-            <table className="w-full text-left border-collapse relative min-w-max">
-              <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
-                <tr>
-                  <th className="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200 text-sm">Account Code</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200 text-sm">Account Name</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200 text-sm">Group (Mapping)</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200 text-sm">Sub Group</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200 text-sm text-right">Debit</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200 text-sm text-right">Credit</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200 text-sm text-right">Ending Balance</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 border-b border-gray-200 text-sm text-center w-12">Act</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {accounts.filter(a => a.name.toLowerCase().includes(searchTerm.toLowerCase()) || a.code.includes(searchTerm)).map((acc) => (
-                  <tr key={acc.id} className="hover:bg-gray-50 transition-colors group">
-                    <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                      <input 
-                        type="text" 
-                        value={acc.code} 
-                        onChange={e => handleEditAccount(acc.id, 'code', e.target.value)}
-                        placeholder="Kode"
-                        className="w-full bg-transparent outline-none border-b border-transparent focus:border-gray-300"
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                      <input 
-                        type="text" 
-                        value={acc.name} 
-                        onChange={e => handleEditAccount(acc.id, 'name', e.target.value)}
-                        placeholder="Nama Akun"
-                        className="w-full bg-transparent outline-none border-b border-transparent focus:border-gray-300 min-w-[150px]"
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <select 
-                        className="w-full border border-gray-200 rounded p-1.5 text-sm focus:border-atlas-blue outline-none bg-transparent hover:bg-white"
-                        value={acc.group}
-                        onChange={(e) => handleEditAccount(acc.id, 'group', e.target.value)}
-                      >
-                        <option value="">-- Pilih Group --</option>
-                        {GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-4 py-3">
-                      <select 
-                        className="w-full border border-gray-200 rounded p-1.5 text-sm focus:border-atlas-blue outline-none bg-transparent hover:bg-white"
-                        value={acc.subGroup}
-                        onChange={(e) => handleEditAccount(acc.id, 'subGroup', e.target.value)}
-                      >
-                        <option value="">-- Pilih Sub Group --</option>
-                        {SUB_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-right font-medium text-gray-700">
-                      <input 
-                        type="number" 
-                        value={acc.debit === 0 ? '' : acc.debit} 
-                        onChange={e => handleEditAccount(acc.id, 'debit', Number(e.target.value))}
-                        placeholder="0"
-                        className="w-full text-right bg-transparent outline-none border-b border-transparent focus:border-gray-300"
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-sm text-right font-medium text-gray-700">
-                      <input 
-                        type="number" 
-                        value={acc.credit === 0 ? '' : acc.credit} 
-                        onChange={e => handleEditAccount(acc.id, 'credit', Number(e.target.value))}
-                        placeholder="0"
-                        className="w-full text-right bg-transparent outline-none border-b border-transparent focus:border-gray-300"
-                      />
-                    </td>
-                    <td className={`px-4 py-3 text-sm text-right font-bold ${acc.endingBalance < 0 ? 'text-red-600' : 'text-gray-800'}`}>
-                      {formatCurrency(acc.endingBalance)} {acc.endingBalance < 0 ? '(Cr)' : '(Dr)'}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button 
-                        onClick={() => handleDeleteAccount(acc.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
-                        title="Hapus baris"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {accounts.length === 0 && (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-16 text-center text-gray-500">
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <p className="font-semibold text-gray-700">Belum ada akun di Trial Balance</p>
-                        <p className="text-xs text-gray-500">Gunakan tombol "+ Tambah Akun" di atas atau "Import Excel" untuk mengisi data neraca saldo klien.</p>
-                      </div>
-                    </td>
-                  </tr>
+      {/* ── SEGMENTED NAVIGATION TABS (TB, LO, LRA, LAK, LPSAL) ── */}
+      <div className="px-6 sm:px-8 pt-3 shrink-0">
+        <div className="flex p-1 bg-slate-200/60 rounded-xl border border-slate-200/80 overflow-x-auto scrollbar-none gap-1 text-xs font-medium">
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 py-2 px-3.5 rounded-lg whitespace-nowrap transition-all text-xs font-semibold cursor-pointer ${
+                  isActive
+                    ? 'bg-white text-slate-900 shadow-2xs border border-slate-200/80'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
+                }`}
+              >
+                <Icon size={14} className={isActive ? 'text-atlas-blue' : 'text-slate-400'} />
+                <span>{tab.label}</span>
+                {tab.badge && (
+                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border ${
+                    isActive ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-500 border-slate-200'
+                  }`}>
+                    {tab.badge}
+                  </span>
                 )}
-              </tbody>
-            </table>
-          </div>
+                {typeof tab.count === 'number' && (
+                  <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded">
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
-      
+
+      {/* ── TAB CONTENT ── */}
+      <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-4 space-y-4">
+        
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {/* TAB 1: TRIAL BALANCE (INPUT & MAPPING DATA)                          */}
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {activeTab === 'TB' && (
+          <div className="space-y-4">
+            
+            {/* Quick Metrics Bar */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
+              <div className="bg-white border border-slate-200/90 rounded-lg p-2.5 shadow-2xs">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Debit</span>
+                <span className="text-sm sm:text-base font-bold text-slate-900 mt-0.5 block font-mono">
+                  Rp {formatCurrency(totalDebit)}
+                </span>
+              </div>
+
+              <div className="bg-white border border-slate-200/90 rounded-lg p-2.5 shadow-2xs">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Kredit</span>
+                <span className="text-sm sm:text-base font-bold text-slate-900 mt-0.5 block font-mono">
+                  Rp {formatCurrency(totalCredit)}
+                </span>
+              </div>
+
+              <div className="bg-white border border-slate-200/90 rounded-lg p-2.5 shadow-2xs">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Surplus/(Defisit) LO</span>
+                <span className={`text-sm sm:text-base font-bold mt-0.5 block font-mono ${lo.surplusDefisitAkhir >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                  Rp {formatCurrency(lo.surplusDefisitAkhir)}
+                </span>
+              </div>
+
+              <div className="bg-white border border-slate-200/90 rounded-lg p-2.5 shadow-2xs">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">SiLPA LRA</span>
+                <span className="text-sm sm:text-base font-bold text-purple-700 mt-0.5 block font-mono">
+                  Rp {formatCurrency(lra.silpa)}
+                </span>
+              </div>
+
+              <div className={`col-span-2 lg:col-span-1 rounded-lg p-2.5 flex items-center justify-center font-bold text-xs uppercase tracking-wider border ${
+                isBalanced 
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                  : 'bg-rose-50 text-rose-800 border-rose-300'
+              }`}>
+                {isBalanced ? '✓ NERACA SEIMBANG' : '⚠ TIDAK SEIMBANG'}
+              </div>
+            </div>
+
+            {/* Filter Search */}
+            <div className="flex items-center space-x-3 bg-white p-2.5 border border-slate-200/90 rounded-lg shadow-2xs">
+              <div className="relative flex-1">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="Cari kode akun, nama akun, atau jenis laporan (LO, LRA, LAK, LPSAL)..." 
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50/60 focus:bg-white border border-slate-200 rounded-md text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-atlas-blue"
+                />
+              </div>
+            </div>
+
+            {/* Main Table Trial Balance */}
+            <div className="bg-white border border-slate-200/90 rounded-xl overflow-hidden shadow-2xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs min-w-[950px]">
+                  <thead>
+                    <tr className="bg-slate-100/90 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="px-3.5 py-2.5 w-32">Kode Akun</th>
+                      <th className="px-3.5 py-2.5">Nama Akun</th>
+                      <th className="px-3.5 py-2.5 w-36">Laporan SAP</th>
+                      <th className="px-3.5 py-2.5 w-44">Kelompok (Group)</th>
+                      <th className="px-3.5 py-2.5 w-48">Sub Kelompok</th>
+                      <th className="px-3.5 py-2.5 w-32 text-right">Debit (Rp)</th>
+                      <th className="px-3.5 py-2.5 w-32 text-right">Kredit (Rp)</th>
+                      <th className="px-3.5 py-2.5 w-36 text-right">Saldo Akhir</th>
+                      <th className="px-3.5 py-2.5 w-12 text-center">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {accounts.filter(a => 
+                      a.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                      a.code.includes(searchTerm) ||
+                      (a.statementType && a.statementType.toLowerCase().includes(searchTerm.toLowerCase()))
+                    ).map((acc) => (
+                      <tr key={acc.id} className="hover:bg-slate-50/80 transition-colors group">
+                        <td className="px-3.5 py-2 font-mono font-bold text-slate-900">
+                          <input 
+                            type="text" 
+                            value={acc.code} 
+                            onChange={e => handleEditAccount(acc.id, 'code', e.target.value)}
+                            placeholder="Kode"
+                            className="w-full bg-transparent outline-none border-b border-transparent focus:border-atlas-blue font-mono text-xs"
+                          />
+                        </td>
+                        <td className="px-3.5 py-2 font-medium text-slate-800">
+                          <input 
+                            type="text" 
+                            value={acc.name} 
+                            onChange={e => handleEditAccount(acc.id, 'name', e.target.value)}
+                            placeholder="Nama Akun"
+                            className="w-full bg-transparent outline-none border-b border-transparent focus:border-atlas-blue text-xs font-semibold"
+                          />
+                        </td>
+                        <td className="px-3.5 py-2">
+                          <select 
+                            className="w-full border border-slate-200 rounded px-2 py-1 text-[11px] font-bold focus:border-atlas-blue outline-none bg-slate-50/60"
+                            value={acc.statementType || 'LO'}
+                            onChange={(e) => handleEditAccount(acc.id, 'statementType', e.target.value)}
+                          >
+                            <option value="LO">LO (Operasional)</option>
+                            <option value="LRA">LRA (Anggaran)</option>
+                            <option value="LAK">LAK (Arus Kas)</option>
+                            <option value="LPSAL">LPSAL (SAL)</option>
+                            <option value="Neraca">Neraca</option>
+                          </select>
+                        </td>
+                        <td className="px-3.5 py-2">
+                          <select 
+                            className="w-full border border-slate-200 rounded px-2 py-1 text-[11px] focus:border-atlas-blue outline-none bg-slate-50/60"
+                            value={acc.group}
+                            onChange={(e) => handleEditAccount(acc.id, 'group', e.target.value)}
+                          >
+                            <option value="">-- Pilih Group --</option>
+                            {ALL_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                          </select>
+                        </td>
+                        <td className="px-3.5 py-2">
+                          <input 
+                            type="text"
+                            value={acc.subGroup || ''}
+                            onChange={(e) => handleEditAccount(acc.id, 'subGroup', e.target.value)}
+                            placeholder="Sub Kelompok"
+                            className="w-full border border-slate-200 rounded px-2 py-1 text-[11px] focus:border-atlas-blue outline-none bg-transparent"
+                          />
+                        </td>
+                        <td className="px-3.5 py-2 text-right">
+                          <input 
+                            type="number" 
+                            value={acc.debit === 0 ? '' : acc.debit} 
+                            onChange={e => handleEditAccount(acc.id, 'debit', Number(e.target.value))}
+                            placeholder="0"
+                            className="w-full text-right bg-transparent outline-none font-mono text-xs focus:border-b focus:border-atlas-blue text-slate-800"
+                          />
+                        </td>
+                        <td className="px-3.5 py-2 text-right">
+                          <input 
+                            type="number" 
+                            value={acc.credit === 0 ? '' : acc.credit} 
+                            onChange={e => handleEditAccount(acc.id, 'credit', Number(e.target.value))}
+                            placeholder="0"
+                            className="w-full text-right bg-transparent outline-none font-mono text-xs focus:border-b focus:border-atlas-blue text-slate-800"
+                          />
+                        </td>
+                        <td className={`px-3.5 py-2 text-right font-mono font-bold text-xs ${acc.endingBalance < 0 ? 'text-rose-700' : 'text-slate-900'}`}>
+                          {formatCurrency(acc.endingBalance)} {acc.endingBalance < 0 ? '(Cr)' : '(Dr)'}
+                        </td>
+                        <td className="px-3.5 py-2 text-center">
+                          <button 
+                            type="button"
+                            onClick={() => handleDeleteAccount(acc.id)}
+                            className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                            title="Hapus baris"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {accounts.length === 0 && (
+                      <tr>
+                        <td colSpan={9} className="px-6 py-12 text-center text-slate-500">
+                          <div className="flex flex-col items-center justify-center space-y-2">
+                            <Calculator size={28} className="text-slate-300" />
+                            <p className="font-bold text-slate-800 text-sm">Belum Ada Akun di Neraca Saldo</p>
+                            <p className="text-xs text-slate-400 max-w-md">
+                              Klik tombol <strong>"Muat Template SAP"</strong> di kanan atas untuk memuat akun standar lengkap SAP PP 71/2010 (LO, LRA, LAK, LPSAL), atau gunakan Import Excel untuk mengunggah neraca saldo klien.
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {/* TABS 2-5: GOVERNMENT FINANCIAL STATEMENTS (LO, LRA, LAK, LPSAL)     */}
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {activeTab !== 'TB' && (
+          <GovernmentFinancialStatements 
+            accounts={accounts}
+            activeStatement={activeTab}
+            clientName={engagement.clientName}
+            period={engagement.auditPeriod || engagement.fiscalYear || '2025'}
+            currency={engagement.currency || 'IDR'}
+            unit={engagement.presentationUnit || 'Full'}
+          />
+        )}
+
+      </div>
+
+      {/* ── EXCEL IMPORT MODAL ── */}
       <ExcelImportModal 
         isOpen={showImport} 
         onClose={() => setShowImport(false)} 
         onImportComplete={(data) => {
-          console.log('Imported:', data);
           setShowImport(false);
           setDuplicateWarning(true);
+          showToast('File Excel/CSV berhasil diimpor!');
           setTimeout(() => setDuplicateWarning(false), 5000);
         }}
-        title="Import Data Trial Balance"
+        title="Import Data Trial Balance & Laporan Keuangan"
       />
+
     </div>
   );
 };

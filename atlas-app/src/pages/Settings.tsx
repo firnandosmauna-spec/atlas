@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useAppConfigStore } from '../store/appConfigStore';
 import { supabase } from '../lib/supabaseClient';
@@ -7,12 +8,29 @@ import {
   Building2, RotateCcw, Check, Sliders, BookOpen,
   Cloud, RefreshCw, AlertCircle, CheckCircle2
 } from 'lucide-react';
+import { MasterAccountingStandardsTab } from '../components/MasterAccountingStandardsTab';
 
 const Settings = () => {
   const { user, login, logout } = useAuthStore();
   const config = useAppConfigStore();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<'branding' | 'profile' | 'security'>('branding');
+  const initialTab = (searchParams.get('tab') as 'branding' | 'standards' | 'profile' | 'security') || 'branding';
+  const [activeTab, setActiveTab] = useState<'branding' | 'standards' | 'profile' | 'security'>(
+    ['branding', 'standards', 'profile', 'security'].includes(initialTab) ? initialTab : 'branding'
+  );
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['branding', 'standards', 'profile', 'security'].includes(tabParam)) {
+      setActiveTab(tabParam as any);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tabId: 'branding' | 'standards' | 'profile' | 'security') => {
+    setActiveTab(tabId);
+    setSearchParams({ tab: tabId });
+  };
 
   // App Branding States
   const [appNameInput, setAppNameInput] = useState(config.appName);
@@ -248,6 +266,7 @@ const Settings = () => {
 
   const tabs = [
     { id: 'branding' as const, label: 'Identitas & Nama Aplikasi', icon: Building2, color: 'text-blue-600' },
+    { id: 'standards' as const, label: 'Master Standar Akuntansi', icon: BookOpen, color: 'text-emerald-600' },
     { id: 'profile' as const, label: 'Profil Auditor & Lisensi', icon: User, color: 'text-indigo-600' },
     { id: 'security' as const, label: 'Keamanan Akun', icon: Lock, color: 'text-slate-600' },
   ];
@@ -296,7 +315,7 @@ const Settings = () => {
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-lg whitespace-nowrap transition-all text-xs font-medium cursor-pointer ${
                 isActive
                   ? 'bg-white text-slate-900 shadow-2xs font-semibold border border-slate-200/60'
@@ -564,6 +583,11 @@ const Settings = () => {
                 </form>
               </div>
             </div>
+          )}
+
+          {/* TAB: MASTER STANDAR AKUNTANSI (SAK) */}
+          {activeTab === 'standards' && (
+            <MasterAccountingStandardsTab />
           )}
 
           {/* TAB 2: PROFIL AUDITOR & LISENSI KAP */}

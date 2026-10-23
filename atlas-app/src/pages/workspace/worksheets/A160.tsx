@@ -1,365 +1,741 @@
 import React, { useState } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom";
+import { useOutletContext, useNavigate, useParams } from "react-router-dom";
 import type { Engagement } from "../../../store/engagementStore";
+import { useEngagementStore } from "../../../store/engagementStore";
 import WorksheetContainer from "../../../components/WorksheetContainer";
-import { CheckCircle2, AlertCircle, FileText, Upload, ShieldAlert, ArrowLeft, Download, Trash2, ArrowRight } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Save, 
+  CheckCircle2, 
+  AlertCircle,
+  Upload, 
+  Plus, 
+  Trash2, 
+  Download,
+  FileText,
+  ShieldCheck,
+  Paperclip,
+  Check,
+  X,
+  ArrowRight,
+  MessageSquare,
+  Compass
+} from "lucide-react";
 
 const A160: React.FC = () => {
-  const { engagement } = useOutletContext<{ engagement: Engagement }>();
+  const context = useOutletContext<{ engagement?: Engagement }>();
+  const { id: paramId } = useParams<{ id: string }>();
+  const engagements = useEngagementStore((state) => state.engagements);
+  const updateEngagement = useEngagementStore((state) => state.updateEngagement);
+  const engagement = context?.engagement || engagements.find((e) => e.id === paramId) || engagements[0];
   const navigate = useNavigate();
 
-  const [activeView, setActiveView] = useState<"komunikasi" | "strategi">("komunikasi");
+  const [activeTab, setActiveTab] = useState<"komunikasi" | "strategi">("komunikasi");
 
-  // State untuk Kriteria Komunikasi (Bagian A)
-  const [pemahaman, setPemahaman] = useState([
-    { id: "a1", text: "Apakah Tim Perikatan memahami ruang lingkup pekerjaan yang akan dilaksanakan?", answer: "" },
-    { id: "a2", text: "Apakah Tim Perikatan memahami periode pelaksanaan audit?", answer: "" },
-    { id: "a3", text: "Apakah Tim Perikatan memiliki keahlian dan keterampilan yang memadai?", answer: "" },
-    { id: "a4", text: "Apakah Tim Perikatan memahami hal-hal khusus untuk industri klien?", answer: "" },
-  ]);
+  // Load existing saved worksheet data if any
+  const wsData = (engagement as any)?.worksheetA160 || {};
 
-  // State untuk Konsultasi (Bagian B) - Input text
-  const [konsultasi, setKonsultasi] = useState({
-    b1: "", // Permasalahan yang disajikan
-    b2: "", // Data yang tersedia
-    b3: "", // Saran/tindakan/simpulan
-    b4: "", // Para/Tanda tangan Tim (di system disimulasikan sebagai input text/nama)
+  // Form state - 8 kriteria Ceklis Komunikasi (a.1 - a.4, b.1 - b.4)
+  const [answers, setAnswers] = useState<Record<string, string>>({
+    qa1: wsData.answers?.qa1 ?? "Ya",
+    qa2: wsData.answers?.qa2 ?? "Ya",
+    qa3: wsData.answers?.qa3 ?? "Ya",
+    qa4: wsData.answers?.qa4 ?? "Ya",
+    qb1: wsData.answers?.qb1 ?? "Ya",
+    qb2: wsData.answers?.qb2 ?? "Ya",
+    qb3: wsData.answers?.qb3 ?? "Ya",
+    qb4: wsData.answers?.qb4 ?? "Ya",
   });
 
-  const [modificationReason, setModificationReason] = useState("");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [contohFiles, setContohFiles] = useState<string[]>(
+    wsData.contohFiles ?? []
+  );
 
-  // State untuk Audit Strategi Memorandum
+  const [lampiranFiles, setLampiranFiles] = useState<string[]>(
+    wsData.lampiranFiles ?? [
+      "Notulen komunikasi tim_penilaian Resiko.pdf",
+      "Memo_konsultasi.pdf",
+      "Catatan komunikasi WA Group.pdf",
+    ]
+  );
+
+  const [simpulanManual, setSimpulanManual] = useState<string>(
+    wsData.simpulan ?? "Komunikasi Memadai"
+  );
+
+  const [catatanPenjelasan, setCatatanPenjelasan] = useState<string>(
+    wsData.catatanPenjelasan ?? ""
+  );
+
+  // State untuk Audit Strategi Memorandum (ASM)
   const [strategi, setStrategi] = useState({
-    karakteristik: "",
-    tujuan: "",
-    faktor: "",
-    sumberDaya: "",
-    riskAssessment: "",
-    prosedurLanjutan: ""
+    karakteristik: wsData.strategi?.karakteristik ?? "",
+    tujuan: wsData.strategi?.tujuan ?? "",
+    faktor: wsData.strategi?.faktor ?? "",
+    sumberDaya: wsData.strategi?.sumberDaya ?? "",
+    riskAssessment: wsData.strategi?.riskAssessment ?? "",
+    prosedurLanjutan: wsData.strategi?.prosedurLanjutan ?? "",
   });
 
-  const handleUpdatePemahaman = (id: string, value: string) => {
-    setPemahaman(prev => prev.map(c => c.id === id ? { ...c, answer: value } : c));
+  const [isSaved, setIsSaved] = useState(false);
+
+  const handleAnswerChange = (key: string, value: string) => {
+    setAnswers((prev) => {
+      const next = { ...prev, [key]: value };
+      const hasNo = Object.values(next).some((ans) => ans === "Tidak");
+      const allFilled = Object.values(next).every((ans) => ans !== "");
+      if (allFilled) {
+        setSimpulanManual(hasNo ? "Komunikasi Tidak Memadai" : "Komunikasi Memadai");
+      }
+      return next;
+    });
   };
 
-  const isPemahamanAllAnswered = pemahaman.every(c => c.answer !== "");
-  const hasPemahamanNo = pemahaman.some(c => c.answer === "Tidak");
-  
-  // Memadai jika A1-A4 dijawab "Ya"
-  const isMemadai = isPemahamanAllAnswered && !hasPemahamanNo;
-  const needsModification = hasPemahamanNo;
+  const totalCriteria = Object.keys(answers).length;
+  const answeredCount = Object.values(answers).filter((val) => val !== "").length;
+  const isAllAnswered = answeredCount === totalCriteria;
+  const hasNoAnswers = Object.values(answers).some((val) => val === "Tidak");
+  const isMemadai = isAllAnswered && !hasNoAnswers;
+  const isCompleted = isAllAnswered && !hasNoAnswers;
+  const statusKKP = isCompleted ? "Completed" : "Uncompleted";
 
-  const isStrategiFilled = Object.values(strategi).every(val => val.trim() !== "");
+  const handleAddContohFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const fileName = e.target.files[0].name;
+      setContohFiles((prev) => [...prev, fileName]);
+    }
+  };
 
-  // Status KKP = Completed jika (Memadai & file terupload & strategi terisi) ATAU (Tidak Memadai & modifikasi terisi & file & strategi)
-  const isCompleted = isPemahamanAllAnswered && 
-                      (isMemadai || (!isMemadai && modificationReason.trim() !== "")) &&
-                      uploadedFile !== null &&
-                      isStrategiFilled;
+  const handleDeleteContoh = (index: number) => {
+    setContohFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddLampiranFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const fileName = e.target.files[0].name;
+      setLampiranFiles((prev) => [...prev, fileName]);
+    }
+  };
+
+  const handleDeleteLampiran = (index: number) => {
+    setLampiranFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDownloadFile = (fileName: string) => {
+    const element = document.createElement("a");
+    const file = new Blob([`Komunikasi Tim Perikatan: ${fileName}\n\nDokumen notulen / memo komunikasi tim perikatan audit.`], {
+      type: "text/plain",
+    });
+    element.href = URL.createObjectURL(file);
+    element.download = fileName.endsWith(".pdf") ? fileName.replace(".pdf", ".txt") : `${fileName}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  const handleSave = () => {
+    if (engagement?.id) {
+      updateEngagement(engagement.id, {
+        worksheetA160: {
+          answers,
+          contohFiles,
+          lampiranFiles,
+          simpulan: simpulanManual,
+          catatanPenjelasan,
+          strategi,
+          isCompleted,
+          status: statusKKP,
+        },
+      } as any);
+    }
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2500);
+  };
+
+  // Helper render tombol toggle Ya / Tidak
+  const renderToggle = (key: string) => {
+    const currentVal = answers[key];
+    return (
+      <div className="inline-flex p-1 bg-slate-100 rounded-lg border border-slate-200/80 shrink-0">
+        <button
+          type="button"
+          onClick={() => handleAnswerChange(key, "Ya")}
+          className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+            currentVal === "Ya"
+              ? "bg-emerald-600 text-white shadow-xs font-bold"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+          }`}
+        >
+          <Check size={12} className={currentVal === "Ya" ? "opacity-100" : "opacity-0"} />
+          <span>Ya</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleAnswerChange(key, "Tidak")}
+          className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+            currentVal === "Tidak"
+              ? "bg-rose-600 text-white shadow-xs font-bold"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+          }`}
+        >
+          <X size={12} className={currentVal === "Tidak" ? "opacity-100" : "opacity-0"} />
+          <span>Tidak</span>
+        </button>
+      </div>
+    );
+  };
 
   return (
     <WorksheetContainer
       code="A.160"
-      name="Komunikasi Tahap Pra Perikatan"
+      name="Komunikasi Tim Perikatan"
       purpose="Mengidentifikasi komunikasi dan konsultasi tim perikatan serta menyusun strategi audit secara keseluruhan (Audit Strategi Memorandum)."
-      status={isCompleted ? "Completed" : "In Progress"}
-      reviewer={engagement.managerName || "Menunggu Reviewer"}
+      status={statusKKP}
+      reviewer={engagement?.managerName || "Menunggu Reviewer"}
       lastUpdated="Baru saja"
     >
-      <div className="space-y-6">
-        
-        {/* Info Card */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col md:flex-row gap-6 shadow-sm">
-          <div className="flex-1 space-y-4">
-            <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Standar Auditing yang Relevan</h3>
-              <ul className="text-sm text-gray-700 font-medium space-y-1">
-                <li className="flex items-start"><ShieldAlert size={16} className="mr-2 text-atlas-blue shrink-0 mt-0.5" /> SA 300 : Perencanaan Suatu Audit atas Laporan Keuangan</li>
-              </ul>
-            </div>
-            <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">
-              Kertas kerja ini digunakan untuk mengidentifikasi komunikasi dan konsultasi yang terjadi di antara tim perikatan dalam rangka proses pelaksanaan audit, serta mendokumentasikan Strategi Audit Memorandum.
-            </p>
+      <div className="space-y-6 max-w-7xl mx-auto">
+        {/* Navigation Tabs Minimalis Modern */}
+        <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+          <div className="inline-flex p-1 bg-slate-100/90 rounded-xl border border-slate-200/80">
+            <button
+              type="button"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === "komunikasi"
+                  ? "bg-white text-atlas-blue shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+              onClick={() => setActiveTab("komunikasi")}
+            >
+              <MessageSquare size={14} />
+              <span>Ceklis Komunikasi Tim Perikatan</span>
+            </button>
+            <button
+              type="button"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeTab === "strategi"
+                  ? "bg-white text-atlas-blue shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+              onClick={() => setActiveTab("strategi")}
+            >
+              <Compass size={14} />
+              <span>Strategi Audit Keseluruhan (ASM)</span>
+            </button>
           </div>
-          
-          <div className="md:w-1/3 bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col justify-center items-center text-center">
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Status KKP</h4>
-            {isCompleted ? (
-              <div className="flex flex-col items-center">
-                <CheckCircle2 size={32} className="text-green-500 mb-2" />
-                <span className="text-green-700 font-black text-lg">COMPLETED</span>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <AlertCircle size={32} className="text-amber-500 mb-2" />
-                <span className="text-amber-700 font-black text-lg">INCOMPLETED</span>
-              </div>
-            )}
+
+          <div className="text-xs text-slate-500 hidden sm:block">
+            Standar Audit: <span className="font-semibold text-slate-700">SA 220 & SA 300</span>
           </div>
         </div>
 
-        {/* Tab Navigation / Toggle View */}
-        <div className="flex border-b border-gray-200">
-          <button 
-            className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors ${activeView === "komunikasi" ? "border-atlas-blue text-atlas-blue" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-            onClick={() => setActiveView("komunikasi")}
-          >
-            Siklus Komunikasi
-          </button>
-          <button 
-            className={`px-6 py-3 text-sm font-bold border-b-2 transition-colors flex items-center ${activeView === "strategi" ? "border-atlas-blue text-atlas-blue" : "border-transparent text-gray-500 hover:text-gray-700"}`}
-            onClick={() => setActiveView("strategi")}
-          >
-            Strategi Audit Keseluruhan
-            {!isStrategiFilled && <div className="ml-2 w-2 h-2 rounded-full bg-red-500"></div>}
-          </button>
-        </div>
-
-        {activeView === "komunikasi" ? (
-          <div className="animate-in fade-in duration-300 space-y-6">
-            {/* Analisis Kriteria Komunikasi */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-              <div className="bg-slate-50 border-b border-gray-100 px-6 py-4">
-                <h2 className="text-lg font-bold text-gray-800 flex items-center">
-                  <FileText size={20} className="mr-2 text-atlas-blue" />
-                  Siklus Komunikasi Antara Tim Perikatan
-                </h2>
-              </div>
-              
-              <div className="p-6">
-                <h3 className="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">a. Pemahaman Tim Perikatan atas:</h3>
-                <div className="overflow-x-auto mb-8">
-                  <table className="w-full text-sm text-left border-collapse">
-                    <thead className="bg-gray-50 border-b border-gray-200">
-                      <tr>
-                        <th className="px-4 py-3 font-bold text-gray-600 w-16 text-center">No</th>
-                        <th className="px-4 py-3 font-bold text-gray-600">Pertanyaan Pemahaman</th>
-                        <th className="px-4 py-3 font-bold text-gray-600 w-48 text-center bg-blue-50/50">Hasil Analisis</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {pemahaman.map((item, idx) => (
-                        <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-4 py-3 text-center font-bold text-gray-400">a.{idx + 1}</td>
-                          <td className="px-4 py-3 text-gray-700 font-medium">{item.text}</td>
-                          <td className="px-4 py-3 bg-blue-50/20">
-                            <select 
-                              className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-atlas-blue/20 outline-none text-center font-bold shadow-sm ${
-                                item.answer === "Ya" ? "bg-green-100 border-green-300 text-green-700" : 
-                                item.answer === "Tidak" ? "bg-red-100 border-red-300 text-red-700" : 
-                                "border-gray-300 bg-white"
-                              }`}
-                              value={item.answer}
-                              onChange={(e) => handleUpdatePemahaman(item.id, e.target.value)}
-                            >
-                              <option value="" disabled>-</option>
-                              <option value="Ya">Ya</option>
-                              <option value="Tidak">Tidak</option>
-                            </select>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+        {activeTab === "komunikasi" ? (
+          /* TAB 1: CEKLIS KOMUNIKASI ANTARA TIM PERIKATAN */
+          <div className="space-y-6">
+            {/* Banner Ringkasan Modern */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-atlas-blue border border-blue-200">
+                    SA 220 & SA 300
+                  </span>
+                  <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+                    Ceklis Komunikasi Antara Tim Perikatan
+                  </h1>
                 </div>
+                <p className="text-xs text-slate-500">
+                  Evaluasi kesepahaman ruang lingkup, jadwal, kompetensi industri, serta rekaman konsultasi dan notulen internal tim audit.
+                </p>
+              </div>
 
-                <h3 className="font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">b. Konsultasi selama Perikatan:</h3>
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="grid grid-cols-1 md:grid-cols-4 items-center">
-                    <label className="text-sm font-semibold text-gray-700 md:col-span-1">b.1. Permasalahan yang disajikan</label>
-                    <input type="text" className="md:col-span-3 border border-gray-300 rounded-lg p-2.5 text-sm focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none" value={konsultasi.b1} onChange={(e) => setKonsultasi({...konsultasi, b1: e.target.value})} placeholder="Deskripsikan masalah..." />
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <div className="text-xs text-slate-500">Progress Evaluasi</div>
+                  <div className="text-sm font-bold text-slate-800">
+                    {answeredCount} dari {totalCriteria} kriteria ({Math.round((answeredCount / totalCriteria) * 100)}%)
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 items-center">
-                    <label className="text-sm font-semibold text-gray-700 md:col-span-1">b.2. Data yang tersedia</label>
-                    <input type="text" className="md:col-span-3 border border-gray-300 rounded-lg p-2.5 text-sm focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none" value={konsultasi.b2} onChange={(e) => setKonsultasi({...konsultasi, b2: e.target.value})} placeholder="Sumber data atau referensi..." />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 items-center">
-                    <label className="text-sm font-semibold text-gray-700 md:col-span-1">b.3. Saran/Tindakan/Simpulan</label>
-                    <input type="text" className="md:col-span-3 border border-gray-300 rounded-lg p-2.5 text-sm focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none" value={konsultasi.b3} onChange={(e) => setKonsultasi({...konsultasi, b3: e.target.value})} placeholder="Keputusan atau tindakan lanjutan..." />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 items-center">
-                    <label className="text-sm font-semibold text-gray-700 md:col-span-1">b.4. Para Pihak / Tanda tangan Tim</label>
-                    <input type="text" className="md:col-span-3 border border-gray-300 rounded-lg p-2.5 text-sm focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none" value={konsultasi.b4} onChange={(e) => setKonsultasi({...konsultasi, b4: e.target.value})} placeholder="Nama personel yang terlibat (misal: Partner, Manajer)..." />
-                  </div>
+                </div>
+                <div className={`px-4 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
+                  isCompleted 
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                    : "bg-rose-50 text-rose-700 border-rose-200"
+                }`}>
+                  {isCompleted ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                  <span>{isCompleted ? "STATUS: COMPLETED" : "STATUS: UNCOMPLETED"}</span>
                 </div>
               </div>
             </div>
 
-            {/* Dokumen & Simpulan */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-              <div className="bg-slate-50 border-b border-gray-100 px-6 py-4">
-                <h2 className="text-lg font-bold text-gray-800 flex items-center">
-                  <CheckCircle2 size={20} className="mr-2 text-atlas-blue" />
-                  Dokumentasi & Simpulan
-                </h2>
+            {/* Card Kuesioner Kontrol Kriteria */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+              <div className="px-6 py-4 bg-slate-50/70 border-b border-slate-200/70 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="text-atlas-blue" size={18} />
+                  <h2 className="text-sm font-bold text-slate-800">
+                    Ceklis Evaluasi Komunikasi & Konsultasi Tim
+                  </h2>
+                </div>
+                <span className="text-xs text-slate-500 font-medium">
+                  Hasil Analisis (Ya / Tidak)
+                </span>
               </div>
-              
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  
-                  {/* Contoh Format */}
-                  <div className="border border-red-200 rounded-xl p-5 bg-white shadow-sm flex flex-col justify-between">
-                    <h4 className="text-sm font-bold text-red-600 mb-4 text-center border-b border-red-100 pb-2">Contoh Jurnal Komunikasi</h4>
-                    <button className="w-full flex items-center justify-center space-x-2 bg-gray-50 border border-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-100 transition-colors font-medium">
-                      <Download size={18} />
-                      <span>Download Template</span>
-                    </button>
+
+              <div className="divide-y divide-slate-100 text-sm text-slate-800">
+                {/* Bagian A */}
+                <div className="px-6 py-2.5 bg-slate-100/50 font-bold text-xs text-slate-700 flex items-center gap-2">
+                  <span className="w-5 text-atlas-blue">a.</span>
+                  <span>Kesepahaman Tim Perikatan atas :</span>
+                </div>
+
+                {/* a.1 */}
+                <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors pl-10">
+                  <div className="flex items-start gap-3 pr-4">
+                    <span className="w-6 font-bold text-slate-400 shrink-0">a.1</span>
+                    <span className="text-slate-700 font-medium">Apakah Tim Perikatan memahami ruang lingkup pekerjaan yang akan dilaksanakan?</span>
+                  </div>
+                  {renderToggle("qa1")}
+                </div>
+
+                {/* a.2 */}
+                <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors pl-10">
+                  <div className="flex items-start gap-3 pr-4">
+                    <span className="w-6 font-bold text-slate-400 shrink-0">a.2</span>
+                    <span className="text-slate-700 font-medium">Apakah Tim Perikatan memahami periode pelaksanaan audit?</span>
+                  </div>
+                  {renderToggle("qa2")}
+                </div>
+
+                {/* a.3 */}
+                <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors pl-10">
+                  <div className="flex items-start gap-3 pr-4">
+                    <span className="w-6 font-bold text-slate-400 shrink-0">a.3</span>
+                    <span className="text-slate-700 font-medium">Apakah Tim Perikatan memiliki keahlian dan ketrampilan yang memadai?</span>
+                  </div>
+                  {renderToggle("qa3")}
+                </div>
+
+                {/* a.4 */}
+                <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors pl-10">
+                  <div className="flex items-start gap-3 pr-4">
+                    <span className="w-6 font-bold text-slate-400 shrink-0">a.4</span>
+                    <span className="text-slate-700 font-medium">Apakah Tim Perikatan memahami hal-hal khusus untuk industri klien?</span>
+                  </div>
+                  {renderToggle("qa4")}
+                </div>
+
+                {/* Bagian B */}
+                <div className="px-6 py-2.5 bg-slate-100/50 font-bold text-xs text-slate-700 flex items-center gap-2">
+                  <span className="w-5 text-atlas-blue">b.</span>
+                  <span>Konsultasi selama Perikatan :</span>
+                </div>
+
+                {/* b.1 */}
+                <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors pl-10">
+                  <div className="flex items-start gap-3 pr-4">
+                    <span className="w-6 font-bold text-slate-400 shrink-0">b.1</span>
+                    <span className="text-slate-700 font-medium">Permasalahan yang diajukan</span>
+                  </div>
+                  {renderToggle("qb1")}
+                </div>
+
+                {/* b.2 */}
+                <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors pl-10">
+                  <div className="flex items-start gap-3 pr-4">
+                    <span className="w-6 font-bold text-slate-400 shrink-0">b.2</span>
+                    <span className="text-slate-700 font-medium">Data yang tersedia</span>
+                  </div>
+                  {renderToggle("qb2")}
+                </div>
+
+                {/* b.3 */}
+                <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors pl-10">
+                  <div className="flex items-start gap-3 pr-4">
+                    <span className="w-6 font-bold text-slate-400 shrink-0">b.3</span>
+                    <span className="text-slate-700 font-medium">Saran / tindakan / simpulan</span>
+                  </div>
+                  {renderToggle("qb3")}
+                </div>
+
+                {/* b.4 */}
+                <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors pl-10">
+                  <div className="flex items-start gap-3 pr-4">
+                    <span className="w-6 font-bold text-slate-400 shrink-0">b.4</span>
+                    <span className="text-slate-700 font-medium">Paraf / tandatangan Tim</span>
+                  </div>
+                  {renderToggle("qb4")}
+                </div>
+              </div>
+            </div>
+
+            {/* 3 Kotak Dokumentasi & Simpulan Modern */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Card 1: Contoh format komunikasi */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-blue-50 text-atlas-blue rounded-lg">
+                        <FileText size={16} />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-800">Contoh Format Komunikasi</h3>
+                        <p className="text-[11px] text-slate-500">Template baku KAP</p>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Lampiran */}
-                  <div className="border border-red-200 rounded-xl p-5 bg-white shadow-sm flex flex-col justify-between">
-                    <h4 className="text-sm font-bold text-red-600 mb-4 text-center border-b border-red-100 pb-2">Lampiran Jurnal Komunikasi</h4>
-                    {uploadedFile ? (
-                      <div className="w-full flex items-center justify-between bg-green-50 border border-green-200 text-green-700 p-3 rounded-lg">
-                        <span className="text-sm truncate pr-2 font-medium">{uploadedFile.name}</span>
-                        <button onClick={() => setUploadedFile(null)} className="text-green-600 hover:text-green-800 shrink-0">
-                          <Trash2 size={16} />
-                        </button>
+                  <div className="space-y-2 min-h-[90px]">
+                    {contohFiles.length === 0 ? (
+                      <div className="text-center py-6 text-xs text-slate-400 italic">
+                        Belum ada contoh format diunggah
                       </div>
                     ) : (
-                      <label className="w-full flex flex-col items-center justify-center bg-gray-50 border border-dashed border-gray-300 text-gray-500 py-4 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                        <Upload size={20} className="mb-2" />
-                        <span className="text-sm font-medium">Upload File</span>
-                        <input 
-                          type="file" 
-                          className="hidden" 
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files.length > 0) {
-                              setUploadedFile(e.target.files[0]);
-                            }
-                          }}
-                        />
-                      </label>
+                      contohFiles.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100/80 border border-slate-200/60 transition-colors group"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadFile(file)}
+                            className="text-xs font-medium text-atlas-blue hover:underline truncate flex items-center gap-1.5 text-left"
+                            title={file}
+                          >
+                            <Download size={13} className="shrink-0 text-slate-400" />
+                            <span className="truncate">{file}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteContoh(idx)}
+                            className="text-slate-400 hover:text-rose-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Hapus file"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))
                     )}
                   </div>
-
-                  {/* Simpulan Kotak */}
-                  <div className="border border-red-200 rounded-xl p-5 bg-white shadow-sm flex flex-col justify-center relative">
-                    <h4 className="text-sm font-bold text-red-600 mb-4 text-center border-b border-red-100 pb-2">Simpulan</h4>
-                    <div className="text-center">
-                      {!isPemahamanAllAnswered ? (
-                        <div className="text-red-500 font-bold bg-red-50 p-2 rounded-lg border border-red-100 inline-block">Komunikasi Tidak Memadai</div>
-                      ) : isMemadai ? (
-                        <div className="text-green-600 font-bold bg-green-50 p-2 rounded-lg border border-green-100 inline-block">Komunikasi Memadai</div>
-                      ) : (
-                        <div className="text-red-500 font-bold bg-red-50 p-2 rounded-lg border border-red-100 inline-block">Komunikasi Tidak Memadai</div>
-                      )}
-                    </div>
-
-                    {/* Tombol ke Strategi - Gambar 26 */}
-                    <div className="absolute -bottom-5 -right-2">
-                      <button 
-                        onClick={() => setActiveView("strategi")}
-                        className="bg-atlas-blue text-white px-4 py-2 rounded-lg font-bold shadow-lg hover:bg-blue-800 transition-colors flex items-center text-xs uppercase"
-                      >
-                        Strategi Audit Secara Keseluruhan <ArrowRight size={14} className="ml-1" />
-                      </button>
-                    </div>
-                  </div>
-
                 </div>
 
-                {/* Kotak Penjelasan Modifikasi */}
-                {needsModification && (
-                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-8">
-                    <label className="block text-sm font-bold text-red-600 mb-2">Jelaskan alasan mengapa prosedur ini tidak diselesaikan!</label>
-                    <textarea 
-                      className="w-full border-2 border-yellow-400 bg-yellow-100/50 rounded-xl p-4 text-gray-800 focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none min-h-[120px] shadow-sm"
-                      placeholder="Tuliskan alasan modifikasi atau ketidakpatuhan prosedur..."
-                      value={modificationReason}
-                      onChange={(e) => setModificationReason(e.target.value)}
-                    ></textarea>
+                <div className="pt-3 border-t border-slate-100">
+                  <label className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-atlas-blue bg-blue-50 hover:bg-blue-100/70 rounded-xl cursor-pointer transition-colors">
+                    <Plus size={14} />
+                    <span>Tambah Format Contoh</span>
+                    <input type="file" className="hidden" onChange={handleAddContohFile} />
+                  </label>
+                </div>
+              </div>
+
+              {/* Card 2: Lampiran Komunikasi Tim Perikatan */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
+                        <Paperclip size={16} />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-800">Lampiran Komunikasi Tim</h3>
+                        <p className="text-[11px] text-slate-500">Notulen, memo, & risalah diskusi</p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      {lampiranFiles.length} Dokumen
+                    </span>
                   </div>
-                )}
+
+                  <div className="space-y-2 min-h-[90px]">
+                    {lampiranFiles.length === 0 ? (
+                      <div className="text-center py-6 text-xs text-slate-400 italic">
+                        Belum ada lampiran diunggah
+                      </div>
+                    ) : (
+                      lampiranFiles.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100/80 border border-slate-200/60 transition-colors group"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadFile(file)}
+                            className="text-xs font-medium text-emerald-800 hover:underline truncate flex items-center gap-1.5 text-left"
+                            title={file}
+                          >
+                            <Download size={13} className="shrink-0 text-slate-400" />
+                            <span className="truncate">{file}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteLampiran(idx)}
+                            className="text-slate-400 hover:text-rose-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Hapus lampiran"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100">
+                  <label className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/70 rounded-xl cursor-pointer transition-colors">
+                    <Upload size={14} />
+                    <span>Upload Lampiran Komunikasi</span>
+                    <input type="file" className="hidden" onChange={handleAddLampiranFile} />
+                  </label>
+                </div>
+              </div>
+
+              {/* Card 3: Simpulan */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
+                        <ShieldCheck size={16} />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-800">Simpulan Komunikasi</h3>
+                        <p className="text-[11px] text-slate-500">Kecukupan koordinasi perikatan</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="block text-xs font-medium text-slate-600">
+                      Status Kecukupan Komunikasi
+                    </label>
+                    <select
+                      value={simpulanManual}
+                      onChange={(e) => setSimpulanManual(e.target.value)}
+                      className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-purple-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-200 cursor-pointer"
+                    >
+                      <option value="Komunikasi Memadai">
+                        Komunikasi Memadai
+                      </option>
+                      <option value="Komunikasi Tidak Memadai">
+                        Komunikasi Tidak Memadai
+                      </option>
+                    </select>
+
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-[11px] text-slate-600 leading-relaxed">
+                      {simpulanManual.includes("Tidak") ? (
+                        <span className="text-rose-600 font-medium">
+                          ⚠️ Komunikasi antar anggota tim belum optimal. Diperlukan pertemuan briefing tambahan untuk menyamakan persepsi prosedur.
+                        </span>
+                      ) : (
+                        <span className="text-emerald-700 font-medium">
+                          ✓ Komunikasi, konsultasi, dan kesepahaman ruang lingkup serta risiko perikatan terkoordinasi secara efektif sesuai SA 220.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-400">
+                  Otomatis terbarui saat kriteria dijawab
+                </div>
               </div>
             </div>
-            
-            <div className="flex justify-between items-center pt-4">
-              <button onClick={() => navigate(`/workspace/${engagement.id}`)} className="text-gray-500 font-bold hover:text-gray-800 px-4 py-2 flex items-center transition-colors">
-                <ArrowLeft size={16} className="mr-2" /> Kembali ke Index
+
+            {/* Card Catatan / Penjelasan Modern */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                  <span>Catatan / Risalah Diskusi Tim Perikatan</span>
+                  <span className="text-[11px] font-normal text-slate-400">
+                    (Poin krusial hasil diskusi perencanaan atau tindak lanjut konsultasi)
+                  </span>
+                </h3>
+                <span className="text-[11px] text-slate-400">Opsional</span>
+              </div>
+              <textarea
+                value={catatanPenjelasan}
+                onChange={(e) => setCatatanPenjelasan(e.target.value)}
+                rows={3}
+                placeholder="Tuliskan poin penting diskusi tim, isu akuntansi pelik yang dikonsultasikan, atau instruksi khusus perikatan audit..."
+                className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all"
+              />
+            </div>
+
+            {/* Action Footer */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+              <button
+                type="button"
+                onClick={() => navigate(`/workspace/${engagement?.id || ""}`)}
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
+              >
+                <ArrowLeft size={16} />
+                <span>Kembali ke Index</span>
               </button>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("strategi")}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-atlas-blue bg-blue-50 border border-blue-200 rounded-xl hover:bg-blue-100/70 transition-colors"
+                >
+                  <span>Ke Strategi Audit Keseluruhan</span>
+                  <ArrowRight size={14} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 rounded-xl transition-all shadow-sm hover:shadow"
+                >
+                  {isSaved ? <CheckCircle2 size={16} className="text-emerald-300" /> : <Save size={16} />}
+                  <span>{isSaved ? "Tersimpan" : "Simpan KKP A.160"}</span>
+                </button>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="animate-in fade-in duration-300 space-y-6">
-            {/* AUDIT STRATEGI MEMORANDUM (Gambar 27) */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="bg-slate-50 border-b border-gray-100 px-6 py-4 flex justify-between items-center">
-                <h2 className="text-lg font-bold text-gray-800 flex items-center uppercase tracking-wide">
-                  <FileText size={20} className="mr-2 text-atlas-blue" />
-                  Audit Strategi Memorandum
-                </h2>
-                <span className="text-xs font-bold text-gray-500">Ref: SA 300</span>
+          /* TAB 2: AUDIT STRATEGI MEMORANDUM (ASM) - MODERN MINIMALIST */
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-6">
+            <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-atlas-blue border border-blue-200">
+                    SA 300
+                  </span>
+                  <h2 className="text-base font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                    <Compass className="text-atlas-blue" size={18} />
+                    <span>Audit Strategi Memorandum (ASM)</span>
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Dokumentasi strategi audit menyeluruh yang menetapkan ruang lingkup, saat, dan arah audit untuk memandu penyusunan rencana audit detail.
+                </p>
               </div>
-              
-              <div className="p-6 space-y-6 bg-gray-50/30">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Karakteristik-Karakteristik Perikatan</label>
-                  <textarea 
-                    className="w-full border-2 border-yellow-300 bg-yellow-50 rounded-xl p-4 text-gray-800 focus:border-atlas-blue outline-none min-h-[80px]"
-                    value={strategi.karakteristik}
-                    onChange={(e) => setStrategi({...strategi, karakteristik: e.target.value})}
-                  ></textarea>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Tujuan Pelaporan, Saat Audit, dan Sifat Komunikasi</label>
-                  <textarea 
-                    className="w-full border-2 border-yellow-300 bg-yellow-50 rounded-xl p-4 text-gray-800 focus:border-atlas-blue outline-none min-h-[80px]"
-                    value={strategi.tujuan}
-                    onChange={(e) => setStrategi({...strategi, tujuan: e.target.value})}
-                  ></textarea>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Faktor Signifikan, Aktivitas Perikatan Awal, dan Pengetahuan yang Diperoleh dari Perikatan Lain</label>
-                  <textarea 
-                    className="w-full border-2 border-yellow-300 bg-yellow-50 rounded-xl p-4 text-gray-800 focus:border-atlas-blue outline-none min-h-[80px]"
-                    value={strategi.faktor}
-                    onChange={(e) => setStrategi({...strategi, faktor: e.target.value})}
-                  ></textarea>
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Sifat, Saat, dan Luas Sumber Daya</label>
-                  <textarea 
-                    className="w-full border-2 border-yellow-300 bg-yellow-50 rounded-xl p-4 text-gray-800 focus:border-atlas-blue outline-none min-h-[80px]"
-                    value={strategi.sumberDaya}
-                    onChange={(e) => setStrategi({...strategi, sumberDaya: e.target.value})}
-                  ></textarea>
+              <button
+                type="button"
+                onClick={() => setActiveTab("komunikasi")}
+                className="text-xs font-semibold text-atlas-blue hover:text-blue-800 flex items-center gap-1.5 self-start sm:self-center"
+              >
+                <ArrowLeft size={14} />
+                <span>Kembali ke Ceklis Komunikasi</span>
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-800">
+                  1. Karakteristik-Karakteristik Perikatan
+                </label>
+                <textarea
+                  className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all min-h-[75px]"
+                  value={strategi.karakteristik}
+                  onChange={(e) => setStrategi({ ...strategi, karakteristik: e.target.value })}
+                  placeholder="Karakteristik kerangka pelaporan keuangan, regulasi industri klien, ketersediaan tenaga ahli, lokasi cabang operasi..."
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-800">
+                  2. Tujuan Pelaporan, Saat Audit, dan Sifat Komunikasi
+                </label>
+                <textarea
+                  className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all min-h-[75px]"
+                  value={strategi.tujuan}
+                  onChange={(e) => setStrategi({ ...strategi, tujuan: e.target.value })}
+                  placeholder="Jadwal penyampaian laporan audit, rapat berkala dengan pihak yang bertanggung jawab atas tata kelola (TCWG), koordinasi interim & final..."
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-800">
+                  3. Faktor Signifikan, Aktivitas Perikatan Awal, dan Pengetahuan dari Perikatan Lain
+                </label>
+                <textarea
+                  className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all min-h-[75px]"
+                  value={strategi.faktor}
+                  onChange={(e) => setStrategi({ ...strategi, faktor: e.target.value })}
+                  placeholder="Hasil prosedur penerimaan/keberlanjutan klien, penentuan materialitas awal, transaksi signifikan dengan pihak berelasi..."
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-800">
+                  4. Sifat, Saat, dan Luas Sumber Daya
+                </label>
+                <textarea
+                  className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all min-h-[75px]"
+                  value={strategi.sumberDaya}
+                  onChange={(e) => setStrategi({ ...strategi, sumberDaya: e.target.value })}
+                  placeholder="Alokasi personil perikatan untuk area berisiko tinggi, pelibatan reviewer independen (EQCR), pembagian jam jasa per fase..."
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="p-1 bg-blue-50 text-atlas-blue rounded-md">
+                    <FileText size={14} />
+                  </span>
+                  <h3 className="font-bold text-xs text-slate-900 uppercase tracking-wider">
+                    Rencana Prosedur Audit Spesifik
+                  </h3>
                 </div>
 
-                <div className="pt-4 border-t border-gray-200">
-                  <h3 className="font-bold text-gray-800 uppercase text-center mb-6 tracking-widest bg-gray-100 py-2 rounded-lg">Perencanaan Audit</h3>
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Sifat, Saat, dan Luas Prosedur Risk Assessment</label>
-                      <textarea 
-                        className="w-full border-2 border-yellow-300 bg-yellow-50 rounded-xl p-4 text-gray-800 focus:border-atlas-blue outline-none min-h-[80px]"
-                        value={strategi.riskAssessment}
-                        onChange={(e) => setStrategi({...strategi, riskAssessment: e.target.value})}
-                      ></textarea>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Sifat, Saat, dan Luas Prosedur Lanjutan</label>
-                      <textarea 
-                        className="w-full border-2 border-yellow-300 bg-yellow-50 rounded-xl p-4 text-gray-800 focus:border-atlas-blue outline-none min-h-[80px]"
-                        value={strategi.prosedurLanjutan}
-                        onChange={(e) => setStrategi({...strategi, prosedurLanjutan: e.target.value})}
-                      ></textarea>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-800">
+                      Sifat, Saat, dan Luas Prosedur Risk Assessment
+                    </label>
+                    <textarea
+                      className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all min-h-[90px]"
+                      value={strategi.riskAssessment}
+                      onChange={(e) => setStrategi({ ...strategi, riskAssessment: e.target.value })}
+                      placeholder="Prosedur pemahaman bisnis entitas, evaluasi sistem pengendalian internal (SPI), prosedur analitis awal..."
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-800">
+                      Sifat, Saat, dan Luas Prosedur Lanjutan
+                    </label>
+                    <textarea
+                      className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all min-h-[90px]"
+                      value={strategi.prosedurLanjutan}
+                      onChange={(e) => setStrategi({ ...strategi, prosedurLanjutan: e.target.value })}
+                      placeholder="Uji pengendalian (TOC) dan uji substantif (TOD/SAP) atas asersi akun signifikan dan pengungkapan laporan keuangan..."
+                    />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-between items-center pt-4">
-              <button onClick={() => setActiveView("komunikasi")} className="text-gray-500 font-bold hover:text-gray-800 px-4 py-2 flex items-center transition-colors">
-                <ArrowLeft size={16} className="mr-2" /> Kembali ke Siklus Komunikasi
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setActiveTab("komunikasi")}
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
+              >
+                <ArrowLeft size={16} />
+                <span>Kembali ke Ceklis Komunikasi</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSave}
+                className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 rounded-xl transition-all shadow-sm hover:shadow"
+              >
+                {isSaved ? <CheckCircle2 size={16} className="text-emerald-300" /> : <Save size={16} />}
+                <span>{isSaved ? "Tersimpan" : "Simpan Strategi Audit"}</span>
               </button>
             </div>
           </div>
         )}
-
       </div>
+
+      {/* Toast Notifikasi Simpan */}
+      {isSaved && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center space-x-2 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm font-medium animate-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+          <span>Data Komunikasi Tim Perikatan berhasil disimpan.</span>
+        </div>
+      )}
     </WorksheetContainer>
   );
 };

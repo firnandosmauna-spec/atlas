@@ -1,232 +1,557 @@
 import React, { useState } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom";
+import { useOutletContext, useNavigate, useParams } from "react-router-dom";
 import type { Engagement } from "../../../store/engagementStore";
+import { useEngagementStore } from "../../../store/engagementStore";
 import WorksheetContainer from "../../../components/WorksheetContainer";
-import { CheckCircle2, AlertCircle, FileText, Upload, ShieldAlert, ArrowLeft, Download, Trash2, Info } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Save, 
+  CheckCircle2, 
+  AlertCircle,
+  Upload, 
+  Plus, 
+  Trash2, 
+  Download,
+  FileText,
+  ShieldCheck,
+  Paperclip,
+  Check,
+  X
+} from "lucide-react";
 
 const A170: React.FC = () => {
-  const { engagement } = useOutletContext<{ engagement: Engagement }>();
+  const context = useOutletContext<{ engagement?: Engagement }>();
+  const { id: paramId } = useParams<{ id: string }>();
+  const engagements = useEngagementStore((state) => state.engagements);
+  const updateEngagement = useEngagementStore((state) => state.updateEngagement);
+  const engagement = context?.engagement || engagements.find((e) => e.id === paramId) || engagements[0];
   const navigate = useNavigate();
 
-  // Kriteria Cek Saldo Awal (SA 510)
-  const [criteria, setCriteria] = useState([
-    { id: 1, text: "Apakah saldo penutup periode lalu telah dipindahkan dengan benar ke periode berjalan (atau telah dinyatakan kembali)?", answer: "" },
-    { id: 2, text: "Apakah kebijakan akuntansi entitas dicerminkan secara konsisten dalam saldo awal?", answer: "" },
-    { id: 3, text: "Jika laporan keuangan tahun lalu diaudit oleh auditor pendahulu, apakah penelaahan kertas kerja auditor pendahulu telah dilakukan?", answer: "" },
-    { id: 4, text: "Apakah telah dilakukan prosedur audit spesifik untuk memperoleh bukti mengenai apakah saldo awal mengandung salah saji material?", answer: "" },
-  ]);
+  // Load existing saved worksheet data if any
+  const wsData = (engagement as any)?.worksheetA170 || {};
 
-  const [modificationReason, setModificationReason] = useState("");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  // Form state
+  const [answers, setAnswers] = useState<Record<string, string>>({
+    q1: wsData.answers?.q1 ?? "Ya",
+    q2a: wsData.answers?.q2a ?? "Tidak",
+    q2b: wsData.answers?.q2b ?? "Ya",
+    q2c: wsData.answers?.q2c ?? "Ya",
+    q3: wsData.answers?.q3 ?? "Ya",
+    q4: wsData.answers?.q4 ?? "Ya",
+    q5: wsData.answers?.q5 ?? "Ya",
+  });
 
-  const handleUpdateAnswer = (id: number, value: string) => {
-    setCriteria(prev => prev.map(c => c.id === id ? { ...c, answer: value } : c));
+  const [contohFiles, setContohFiles] = useState<string[]>(
+    wsData.contohFiles ?? [
+      "5. Kosistensi kebijjakan akuntansi.pdf",
+      "6. komunikasi dengan manejmen_kebijakkan aku",
+    ]
+  );
+
+  const [lampiranFiles, setLampiranFiles] = useState<string[]>(
+    wsData.lampiranFiles ?? [
+      "1. KKP perbandingan saldo awal dan saldo tahun audited",
+      "2. KKP substantif akumulasi penyusutan aset tetap dengan m",
+      "3. KKP subsequent collection test atas kewajaran akun Piutan",
+      "4. KKP subsequent payment test atas kewajaran akun Utang",
+    ]
+  );
+
+  const [simpulan, setSimpulan] = useState<string>(
+    wsData.simpulan ?? "Secara umum Saldo Awal sudah wajar"
+  );
+
+  const [catatanPenjelasan, setCatatanPenjelasan] = useState<string>(
+    wsData.catatanPenjelasan ?? ""
+  );
+
+  const [isSaved, setIsSaved] = useState(false);
+
+  const handleAnswerChange = (key: string, value: string) => {
+    setAnswers((prev) => {
+      const next = { ...prev, [key]: value };
+      const hasReq2 = next.q2a === "Ya" || next.q2b === "Ya" || next.q2c === "Ya";
+      const isCompliant = next.q1 === "Ya" && hasReq2 && next.q3 === "Ya" && next.q4 === "Ya";
+      const allFilled = Object.values(next).every((v) => v !== "");
+      if (allFilled) {
+        if (!isCompliant) {
+          setSimpulan("Tidak dapat memperoleh bukti audit yang cukup dan tepat atas Saldo Awal");
+        } else {
+          setSimpulan("Secara umum Saldo Awal sudah wajar");
+        }
+      }
+      return next;
+    });
   };
 
-  const isAllAnswered = criteria.every(c => c.answer !== "");
-  const hasNoAnswers = criteria.some(c => c.answer === "Tidak");
-  
-  // Logic untuk simpulan
-  // Memadai jika: Semua dijawab "Ya"
-  // Tidak Memadai jika: Belum lengkap ATAU ada yang dijawab "Tidak"
-  const isMemadai = isAllAnswered && !hasNoAnswers;
-  
-  // Perlu penjelasan modifikasi jika: ada yang dijawab "Tidak"
-  const needsModification = hasNoAnswers;
+  // Logic Status KKP
+  const totalCriteria = Object.keys(answers).length;
+  const answeredCount = Object.values(answers).filter((val) => val !== "").length;
+  const isAllAnswered = answeredCount === totalCriteria;
+  const hasReq2 = answers.q2a === "Ya" || answers.q2b === "Ya" || answers.q2c === "Ya";
+  const isCompliant = answers.q1 === "Ya" && hasReq2 && answers.q3 === "Ya" && answers.q4 === "Ya";
+  const isWajar = simpulan === "Secara umum Saldo Awal sudah wajar";
+  const isCompleted = isAllAnswered && isCompliant && isWajar;
+  const statusKKP = isCompleted ? "Completed" : "Uncompleted";
 
-  // Status KKP = Completed jika (Memadai dan file terupload) ATAU (Tidak Memadai, alasan modifikasi terisi, dan file terupload)
-  const isCompleted = isAllAnswered && 
-                      (isMemadai || (!isMemadai && modificationReason.trim() !== "")) &&
-                      uploadedFile !== null;
+  const handleAddContohFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const fileName = e.target.files[0].name;
+      setContohFiles((prev) => [...prev, fileName]);
+    }
+  };
 
-  // Render peringatan jika bukan perikatan tahun pertama (ideal flow)
-  // Untuk keperluan demo ini, kita asumsikan hal ini bisa dilihat.
-  const isFirstYear = engagement.tipePerikatan === "Tahun Pertama" || true; 
+  const handleDeleteContoh = (index: number) => {
+    setContohFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddLampiranFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const fileName = e.target.files[0].name;
+      setLampiranFiles((prev) => [...prev, `${prev.length + 1}. ${fileName}`]);
+    }
+  };
+
+  const handleDeleteLampiran = (index: number) => {
+    setLampiranFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDownloadFile = (fileName: string) => {
+    const element = document.createElement("a");
+    const file = new Blob([`Dokumen Audit SA 510: ${fileName}\n\nIsi kertas kerja pendukung evaluasi saldo awal dan kebijakan akuntansi.`], {
+      type: "text/plain",
+    });
+    element.href = URL.createObjectURL(file);
+    element.download = fileName.endsWith(".pdf") ? fileName.replace(".pdf", ".txt") : `${fileName}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  const handleSave = () => {
+    if (engagement?.id) {
+      updateEngagement(engagement.id, {
+        worksheetA170: {
+          answers,
+          contohFiles,
+          lampiranFiles,
+          simpulan,
+          catatanPenjelasan,
+          isCompleted,
+          status: statusKKP,
+        },
+      } as any);
+    }
+    setIsSaved(true);
+    setTimeout(() => setIsSaved(false), 2500);
+  };
+
+  // Helper render tombol toggle Ya / Tidak
+  const renderToggle = (key: string) => {
+    const currentVal = answers[key];
+    return (
+      <div className="inline-flex p-1 bg-slate-100 rounded-lg border border-slate-200/80 shrink-0">
+        <button
+          type="button"
+          onClick={() => handleAnswerChange(key, "Ya")}
+          className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+            currentVal === "Ya"
+              ? "bg-emerald-600 text-white shadow-xs font-bold"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+          }`}
+        >
+          <Check size={12} className={currentVal === "Ya" ? "opacity-100" : "opacity-0"} />
+          <span>Ya</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleAnswerChange(key, "Tidak")}
+          className={`flex items-center gap-1 px-3 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+            currentVal === "Tidak"
+              ? "bg-rose-600 text-white shadow-xs font-bold"
+              : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+          }`}
+        >
+          <X size={12} className={currentVal === "Tidak" ? "opacity-100" : "opacity-0"} />
+          <span>Tidak</span>
+        </button>
+      </div>
+    );
+  };
 
   return (
     <WorksheetContainer
       code="A.170"
       name="Perikatan Audit Tahun Pertama"
-      purpose="Mengidentifikasi prosedur audit untuk perikatan tahun pertama, berfokus pada pengecekan saldo awal."
-      status={isCompleted ? "Completed" : "In Progress"}
-      reviewer={engagement.managerName || "Menunggu Reviewer"}
+      purpose="Mengidentifikasi prosedur audit untuk perikatan tahun pertama, berfokus pada pengecekan saldo awal dan konsistensi kebijakan akuntansi."
+      status={statusKKP}
+      reviewer={engagement?.managerName || "Menunggu Reviewer"}
       lastUpdated="Baru saja"
     >
-      <div className="space-y-6">
-        
-        {/* Info Card */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col md:flex-row gap-6 shadow-sm">
-          <div className="flex-1 space-y-4">
-            <div>
-              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Standar Auditing yang Relevan</h3>
-              <ul className="text-sm text-gray-700 font-medium space-y-1">
-                <li className="flex items-start"><ShieldAlert size={16} className="mr-2 text-atlas-blue shrink-0 mt-0.5" /> SA 510 : Perikatan Audit Tahun Pertama - Saldo Awal</li>
-              </ul>
+      <div className="space-y-6 max-w-7xl mx-auto">
+        {/* Banner Ringkasan Modern */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-atlas-blue border border-blue-200">
+                SA 510
+              </span>
+              <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+                Audit Saldo Awal Perikatan Pertama
+              </h1>
             </div>
-            <p className="text-sm text-gray-600 leading-relaxed max-w-3xl">
-              Kertas kerja ini digunakan untuk mengidentifikasi proses/prosedur yang harus dilakukan auditor pada perikatan tahun pertama. Perikatan tahun pertama mempunyai perlakuan khusus sesuai dengan standar audit yang berlaku, khususnya terkait verifikasi kewajaran Saldo Awal.
+            <p className="text-xs text-slate-500">
+              Evaluasi kewajaran saldo awal dan konsistensi penerapan kebijakan akuntansi dari periode sebelumnya ke periode berjalan.
             </p>
           </div>
-          
-          <div className="md:w-1/3 bg-gray-50 rounded-xl p-4 border border-gray-100 flex flex-col justify-center items-center text-center">
-            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Status KKP</h4>
-            {isCompleted ? (
-              <div className="flex flex-col items-center">
-                <CheckCircle2 size={32} className="text-green-500 mb-2" />
-                <span className="text-green-700 font-black text-lg">COMPLETED</span>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center">
-                <AlertCircle size={32} className="text-amber-500 mb-2" />
-                <span className="text-amber-700 font-black text-lg">INCOMPLETED</span>
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Warning Alert if not first year (Simulation) */}
-        {engagement.tipePerikatan === "Berulang" && (
-          <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-xl p-4 flex items-start shadow-sm">
-            <Info className="shrink-0 mr-3 mt-0.5" size={20} />
-            <div>
-              <h4 className="font-bold text-sm">Informasi Tipe Perikatan</h4>
-              <p className="text-sm mt-1">Sistem mendeteksi bahwa ini adalah perikatan berulang. Normalnya, kertas kerja A.170 ini hanya wajib diisi jika tipe perikatan di beranda diatur sebagai "Perikatan Tahun Pertama". Namun, untuk keperluan demo, Anda tetap dapat mengaksesnya.</p>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <div className="text-xs text-slate-500">Progress Prosedur</div>
+              <div className="text-sm font-bold text-slate-800">
+                {answeredCount} dari {totalCriteria} kriteria ({Math.round((answeredCount / totalCriteria) * 100)}%)
+              </div>
+            </div>
+            <div className={`px-4 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
+              isCompleted 
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                : "bg-rose-50 text-rose-700 border-rose-200"
+            }`}>
+              {isCompleted ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+              <span>{isCompleted ? "STATUS: COMPLETED" : "STATUS: UNCOMPLETED"}</span>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Analisis Kriteria */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-          <div className="bg-slate-50 border-b border-gray-100 px-6 py-4">
-            <h2 className="text-lg font-bold text-gray-800 flex items-center">
-              <FileText size={20} className="mr-2 text-atlas-blue" />
-              Kontrol Prosedur Cek Saldo Awal
-            </h2>
+        {/* Card Kuesioner Kontrol Kriteria */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="px-6 py-4 bg-slate-50/70 border-b border-slate-200/70 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="text-atlas-blue" size={18} />
+              <h2 className="text-sm font-bold text-slate-800">
+                Prosedur Audit Saldo Awal & Konsistensi Kebijakan Akuntansi
+              </h2>
+            </div>
+            <span className="text-xs text-slate-500 font-medium">
+              Hasil Analisis (Ya / Tidak)
+            </span>
           </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border-collapse">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 font-bold text-gray-600 w-16 text-center">No</th>
-                  <th className="px-6 py-4 font-bold text-gray-600">Prosedur / Pertanyaan</th>
-                  <th className="px-6 py-4 font-bold text-gray-600 w-48 text-center bg-blue-50/50">Dilakukan (Ya/Tidak)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {criteria.map((item, idx) => (
-                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 text-center font-bold text-gray-400">{idx + 1}</td>
-                    <td className="px-6 py-4 text-gray-700 font-medium">{item.text}</td>
-                    <td className="px-6 py-4 bg-blue-50/20">
-                      <select 
-                        className={`w-full border rounded-lg p-2 focus:ring-2 focus:ring-atlas-blue/20 outline-none text-center font-bold shadow-sm ${
-                          item.answer === "Ya" ? "bg-green-100 border-green-300 text-green-700" : 
-                          item.answer === "Tidak" ? "bg-red-100 border-red-300 text-red-700" : 
-                          "border-gray-300 bg-white"
-                        }`}
-                        value={item.answer}
-                        onChange={(e) => handleUpdateAnswer(item.id, e.target.value)}
-                      >
-                        <option value="" disabled>-</option>
-                        <option value="Ya">Ya</option>
-                        <option value="Tidak">Tidak</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          <div className="divide-y divide-slate-100 text-sm text-slate-800">
+            {/* 1 */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3.5 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">1.</span>
+                <span className="text-slate-700 font-medium">
+                  Membaca laporan keuangan terkini dan laporan auditor terdahulu (jika ada), untuk informasi yang relevan dengan saldo awal
+                </span>
+              </div>
+              {renderToggle("q1")}
+            </div>
+
+            {/* 2 Header */}
+            <div className="px-6 py-2.5 bg-slate-100/50 font-bold text-xs text-slate-700 flex items-center gap-2">
+              <span className="w-5 text-atlas-blue font-bold">2.</span>
+              <span>Melakukan satu atau lebih prosedur berikut :</span>
+            </div>
+
+            {/* 2.a */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors pl-11">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">a.</span>
+                <span className="text-slate-700 font-medium">
+                  Terdapat reviu kertas kerja auditor pendahulu, jika laporan keuangan tahun lalu telah diaudit
+                </span>
+              </div>
+              {renderToggle("q2a")}
+            </div>
+
+            {/* 2.b */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors pl-11">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">b.</span>
+                <span className="text-slate-700 font-medium">
+                  Terdapat evaluasi apakah prosedur audit dalam periode berjalan menyediakan bukti audit yang relevan dengan saldo awal
+                </span>
+              </div>
+              {renderToggle("q2b")}
+            </div>
+
+            {/* 2.c */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors pl-11">
+              <div className="flex items-start gap-3 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">c.</span>
+                <span className="text-slate-700 font-medium">
+                  Melakukan prosedur audit spesifik untuk memperoleh bukti yang terkait dengan saldo awal
+                </span>
+              </div>
+              {renderToggle("q2c")}
+            </div>
+
+            {/* 3 */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3.5 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">3.</span>
+                <span className="text-slate-700 font-medium">
+                  Terdapat bukti audit yang cukup dan tepat bahwa saldo akhir periode lalu secara benar dipindahkan ke periode berjalan, atau, jika tepat, telah disajikan kembali?
+                </span>
+              </div>
+              {renderToggle("q3")}
+            </div>
+
+            {/* 4 */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3.5 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">4.</span>
+                <span className="text-slate-700 font-medium">
+                  Terdapat bukti audit yang cukup dan tepat bahwa saldo awal telah mencerminkan penerapan kebijakan akuntansi yang semestinya
+                </span>
+              </div>
+              {renderToggle("q4")}
+            </div>
+
+            {/* 5 */}
+            <div className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-start gap-3.5 pr-4">
+                <span className="w-5 font-bold text-slate-400 shrink-0">5.</span>
+                <span className="text-slate-700 font-medium">
+                  Apakah saldo awal mengandung salah saji yang material?
+                </span>
+              </div>
+              {renderToggle("q5")}
+            </div>
           </div>
         </div>
 
-        {/* Dokumen & Simpulan (Gambar 28) */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
-          <div className="bg-slate-50 border-b border-gray-100 px-6 py-4">
-            <h2 className="text-lg font-bold text-gray-800 flex items-center">
-              <CheckCircle2 size={20} className="mr-2 text-atlas-blue" />
-              Dokumentasi & Simpulan
-            </h2>
-          </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              
-              {/* Contoh Format */}
-              <div className="border border-red-200 rounded-xl p-5 bg-white shadow-sm flex flex-col justify-between">
-                <h4 className="text-sm font-bold text-red-600 mb-4 text-center border-b border-red-100 pb-2">Contoh Cek Saldo Awal</h4>
-                <button className="w-full flex items-center justify-center space-x-2 bg-gray-50 border border-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-100 transition-colors font-medium">
-                  <Download size={18} />
-                  <span>Download Template</span>
-                </button>
-              </div>
-
-              {/* Lampiran */}
-              <div className="border border-red-200 rounded-xl p-5 bg-white shadow-sm flex flex-col justify-between">
-                <h4 className="text-sm font-bold text-red-600 mb-4 text-center border-b border-red-100 pb-2">Lampiran KKP Cek Saldo Awal</h4>
-                {uploadedFile ? (
-                  <div className="w-full flex items-center justify-between bg-green-50 border border-green-200 text-green-700 p-3 rounded-lg">
-                    <span className="text-sm truncate pr-2 font-medium">{uploadedFile.name}</span>
-                    <button onClick={() => setUploadedFile(null)} className="text-green-600 hover:text-green-800 shrink-0">
-                      <Trash2 size={16} />
-                    </button>
+        {/* 3 Kotak Dokumentasi & Simpulan Modern */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: Contoh cek saldo awal */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-50 text-atlas-blue rounded-lg">
+                    <FileText size={16} />
                   </div>
-                ) : (
-                  <label className="w-full flex flex-col items-center justify-center bg-gray-50 border border-dashed border-gray-300 text-gray-500 py-4 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
-                    <Upload size={20} className="mb-2" />
-                    <span className="text-sm font-medium">Upload File</span>
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files.length > 0) {
-                          setUploadedFile(e.target.files[0]);
-                        }
-                      }}
-                    />
-                  </label>
-                )}
-              </div>
-
-              {/* Simpulan Kotak */}
-              <div className="border border-red-200 rounded-xl p-5 bg-white shadow-sm flex flex-col justify-center">
-                <h4 className="text-sm font-bold text-red-600 mb-4 text-center border-b border-red-100 pb-2">Simpulan</h4>
-                <div className="text-center">
-                  {!isAllAnswered ? (
-                    <div className="text-red-500 font-bold bg-red-50 p-2 rounded-lg border border-red-100 inline-block">Cek Saldo Awal Tidak Memadai</div>
-                  ) : isMemadai ? (
-                    <div className="text-green-600 font-bold bg-green-50 p-2 rounded-lg border border-green-100 inline-block">Cek Saldo Awal Memadai</div>
-                  ) : (
-                    <div className="text-red-500 font-bold bg-red-50 p-2 rounded-lg border border-red-100 inline-block">Cek Saldo Awal Tidak Memadai</div>
-                  )}
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-800">Contoh Format Cek Saldo Awal</h3>
+                    <p className="text-[11px] text-slate-500">Panduan & referensi prosedur</p>
+                  </div>
                 </div>
               </div>
 
+              <div className="space-y-2 min-h-[90px]">
+                {contohFiles.length === 0 ? (
+                  <div className="text-center py-6 text-xs text-slate-400 italic">
+                    Belum ada contoh format diunggah
+                  </div>
+                ) : (
+                  contohFiles.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100/80 border border-slate-200/60 transition-colors group"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadFile(file)}
+                        className="text-xs font-medium text-atlas-blue hover:underline truncate flex items-center gap-1.5 text-left"
+                        title={file}
+                      >
+                        <Download size={13} className="shrink-0 text-slate-400" />
+                        <span className="truncate">{file}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteContoh(idx)}
+                        className="text-slate-400 hover:text-rose-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Hapus file"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
-            {/* Kotak Penjelasan Modifikasi */}
-            {needsModification && (
-              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                <label className="block text-sm font-bold text-red-600 mb-2">Jelaskan bagaimana KAP melakukan uji saldo awal</label>
-                <textarea 
-                  className="w-full border-2 border-yellow-400 bg-yellow-100/50 rounded-xl p-4 text-gray-800 focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none min-h-[120px] shadow-sm"
-                  placeholder="Kriteria uji saldo awal tidak lengkap. Jelaskan prosedur spesifik yang dilakukan KAP..."
-                  value={modificationReason}
-                  onChange={(e) => setModificationReason(e.target.value)}
-                ></textarea>
+            <div className="pt-3 border-t border-slate-100">
+              <label className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-atlas-blue bg-blue-50 hover:bg-blue-100/70 rounded-xl cursor-pointer transition-colors">
+                <Plus size={14} />
+                <span>Tambah Format Contoh</span>
+                <input type="file" className="hidden" onChange={handleAddContohFile} />
+              </label>
+            </div>
+          </div>
+
+          {/* Card 2: Lampiran KKP cek saldo awal */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
+                    <Paperclip size={16} />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-800">Lampiran KKP Saldo Awal</h3>
+                    <p className="text-[11px] text-slate-500">Kertas kerja pengujian substantif</p>
+                  </div>
+                </div>
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  {lampiranFiles.length} KKP
+                </span>
               </div>
-            )}
+
+              <div className="space-y-2 min-h-[90px]">
+                {lampiranFiles.length === 0 ? (
+                  <div className="text-center py-6 text-xs text-slate-400 italic">
+                    Belum ada lampiran diunggah
+                  </div>
+                ) : (
+                  lampiranFiles.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-50 hover:bg-slate-100/80 border border-slate-200/60 transition-colors group"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadFile(file)}
+                        className="text-xs font-medium text-emerald-800 hover:underline truncate flex items-center gap-1.5 text-left"
+                        title={file}
+                      >
+                        <Download size={13} className="shrink-0 text-slate-400" />
+                        <span className="truncate">{file}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteLampiran(idx)}
+                        className="text-slate-400 hover:text-rose-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Hapus lampiran"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100">
+              <label className="w-full flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100/70 rounded-xl cursor-pointer transition-colors">
+                <Upload size={14} />
+                <span>Upload Lampiran KKP</span>
+                <input type="file" className="hidden" onChange={handleAddLampiranFile} />
+              </label>
+            </div>
+          </div>
+
+          {/* Card 3: Simpulan */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
+                    <ShieldCheck size={16} />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold text-slate-800">Simpulan Saldo Awal</h3>
+                    <p className="text-[11px] text-slate-500">Opini kelayakan saldo awal</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block text-xs font-medium text-slate-600">
+                  Hasil Evaluasi Saldo Awal
+                </label>
+                <select
+                  value={simpulan}
+                  onChange={(e) => setSimpulan(e.target.value)}
+                  className="w-full text-xs font-bold p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 text-purple-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-200 cursor-pointer"
+                >
+                  <option value="Secara umum Saldo Awal sudah wajar">
+                    Secara umum Saldo Awal sudah wajar
+                  </option>
+                  <option value="Saldo Awal mengandung salah saji material">
+                    Saldo Awal mengandung salah saji material
+                  </option>
+                  <option value="Tidak dapat memperoleh bukti audit yang cukup dan tepat atas Saldo Awal">
+                    Tidak dapat memperoleh bukti audit yang cukup dan tepat atas Saldo Awal
+                  </option>
+                </select>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-[11px] text-slate-600 leading-relaxed">
+                  {simpulan.includes("sudah wajar") ? (
+                    <span className="text-emerald-700 font-medium">
+                      ✓ Saldo awal telah ditelusuri ke laporan keuangan tahun lalu dan/atau pengujian substantif dengan kesimpulan wajar sesuai SA 510.
+                    </span>
+                  ) : simpulan.includes("salah saji") ? (
+                    <span className="text-rose-600 font-medium">
+                      ⚠️ Terdapat indikasi salah saji material pada saldo awal. Diperlukan penyesuaian retrospektif atau modifikasi opini audit.
+                    </span>
+                  ) : (
+                    <span className="text-amber-700 font-medium">
+                      ⚠️ Keterbatasan bukti audit atas saldo awal. Auditor harus mempertimbangkan dampak terhadap laporan auditor independen.
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 text-[11px] text-slate-400">
+              Evaluasi sesuai SA 510 Paragraf 6-13
+            </div>
           </div>
         </div>
 
-        {/* Action Footer */}
-        <div className="flex justify-between items-center pt-4">
-          <button onClick={() => navigate(`/workspace/${engagement.id}`)} className="text-gray-500 font-bold hover:text-gray-800 px-4 py-2 flex items-center transition-colors">
-            <ArrowLeft size={16} className="mr-2" /> Kembali ke Index
-          </button>
+        {/* Card Catatan / Penjelasan Modern */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+              <span>Catatan & Pertimbangan Auditor atas Saldo Awal</span>
+              <span className="text-[11px] font-normal text-slate-400">
+                (Penjelasan rincian pengujian substantif, reviu auditor pendahulu, atau rekonsiliasi)
+              </span>
+            </h3>
+            <span className="text-[11px] text-slate-400">Opsional</span>
+          </div>
+          <textarea
+            value={catatanPenjelasan}
+            onChange={(e) => setCatatanPenjelasan(e.target.value)}
+            rows={3}
+            placeholder="Tuliskan catatan khusus terkait hasil perbandingan saldo awal dengan laporan audited tahun lalu, uji subsequent collection/payment, atau catatan penyesuaian..."
+            className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all"
+          />
         </div>
 
+        {/* Action Footer */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/workspace/${engagement?.id || ""}`)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
+          >
+            <ArrowLeft size={16} />
+            <span>Kembali ke Index</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 rounded-xl transition-all shadow-sm hover:shadow"
+          >
+            {isSaved ? <CheckCircle2 size={16} className="text-emerald-300" /> : <Save size={16} />}
+            <span>{isSaved ? "Tersimpan" : "Simpan KKP A.170"}</span>
+          </button>
+        </div>
       </div>
+
+      {/* Toast Notifikasi Simpan */}
+      {isSaved && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center space-x-2 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm font-medium animate-in slide-in-from-bottom-3 duration-200">
+          <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+          <span>Evaluasi Saldo Awal Perikatan Pertama berhasil disimpan.</span>
+        </div>
+      )}
     </WorksheetContainer>
   );
 };

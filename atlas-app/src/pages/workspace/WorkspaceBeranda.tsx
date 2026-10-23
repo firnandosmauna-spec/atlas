@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import type { Engagement } from '../../store/engagementStore';
 import { useEngagementStore } from '../../store/engagementStore';
 import { useAuthStore } from '../../store/authStore';
+import { useAccountingStandardStore } from '../../store/accountingStandardStore';
 import { Users, Building, FileSpreadsheet, Save, CheckCircle, Edit2, X, Plus } from 'lucide-react';
 import EngagementFormModal from '../../components/EngagementFormModal';
 
@@ -115,6 +116,7 @@ const WorkspaceBeranda = () => {
   const { hasPermission } = useAuthStore();
   const canEdit = hasPermission('fill_worksheet');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { standards, getStandardName } = useAccountingStandardStore();
 
   // ── Section 1: Auditor & Tim ──
   const [editAuditor, setEditAuditor] = useState(false);
@@ -385,16 +387,25 @@ const WorkspaceBeranda = () => {
               }
             />
             <FieldRow
-              label="Standar Akuntansi yang Berlaku"
-              value={STANDARD_LABELS[perikatanForm.accountingStandard] || perikatanForm.accountingStandard}
+              label="Standar Akuntansi yang Berlaku (Aplikasi PELITA)"
+              value={
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span>{getStandardName(perikatanForm.accountingStandard) || STANDARD_LABELS[perikatanForm.accountingStandard] || perikatanForm.accountingStandard}</span>
+                  {standards.find(s => s.code === perikatanForm.accountingStandard)?.pelitaCategory && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
+                      PELITA: {standards.find(s => s.code === perikatanForm.accountingStandard)?.pelitaCategory}
+                    </span>
+                  )}
+                </div>
+              }
               editing={editPerikatan}
               editNode={
                 <select className={selectCls} value={perikatanForm.accountingStandard} onChange={e => setPerikatanForm(f => ({ ...f, accountingStandard: e.target.value as any }))}>
-                  <option value="SAK_UMUM">SAK Umum (PSAK)</option>
-                  <option value="SAK_ETAP">SAK ETAP</option>
-                  <option value="SAK_EMKM">SAK EMKM</option>
-                  <option value="PSAK_SYARIAH">PSAK Syariah</option>
-                  <option value="SAP">SAP (Pemerintah)</option>
+                  {standards.filter(s => s.isActive || s.code === perikatanForm.accountingStandard).map(std => (
+                    <option key={std.code} value={std.code}>
+                      {std.name} {std.pelitaCategory ? `— [PELITA: ${std.pelitaCategory}]` : (std.category ? `(${std.category})` : '')}
+                    </option>
+                  ))}
                 </select>
               }
             />

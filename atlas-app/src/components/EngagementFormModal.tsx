@@ -16,10 +16,12 @@ import {
   Plus,
   Maximize2,
   Minimize2,
-  X
+  X,
+  Sliders
 } from 'lucide-react';
 import { useEngagementStore } from '../store/engagementStore';
 import type { Engagement } from '../store/engagementStore';
+import { useAccountingStandardStore } from '../store/accountingStandardStore';
 import { SYSTEM_ROLES } from '../constants/roles';
 import { 
   getSynchronizedKAPUsersSync, 
@@ -45,6 +47,28 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
   const [isExpanded, setIsExpanded] = useState(false);
   const [allUsers, setAllUsers] = useState<UserData[]>([]);
   const [selectedTeamMembers, setSelectedTeamMembers] = useState<{ id: string; name: string; role: string; email?: string }[]>([]);
+
+  const { standards } = useAccountingStandardStore();
+  const availableStandards = useMemo(() => {
+    const active = standards.filter(s => s.isActive);
+    if (initialData?.accountingStandard && !active.some(s => s.code === initialData.accountingStandard)) {
+      const match = standards.find(s => s.code === initialData.accountingStandard);
+      if (match) return [...active, match];
+      return [
+        ...active,
+        {
+          id: 'legacy',
+          code: initialData.accountingStandard,
+          name: initialData.accountingStandard,
+          description: 'Standar Akuntansi Perikatan',
+          category: 'Lainnya',
+          isActive: true,
+          isSystemDefault: false
+        }
+      ];
+    }
+    return active;
+  }, [standards, initialData]);
 
   // Synchronize users immediately and asynchronously when modal is opened
   useEffect(() => {
@@ -352,17 +376,39 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">Standar Akuntansi</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                      Standar Akuntansi <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        navigate('/settings?tab=standards');
+                      }}
+                      className="text-[10px] text-atlas-blue hover:text-blue-800 font-semibold hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+                      title="Buka Pengaturan Master Standar Akuntansi KAP"
+                    >
+                      <Sliders size={10} />
+                      <span>Kelola Standar</span>
+                    </button>
+                  </div>
                   <select 
                     {...register('accountingStandard')} 
-                    className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-slate-900 focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none transition-all bg-white shadow-2xs"
+                    className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-xs sm:text-sm text-slate-900 focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none transition-all bg-white shadow-2xs cursor-pointer"
                   >
-                    <option value="SAK_UMUM">SAK Umum</option>
-                    <option value="SAK_ETAP">SAK ETAP</option>
-                    <option value="SAK_EMKM">SAK EMKM</option>
-                    <option value="PSAK_SYARIAH">PSAK Syariah</option>
-                    <option value="SAP">SAP (Standar Akuntansi Pemerintahan)</option>
+                    {availableStandards.map((std) => (
+                      <option key={std.code} value={std.code}>
+                        {std.name} {std.pelitaCategory ? `— [PELITA: ${std.pelitaCategory}]` : (std.category ? `(${std.category})` : '')}
+                      </option>
+                    ))}
                   </select>
+                  <div className="flex items-center gap-1.5 mt-1 text-[10px] text-slate-500">
+                    <span className="font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200 shrink-0">
+                      Aplikasi PELITA Kemenkeu
+                    </span>
+                    <span className="truncate">Sesuai klasifikasi resmi pelaporan PPPK Kemenkeu & QR Code LAI</span>
+                  </div>
                 </div>
 
                 <div>

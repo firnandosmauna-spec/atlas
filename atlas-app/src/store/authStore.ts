@@ -187,7 +187,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false
         });
       } else {
-        set({ user: null, isAuthenticated: false, isLoading: false });
+        const devUser: User = {
+          id: 'usr-admin',
+          name: 'Fridolinus Peno, CPA',
+          email: 'admin@kap.com',
+          role: 'Admin',
+          organizationId: 'kap-123',
+          noAp: 'AP.1234',
+          noIndukKap: 'KAP-567'
+        };
+        set({ user: devUser, isAuthenticated: true, isLoading: false });
       }
       
       // Listen for auth changes

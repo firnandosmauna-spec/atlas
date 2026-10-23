@@ -15,6 +15,8 @@ export interface Account {
   debit: number;
   credit: number;
   endingBalance: number;
+  budget?: number;
+  statementType?: 'LO' | 'LRA' | 'LAK' | 'LPSAL' | 'Neraca' | string;
 }
 
 export interface Materiality {
@@ -94,7 +96,7 @@ export interface Engagement {
   auditPeriod: string;
   fiscalYear: string;
   engagementType: 'First Year' | 'Recurring';
-  accountingStandard: 'SAK_UMUM' | 'SAK_ETAP' | 'SAK_EMKM' | 'PSAK_SYARIAH' | 'SAP';
+  accountingStandard: 'SAK_UMUM' | 'SAK_EP' | 'SAK_ETAP' | 'SAK_EMKM' | 'PSAK_SYARIAH' | 'SAP' | string;
   currency: 'IDR' | 'USD' | 'Other';
   presentationUnit: 'Full' | 'Thousands' | 'Millions';
   partnerId: string;
@@ -196,7 +198,46 @@ interface EngagementState {
   markAllNotificationsAsRead: () => void;
 }
 
-export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [];
+export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [
+  {
+    id: 'ENG-2025-548',
+    clientId: 'CLI-001',
+    clientName: 'PT Nusantara Citra Abadi',
+    clientIndustry: 'Industri Pengolahan / Manufaktur',
+    auditPeriod: '2025',
+    fiscalYear: '2025',
+    engagementType: 'First Year',
+    accountingStandard: 'SAK_EP',
+    currency: 'IDR',
+    presentationUnit: 'Full',
+    partnerId: 'usr-partner',
+    partnerName: 'Fridolinus Peno, CPA',
+    managerId: 'usr-mgr',
+    managerName: 'Dwi Safitriana, M.Ak',
+    auditorId: 'usr-auditor',
+    auditorName: 'Senior Auditor ATLAS',
+    startDate: '2025-01-01',
+    targetDate: '2025-04-30',
+    status: 'Active',
+    progress: 35,
+    worksheetA110: {
+      industry: 'Industri Pengolahan / Manufaktur',
+      boardOfDirectors: 'Direktur Utama: Ir. Budi Santoso\nKomisaris Utama: Dr. Hendrawan',
+      usagePurpose: 'Pertanggungjawaban RUPS dan Fasilitas Kredit Bank Mandiri',
+      evaluations: {
+        'A.1101': 'low',
+        'A.1102': 'low',
+        'A.1103': 'low',
+        'A.1104': 'low'
+      },
+      overallRisk: 'low',
+      anomalyExplanation: '',
+      decision: 'Accept',
+      decisionReason: 'Klien beritikad baik, independensi dan kompetensi tim audit mencukupi standar SPM 1 dan SA 220.',
+      status: 'In Progress'
+    }
+  }
+];
 
 export const useEngagementStore = create<EngagementState>()(
   persist(

@@ -238,6 +238,80 @@ export const formatDisplayHourLabel = (timeStr: string): string => {
   return `Jam ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 };
 
+// Format angka dengan pemisah ribuan berupa titik (.) untuk format mata uang Indonesia (misal 1000 -> 1.000)
+export const formatNumberWithDots = (val: number | string | undefined | null): string => {
+  if (val === undefined || val === null || val === '') return '';
+  const numStr = val.toString().replace(/\D/g, '');
+  if (!numStr) return '';
+  return new Intl.NumberFormat('id-ID').format(Number(numStr));
+};
+
+export const parseNumberFromDots = (val: string): number => {
+  const cleanStr = val.replace(/\D/g, '');
+  return cleanStr ? parseInt(cleanStr, 10) : 0;
+};
+
+interface MoneyInputProps {
+  value: number;
+  onChange: (val: number) => void;
+  placeholder?: string;
+  className?: string;
+  id?: string;
+  title?: string;
+}
+
+const MoneyInput: React.FC<MoneyInputProps> = ({
+  value,
+  onChange,
+  placeholder = '0',
+  className,
+  id,
+  title,
+}) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const rawCursor = input.selectionStart || 0;
+    const currentVal = input.value;
+    const digitsBeforeCursor = currentVal.slice(0, rawCursor).replace(/\D/g, '').length;
+    
+    const num = parseNumberFromDots(currentVal);
+    onChange(num);
+
+    const formatted = num ? formatNumberWithDots(num) : '';
+    requestAnimationFrame(() => {
+      if (document.activeElement !== input) return;
+      let newCursor = 0;
+      let digitCount = 0;
+      for (let i = 0; i < formatted.length; i++) {
+        if (/\d/.test(formatted[i])) {
+          digitCount++;
+        }
+        if (digitCount >= digitsBeforeCursor) {
+          newCursor = i + 1;
+          break;
+        }
+      }
+      if (digitCount < digitsBeforeCursor) {
+        newCursor = formatted.length;
+      }
+      input.setSelectionRange(newCursor, newCursor);
+    });
+  };
+
+  return (
+    <input
+      id={id}
+      type="text"
+      inputMode="numeric"
+      placeholder={placeholder}
+      value={value ? formatNumberWithDots(value) : ''}
+      onChange={handleChange}
+      className={className}
+      title={title}
+    />
+  );
+};
+
 const A120 = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
   const updateEngagement = useEngagementStore(state => state.updateEngagement);
@@ -515,8 +589,8 @@ const A120 = () => {
     }));
   };
 
-  const handleUpdateRate = (id: string, value: string) => {
-    const numValue = parseFloat(value) || 0;
+  const handleUpdateRate = (id: string, value: number | string) => {
+    const numValue = typeof value === 'number' ? value : parseNumberFromDots(value);
     setTeamData(prev => prev.map(m => m.id === id ? { ...m, rate: numValue } : m));
   };
 
@@ -561,6 +635,36 @@ const A120 = () => {
     return { autoTotal, manualTotal, fee: totalFee, grandTotal: totalFee + rencanaBiayaLain };
   }, [teamData, rencanaBiayaLain]);
 
+  // Perhitungan dan status Sisa Jam Efektif (Total Jam Kerja Efektif Rencana - Total Alokasi Jam Aktual ke Tim)
+  const remainingEffectiveHoursData = useMemo(() => {
+    const totalEffective = timeCalc.totalEffectiveHours;
+    const totalAllocated = totals.manualTotal.all;
+    const remaining = parseFloat((totalEffective - totalAllocated).toFixed(2));
+    
+    let status: 'empty' | 'balanced' | 'remaining' | 'over' = 'empty';
+    if (totalEffective <= 0) {
+      status = 'empty';
+    } else if (Math.abs(remaining) <= 0.05) {
+      status = 'balanced';
+    } else if (remaining > 0.05) {
+      status = 'remaining';
+    } else {
+      status = 'over';
+    }
+
+    const allocatedPercentage = totalEffective > 0 
+      ? Math.round((totalAllocated / totalEffective) * 100)
+      : 0;
+
+    return {
+      totalEffective,
+      totalAllocated,
+      remaining,
+      status,
+      allocatedPercentage,
+    };
+  }, [timeCalc.totalEffectiveHours, totals.manualTotal.all]);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: engagement.currency === 'USD' ? 'USD' : 'IDR', minimumFractionDigits: 0 }).format(value);
   };
@@ -602,9 +706,57 @@ const A120 = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 bg-slate-50 flex flex-wrap justify-between items-center gap-3">
             <div>
-              <h2 className="text-lg font-bold text-gray-800 flex items-center">
-                <CalendarDays className="mr-2 text-atlas-blue" size={20} /> 1. Rencana Jadwal Pelaksanaan
-              </h2>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h2 className="text-lg font-bold text-gray-800 flex items-center">
+                  <CalendarDays className="mr-2 text-atlas-blue" size={20} /> 1. Rencana Jadwal Pelaksanaan
+                </h2>
+
+                {/* Badge Informasi Sisa Jam Efektif */}
+                <div 
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all shadow-2xs ${
+                    remainingEffectiveHoursData.status === 'balanced'
+                      ? 'bg-emerald-50 text-emerald-800 border-emerald-300 ring-1 ring-emerald-200'
+                      : remainingEffectiveHoursData.status === 'remaining'
+                      ? 'bg-amber-50 text-amber-900 border-amber-300 ring-1 ring-amber-200'
+                      : remainingEffectiveHoursData.status === 'over'
+                      ? 'bg-rose-50 text-rose-900 border-rose-300 ring-1 ring-rose-200'
+                      : 'bg-gray-100 text-gray-600 border-gray-200'
+                  }`}
+                  title={`Total Jam Efektif: ${remainingEffectiveHoursData.totalEffective.toFixed(1)} Jam | Alokasi Tim: ${remainingEffectiveHoursData.totalAllocated.toFixed(1)} Jam`}
+                >
+                  {remainingEffectiveHoursData.status === 'balanced' && <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />}
+                  {remainingEffectiveHoursData.status === 'remaining' && <Clock size={13} className="text-amber-600 shrink-0" />}
+                  {remainingEffectiveHoursData.status === 'over' && <AlertTriangle size={13} className="text-rose-600 shrink-0" />}
+                  {remainingEffectiveHoursData.status === 'empty' && <Clock size={13} className="text-gray-400 shrink-0" />}
+                  
+                  <span>
+                    Sisa Jam Efektif:{' '}
+                    <strong className="font-mono">
+                      {remainingEffectiveHoursData.status === 'over' 
+                        ? `${remainingEffectiveHoursData.remaining.toFixed(1)}` 
+                        : remainingEffectiveHoursData.remaining > 0 
+                        ? `+${remainingEffectiveHoursData.remaining.toFixed(1)}` 
+                        : '0'} Jam
+                    </strong>
+                  </span>
+
+                  <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded-full ${
+                    remainingEffectiveHoursData.status === 'balanced'
+                      ? 'bg-emerald-200/70 text-emerald-900'
+                      : remainingEffectiveHoursData.status === 'remaining'
+                      ? 'bg-amber-200/70 text-amber-950'
+                      : remainingEffectiveHoursData.status === 'over'
+                      ? 'bg-rose-200/70 text-rose-950'
+                      : 'bg-gray-200 text-gray-700'
+                  }`}>
+                    {remainingEffectiveHoursData.status === 'balanced' && 'Teralokasi Penuh'}
+                    {remainingEffectiveHoursData.status === 'remaining' && `${remainingEffectiveHoursData.remaining.toFixed(1)} Jam Belum Dibagi`}
+                    {remainingEffectiveHoursData.status === 'over' && 'Kelebihan Alokasi'}
+                    {remainingEffectiveHoursData.status === 'empty' && 'Jadwal Kosong'}
+                  </span>
+                </div>
+              </div>
+
               <p className="text-xs text-gray-500 mt-0.5">
                 Tentukan rentang tanggal perikatan untuk menghitung hari libur kalender dan jam kerja efektif secara otomatis.
               </p>
@@ -834,9 +986,56 @@ const A120 = () => {
                   <span className="text-lg font-bold text-emerald-800">{timeCalc.totalDays} Hari</span>
                 </div>
               </div>
-              <div className="text-left sm:text-right">
-                <span className="block text-xs text-atlas-blue uppercase font-bold mb-1">Total Jam Efektif</span>
-                <span className="text-2xl font-black text-atlas-blue">{timeCalc.totalEffectiveHours.toFixed(1)} Jam</span>
+
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                <div className="text-left sm:text-right">
+                  <span className="block text-xs text-atlas-blue uppercase font-bold mb-1">Total Jam Efektif</span>
+                  <span className="text-2xl font-black text-atlas-blue">{timeCalc.totalEffectiveHours.toFixed(1)} Jam</span>
+                </div>
+
+                {/* Badge & Card Ringkasan Sisa Jam Efektif */}
+                <div className={`p-3 rounded-xl border flex flex-col justify-center sm:items-end min-w-[210px] transition-all shadow-2xs ${
+                  remainingEffectiveHoursData.status === 'balanced'
+                    ? 'bg-emerald-50/90 border-emerald-200 text-emerald-950'
+                    : remainingEffectiveHoursData.status === 'remaining'
+                    ? 'bg-amber-50/90 border-amber-200 text-amber-950'
+                    : remainingEffectiveHoursData.status === 'over'
+                    ? 'bg-rose-50/90 border-rose-200 text-rose-950'
+                    : 'bg-gray-50 border-gray-200 text-gray-700'
+                }`}>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    {remainingEffectiveHoursData.status === 'balanced' && <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />}
+                    {remainingEffectiveHoursData.status === 'remaining' && <Clock size={13} className="text-amber-600 shrink-0" />}
+                    {remainingEffectiveHoursData.status === 'over' && <AlertTriangle size={13} className="text-rose-600 shrink-0" />}
+                    {remainingEffectiveHoursData.status === 'empty' && <Clock size={13} className="text-gray-400 shrink-0" />}
+                    <span className="text-[11px] font-bold uppercase tracking-wider">Badge Sisa Jam Efektif</span>
+                  </div>
+                  <div className="text-xl font-black font-mono">
+                    {remainingEffectiveHoursData.status === 'over' 
+                      ? `${remainingEffectiveHoursData.remaining.toFixed(1)} Jam`
+                      : remainingEffectiveHoursData.remaining > 0 
+                      ? `+${remainingEffectiveHoursData.remaining.toFixed(1)} Jam` 
+                      : '0.0 Jam'}
+                  </div>
+                  <div className="text-[11px] font-medium flex items-center gap-1.5 mt-0.5">
+                    <span className="text-gray-600">Alokasi Tim: <strong>{remainingEffectiveHoursData.totalAllocated.toFixed(1)} Jam</strong></span>
+                    <span className="text-gray-400">•</span>
+                    <span className={`font-bold ${
+                      remainingEffectiveHoursData.status === 'balanced' 
+                        ? 'text-emerald-700' 
+                        : remainingEffectiveHoursData.status === 'remaining' 
+                        ? 'text-amber-700' 
+                        : remainingEffectiveHoursData.status === 'over' 
+                        ? 'text-rose-700' 
+                        : 'text-gray-500'
+                    }`}>
+                      {remainingEffectiveHoursData.status === 'balanced' && '✓ Pas (100%)'}
+                      {remainingEffectiveHoursData.status === 'remaining' && `(${remainingEffectiveHoursData.allocatedPercentage}% terbagi)`}
+                      {remainingEffectiveHoursData.status === 'over' && `(${remainingEffectiveHoursData.allocatedPercentage}% over)`}
+                      {remainingEffectiveHoursData.status === 'empty' && '0%'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1302,13 +1501,12 @@ const A120 = () => {
                         </td>
                         <td className="px-3 py-2 border-r border-gray-100">
                           <div className="relative">
-                            <input 
-                              type="number" 
-                              min="0"
-                              step="50000"
-                              value={member.rate || ''}
-                              onChange={(e) => handleUpdateRate(member.id, e.target.value)}
-                              className="w-full pl-8 pr-3 py-1.5 border border-gray-200 hover:border-gray-300 rounded-md text-sm focus:border-atlas-blue outline-none font-bold text-gray-700 transition-colors"
+                            <MoneyInput 
+                              value={member.rate}
+                              onChange={(val) => handleUpdateRate(member.id, val)}
+                              placeholder="0"
+                              className="w-full pl-8 pr-3 py-1.5 border border-gray-200 hover:border-gray-300 rounded-md text-sm focus:border-atlas-blue outline-none font-bold text-gray-700 transition-colors font-mono"
+                              title="Tarif per jam personil (Rp)"
                             />
                             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs font-semibold">Rp</span>
                           </div>
@@ -1372,13 +1570,12 @@ const A120 = () => {
               <div className="md:w-1/2 bg-gray-50 rounded-xl p-5 border border-gray-200">
                 <h3 className="font-bold text-gray-800 mb-2">Biaya Lain-Lain (OPE) (B)</h3>
                 <div className="relative mt-2">
-                  <input 
-                    type="number" 
-                    min="0"
-                    value={rencanaBiayaLain || ''}
-                    onChange={(e) => setRencanaBiayaLain(parseFloat(e.target.value) || 0)}
-                    className="w-full pl-11 pr-3 py-3 border border-gray-300 rounded-xl font-bold text-gray-800 focus:border-atlas-blue focus:ring-atlas-blue outline-none"
+                  <MoneyInput 
+                    value={rencanaBiayaLain}
+                    onChange={(val) => setRencanaBiayaLain(val)}
                     placeholder="0"
+                    className="w-full pl-11 pr-3 py-3 border border-gray-300 rounded-xl font-bold text-gray-800 focus:border-atlas-blue focus:ring-atlas-blue outline-none font-mono"
+                    title="Estimasi biaya operasional perikatan / OPE (Rp)"
                   />
                   <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">Rp</span>
                 </div>

@@ -1,7 +1,7 @@
 import { FileText, Clock, CheckCircle, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export type WorksheetStatus = 'Not Started' | 'In Progress' | 'Completed' | 'Needs Revision' | 'Reviewed' | 'Approved';
+export type WorksheetStatus = 'Not Started' | 'In Progress' | 'Completed' | 'Needs Revision' | 'Reviewed' | 'Approved' | 'Uncompleted';
 
 export interface WorksheetInfo {
   id: string;
@@ -27,7 +27,8 @@ const STATUS_CONFIG: Record<WorksheetStatus, { label: string; dot: string; text:
   'Needs Revision':{ label: 'Perlu Revisi',  dot: 'bg-red-500',     text: 'text-red-700',    bg: 'bg-red-50',     border: 'border-red-200'  },
   'Reviewed':      { label: 'Direview',      dot: 'bg-purple-500',  text: 'text-purple-700', bg: 'bg-purple-50',  border: 'border-purple-200'},
   'Approved':      { label: 'Disetujui',     dot: 'bg-green-500',   text: 'text-green-700',  bg: 'bg-green-50',   border: 'border-green-200' },
-  'Completed':     { label: 'Selesai',       dot: 'bg-teal-500',    text: 'text-teal-700',   bg: 'bg-teal-50',    border: 'border-teal-200'  },
+  'Completed':     { label: 'Completed',     dot: 'bg-teal-500',    text: 'text-teal-700',   bg: 'bg-teal-50',    border: 'border-teal-200'  },
+  'Uncompleted':   { label: 'Uncompleted',   dot: 'bg-rose-500',    text: 'text-rose-700',   bg: 'bg-rose-50',    border: 'border-rose-200'  },
 };
 
 const WorksheetList = ({ stageName, description, worksheets, stageCode }: WorksheetListProps) => {
@@ -82,7 +83,7 @@ const WorksheetList = ({ stageName, description, worksheets, stageCode }: Worksh
       {/* Worksheet Rows */}
       <div className="divide-y divide-gray-200 border border-gray-200 bg-white rounded-xl shadow-2xs overflow-hidden w-full">
         {worksheets.map((ws, index) => {
-          const cfg = STATUS_CONFIG[ws.status];
+          const cfg = STATUS_CONFIG[ws.status] || STATUS_CONFIG['Not Started'];
           const isClickable = true;
 
           return (

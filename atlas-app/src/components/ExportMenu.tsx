@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { Download, FileSpreadsheet, FileText, FileDown, Archive, ChevronDown, CheckCircle, Printer } from 'lucide-react';
+import { useEngagementStore } from '../store/engagementStore';
+import { exportA110ToExcel, exportA110ToJSON } from '../utils/a110ExcelService';
 
 interface ExportMenuProps {
   worksheetCode?: string;
@@ -8,6 +11,10 @@ interface ExportMenuProps {
 }
 
 const ExportMenu: React.FC<ExportMenuProps> = ({ worksheetCode, clientName = "Klien", isGlobal = false }) => {
+  const { id: engagementId } = useParams<{ id: string }>();
+  const engagements = useEngagementStore((state) => state.engagements);
+  const engagement = engagements.find(e => e.id === engagementId);
+
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -23,6 +30,38 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ worksheetCode, clientName = "Kl
   }, []);
 
   const handleExport = (type: string, label: string) => {
+    // If this is A.110 and Excel export is selected, perform real export
+    if ((worksheetCode === 'A.110' || worksheetCode === 'a110') && engagement && type === 'excel') {
+      const ws = engagement.worksheetA110 || {
+        industry: engagement.clientIndustry || '',
+        boardOfDirectors: '',
+        usagePurpose: '',
+        evaluations: {},
+        overallRisk: 'low',
+        anomalyExplanation: '',
+        decision: null,
+        decisionReason: '',
+        status: 'In Progress'
+      };
+      exportA110ToExcel(engagement, {
+        industry: ws.industry,
+        boardOfDirectors: ws.boardOfDirectors,
+        usagePurpose: ws.usagePurpose,
+        evaluations: ws.evaluations,
+        overallRisk: ws.overallRisk,
+        anomalyExplanation: ws.anomalyExplanation,
+        decision: ws.decision,
+        decisionReason: ws.decisionReason,
+        status: ws.status,
+        preparedBy: engagement.auditorName,
+        reviewedBy: engagement.managerName,
+        auditPeriod: engagement.auditPeriod || engagement.fiscalYear,
+        accountingStandard: engagement.accountingStandard
+      });
+      setIsOpen(false);
+      return;
+    }
+
     setIsExporting(type);
     
     // Simulate export generation process
@@ -30,7 +69,7 @@ const ExportMenu: React.FC<ExportMenuProps> = ({ worksheetCode, clientName = "Kl
       setIsExporting(null);
       setIsOpen(false);
       alert(`Berhasil mengekspor: ${label}\n\nFile telah diunduh ke folder Downloads Anda.`);
-    }, 2000);
+    }, 1500);
   };
 
   return (
