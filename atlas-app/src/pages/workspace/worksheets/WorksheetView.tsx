@@ -66,7 +66,7 @@ const WorksheetView = () => {
   if (worksheetId === 'a1101' || worksheetId === 'a110.1') {
     return <A1101 />;
   }
-  if (worksheetId === 'a1102') {
+  if (worksheetId === 'a1102' || worksheetId === 'a110.2') {
     return <A1102 />;
   }
   if (worksheetId === 'a1103') {

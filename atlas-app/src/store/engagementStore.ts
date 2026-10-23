@@ -100,6 +100,13 @@ export interface WorksheetA1101 {
   status: string;
 }
 
+export interface WorksheetA1102 {
+  answers: Record<string, 'Ya' | 'Tidak' | ''>;
+  acceptanceReason: string;
+  isCompleted: boolean;
+  status: string;
+}
+
 export interface Engagement {
   id: string;
   clientId: string;
@@ -136,6 +143,7 @@ export interface Engagement {
   procedures?: AuditProcedure[];
   worksheetA110?: WorksheetA110;
   worksheetA1101?: WorksheetA1101;
+  worksheetA1102?: WorksheetA1102;
 }
 
 export interface ReviewNote {
@@ -260,6 +268,22 @@ export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [
         '5': 'Tidak'
       },
       acceptanceReason: 'KAP akan menambahkan ahli yg berpengalaman dalam mengevaluasi imbalan paska kerja.\nAkan dilibatkan seorang EQCR untuk membantu analisis rencana manajemen terkait isu going concern',
+      isCompleted: true,
+      status: 'Completed'
+    },
+    worksheetA1102: {
+      answers: {
+        '1': 'Tidak',
+        '2': 'Tidak',
+        '3': 'Tidak',
+        '4': 'Tidak',
+        '5': 'Tidak',
+        '6': 'Ya',
+        '7': 'Ya',
+        '8': 'Tidak',
+        '9': 'Tidak'
+      },
+      acceptanceReason: 'walaupun berdasarkan pemberitaan di internet, salah satu direksi memiliki keluarga yang terdapat pelanggaran terhadap hukum, tapi tidak ada pemberitaan yang menunjukan peran dari direksi yang telah melakukan pelanggaran hukum bersama dengan keluarganya tersebut.\nWalaupun dirut termasuk dalam pengurus partai besar Lembu Perjuangan, tapi dirut belum pernah menjadi wakil rakyat daerah/pusat',
       isCompleted: true,
       status: 'Completed'
     }
