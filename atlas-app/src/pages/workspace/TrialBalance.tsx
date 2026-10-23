@@ -20,11 +20,13 @@ import {
   TrendingUp,
   DollarSign,
   Layers,
-  CheckCircle2
+  CheckCircle2,
+  RotateCcw
 } from 'lucide-react';
 import ExcelImportModal from '../../components/ExcelImportModal';
 import ExportMenu from '../../components/ExportMenu';
 import { GovernmentFinancialStatements } from '../../components/financial-statements/GovernmentFinancialStatements';
+import { CommercialFinancialStatements } from '../../components/financial-statements/CommercialFinancialStatements';
 import { 
   SAP_GROUPS, 
   SAP_SUBGROUPS, 
@@ -35,9 +37,23 @@ import {
   calculateLPSAL
 } from '../../utils/sapFinancialStatements';
 
-type ActiveTab = 'TB' | 'LO' | 'LRA' | 'LAK' | 'LPSAL';
+type ActiveTab = 'TB' | 'LO' | 'LRA' | 'LAK' | 'LPSAL' | 'NERACA' | 'LABA_RUGI' | 'ARUS_KAS' | 'PERUBAHAN_EKUITAS';
 
-const ALL_GROUPS = [
+const COMMERCIAL_GROUPS = [
+  'Aset Lancar',
+  'Aset Tetap',
+  'Aset Tidak Lancar Lainnya',
+  'Liabilitas Jangka Pendek',
+  'Liabilitas Jangka Panjang',
+  'Ekuitas',
+  'Pendapatan Usaha',
+  'Beban Pokok Pendapatan (HPP)',
+  'Beban Operasional',
+  'Pendapatan Lain-lain',
+  'Beban Lain-lain'
+];
+
+const ALL_SAP_GROUPS = [
   ...SAP_GROUPS,
   'Aset Lancar',
   'Aset Tetap',
@@ -46,17 +62,39 @@ const ALL_GROUPS = [
   'Beban'
 ];
 
+// Contoh template komersial SAK EP lengkap & seimbang (Manufaktur / Perdagangan)
+const COMMERCIAL_SAMPLE_TRIAL_BALANCE: Account[] = [
+  { id: 'com-1', code: '1110', name: 'Kas dan Setara Kas', group: 'Aset Lancar', subGroup: 'Kas & Bank', statementType: 'Neraca', debit: 650000000, credit: 0, endingBalance: 650000000 },
+  { id: 'com-2', code: '1120', name: 'Piutang Usaha', group: 'Aset Lancar', subGroup: 'Piutang', statementType: 'Neraca', debit: 620000000, credit: 0, endingBalance: 620000000 },
+  { id: 'com-3', code: '1130', name: 'Persediaan Barang Jadi & Bahan Baku', group: 'Aset Lancar', subGroup: 'Persediaan', statementType: 'Neraca', debit: 580000000, credit: 0, endingBalance: 580000000 },
+  { id: 'com-4', code: '1210', name: 'Aset Tetap - Bangunan & Mesin Pabrik', group: 'Aset Tetap', subGroup: 'Aset Tetap', statementType: 'Neraca', debit: 1850000000, credit: 0, endingBalance: 1850000000 },
+  { id: 'com-5', code: '1220', name: 'Akumulasi Penyusutan Aset Tetap', group: 'Aset Tetap', subGroup: 'Akumulasi Penyusutan', statementType: 'Neraca', debit: 0, credit: 350000000, endingBalance: -350000000 },
+  { id: 'com-6', code: '2110', name: 'Utang Usaha (Pemasok)', group: 'Liabilitas Jangka Pendek', subGroup: 'Utang Usaha', statementType: 'Neraca', debit: 0, credit: 420000000, endingBalance: -420000000 },
+  { id: 'com-7', code: '2120', name: 'Utang Pajak (PPh & PPN)', group: 'Liabilitas Jangka Pendek', subGroup: 'Utang Pajak', statementType: 'Neraca', debit: 0, credit: 80000000, endingBalance: -80000000 },
+  { id: 'com-8', code: '2210', name: 'Utang Bank Jangka Panjang', group: 'Liabilitas Jangka Panjang', subGroup: 'Utang Bank', statementType: 'Neraca', debit: 0, credit: 650000000, endingBalance: -650000000 },
+  { id: 'com-9', code: '3110', name: 'Modal Saham Disetor', group: 'Ekuitas', subGroup: 'Modal Saham', statementType: 'Neraca', debit: 0, credit: 1500000000, endingBalance: -1500000000 },
+  { id: 'com-10', code: '3210', name: 'Saldo Laba Tahun Lalu', group: 'Ekuitas', subGroup: 'Saldo Laba', statementType: 'Neraca', debit: 0, credit: 300000000, endingBalance: -300000000 },
+  { id: 'com-11', code: '4110', name: 'Pendapatan Usaha / Penjualan', group: 'Pendapatan Usaha', subGroup: 'Penjualan', statementType: 'Laba Rugi', debit: 0, credit: 2400000000, endingBalance: -2400000000 },
+  { id: 'com-12', code: '5110', name: 'Beban Pokok Pendapatan (HPP)', group: 'Beban Pokok Pendapatan (HPP)', subGroup: 'HPP', statementType: 'Laba Rugi', debit: 1450000000, credit: 0, endingBalance: 1450000000 },
+  { id: 'com-13', code: '5210', name: 'Beban Gaji & Upah Karyawan', group: 'Beban Operasional', subGroup: 'Beban Operasional', statementType: 'Laba Rugi', debit: 380000000, credit: 0, endingBalance: 380000000 },
+  { id: 'com-14', code: '5220', name: 'Beban Operasional & Administrasi Umum', group: 'Beban Operasional', subGroup: 'Beban Operasional', statementType: 'Laba Rugi', debit: 170000000, credit: 0, endingBalance: 170000000 },
+];
+
 const TrialBalance: React.FC = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
   const navigate = useNavigate();
   const updateEngagement = useEngagementStore(state => state.updateEngagement);
   
+  const isSAP = engagement.accountingStandard === 'SAP';
+  const availableGroups = isSAP ? ALL_SAP_GROUPS : COMMERCIAL_GROUPS;
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('TB');
   const [accounts, setAccounts] = useState<Account[]>(engagement.trialBalance || []);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSaved, setIsSaved] = useState(false);
   const [duplicateWarning, setDuplicateWarning] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -75,6 +113,17 @@ const TrialBalance: React.FC = () => {
     setTimeout(() => setIsSaved(false), 3000);
   };
 
+  const handleResetData = () => {
+    setShowResetModal(true);
+  };
+
+  const confirmResetData = () => {
+    setAccounts([]);
+    updateEngagement(engagement.id, { trialBalance: [] });
+    setShowResetModal(false);
+    showToast('Seluruh data Neraca Saldo dan Laporan Keuangan berhasil dibersihkan (reset bersih)!');
+  };
+
   const handleOpenImport = () => {
     setShowImport(true);
   };
@@ -84,9 +133,9 @@ const TrialBalance: React.FC = () => {
       id: Date.now().toString(),
       code: '',
       name: '',
-      group: 'Pendapatan-LO',
-      subGroup: 'Pendapatan Asli Daerah (PAD) - LO',
-      statementType: 'LO',
+      group: isSAP ? 'Pendapatan-LO' : 'Aset Lancar',
+      subGroup: isSAP ? 'Pendapatan Asli Daerah (PAD) - LO' : 'Kas & Bank',
+      statementType: isSAP ? 'LO' : 'Neraca',
       debit: 0,
       credit: 0,
       endingBalance: 0,
@@ -95,9 +144,14 @@ const TrialBalance: React.FC = () => {
     setAccounts([newAccount, ...accounts]);
   };
 
-  const handleLoadSAPTemplate = () => {
-    setAccounts(SAP_SAMPLE_TRIAL_BALANCE);
-    showToast('Template standar SAP (PP 71/2010) dengan laporan LO, LRA, LAK, dan LPSAL berhasil dimuat!');
+  const handleLoadTemplate = () => {
+    if (isSAP) {
+      setAccounts(SAP_SAMPLE_TRIAL_BALANCE);
+      showToast('Template contoh SAP PP 71/2010 (LO, LRA, LAK, LPSAL) berhasil dimuat!');
+    } else {
+      setAccounts(COMMERCIAL_SAMPLE_TRIAL_BALANCE);
+      showToast(`Template contoh standar ${engagement.accountingStandard || 'SAK EP'} berhasil dimuat!`);
+    }
   };
 
   const handleEditAccount = (id: string, field: keyof Account, value: any) => {
@@ -108,13 +162,21 @@ const TrialBalance: React.FC = () => {
           updated.endingBalance = (Number(updated.debit) || 0) - (Number(updated.credit) || 0);
         }
         if (field === 'group') {
-          const defaultSub = SAP_SUBGROUPS[value]?.[0] || '';
-          updated.subGroup = defaultSub;
-          if (value === 'Pendapatan-LO' || value === 'Beban-LO') updated.statementType = 'LO';
-          else if (value === 'Pendapatan-LRA' || value === 'Belanja-LRA' || value === 'Pembiayaan-LRA') updated.statementType = 'LRA';
-          else if (value === 'Arus Kas / Transitoris') updated.statementType = 'LAK';
-          else if (value === 'Saldo Anggaran Lebih') updated.statementType = 'LPSAL';
-          else updated.statementType = 'Neraca';
+          if (isSAP) {
+            const defaultSub = SAP_SUBGROUPS[value]?.[0] || '';
+            updated.subGroup = defaultSub;
+            if (value === 'Pendapatan-LO' || value === 'Beban-LO') updated.statementType = 'LO';
+            else if (value === 'Pendapatan-LRA' || value === 'Belanja-LRA' || value === 'Pembiayaan-LRA') updated.statementType = 'LRA';
+            else if (value === 'Arus Kas / Transitoris') updated.statementType = 'LAK';
+            else if (value === 'Saldo Anggaran Lebih') updated.statementType = 'LPSAL';
+            else updated.statementType = 'Neraca';
+          } else {
+            if (value.includes('Aset') || value.includes('Liabilitas') || value === 'Ekuitas') {
+              updated.statementType = 'Neraca';
+            } else if (value.includes('Pendapatan') || value.includes('Beban') || value.includes('HPP')) {
+              updated.statementType = 'Laba Rugi';
+            }
+          }
         }
         return updated;
       }
@@ -127,22 +189,37 @@ const TrialBalance: React.FC = () => {
   };
 
   // Calculations for Summary
-  const totalDebit = accounts.reduce((sum, acc) => sum + acc.debit, 0);
-  const totalCredit = accounts.reduce((sum, acc) => sum + acc.credit, 0);
+  const totalDebit = accounts.reduce((sum, acc) => sum + (Number(acc.debit) || 0), 0);
+  const totalCredit = accounts.reduce((sum, acc) => sum + (Number(acc.credit) || 0), 0);
   const isBalanced = Math.abs(totalDebit - totalCredit) < 1;
   
+  // SAP metrics
   const lo = calculateLO(accounts);
   const lra = calculateLRA(accounts);
-  const lak = calculateLAK(accounts, lra);
-  const lpsal = calculateLPSAL(accounts, lra.silpa);
 
-  const tabs: { id: ActiveTab; label: string; icon: any; count?: number; badge?: string }[] = [
-    { id: 'TB', label: 'Neraca Saldo (Trial Balance)', icon: Calculator, count: accounts.length },
-    { id: 'LO', label: 'LO (Laporan Operasional)', icon: TrendingUp, badge: 'Akrual' },
-    { id: 'LRA', label: 'LRA (Realisasi Anggaran)', icon: BarChart3, badge: 'Kas' },
-    { id: 'LAK', label: 'LAK (Laporan Arus Kas)', icon: DollarSign, badge: 'Direct' },
-    { id: 'LPSAL', label: 'LPSAL (Perubahan SAL)', icon: FileText, badge: 'SiLPA' },
+  // Commercial metrics
+  const commercialPendapatan = accounts.filter(a => a.group?.toLowerCase().includes('pendapatan')).reduce((sum, a) => sum + Math.abs(a.endingBalance || a.credit - a.debit), 0);
+  const commercialBeban = accounts.filter(a => a.group?.toLowerCase().includes('beban') || a.group?.toLowerCase().includes('hpp')).reduce((sum, a) => sum + Math.abs(a.endingBalance || a.debit - a.credit), 0);
+  const commercialNetProfit = commercialPendapatan - commercialBeban;
+
+  // Segmented Navigation Tabs
+  const sapTabs = [
+    { id: 'TB' as ActiveTab, label: 'Neraca Saldo (Trial Balance)', icon: Calculator, count: accounts.length },
+    { id: 'LO' as ActiveTab, label: 'LO (Laporan Operasional)', icon: TrendingUp, badge: 'Akrual' },
+    { id: 'LRA' as ActiveTab, label: 'LRA (Realisasi Anggaran)', icon: BarChart3, badge: 'Kas' },
+    { id: 'LAK' as ActiveTab, label: 'LAK (Laporan Arus Kas)', icon: DollarSign, badge: 'Direct' },
+    { id: 'LPSAL' as ActiveTab, label: 'LPSAL (Perubahan SAL)', icon: FileText, badge: 'SiLPA' },
   ];
+
+  const commercialTabs = [
+    { id: 'TB' as ActiveTab, label: 'Neraca Saldo (Trial Balance)', icon: Calculator, count: accounts.length },
+    { id: 'NERACA' as ActiveTab, label: 'Laporan Posisi Keuangan (Neraca)', icon: Building2, badge: 'SAK' },
+    { id: 'LABA_RUGI' as ActiveTab, label: 'Laporan Laba Rugi', icon: TrendingUp, badge: 'Komprehensif' },
+    { id: 'ARUS_KAS' as ActiveTab, label: 'Laporan Arus Kas', icon: DollarSign, badge: 'Kas' },
+    { id: 'PERUBAHAN_EKUITAS' as ActiveTab, label: 'Laporan Perubahan Ekuitas', icon: FileText, badge: 'Ekuitas' },
+  ];
+
+  const tabs = isSAP ? sapTabs : commercialTabs;
 
   return (
     <div className="h-full flex flex-col -m-6 bg-slate-50 font-sans">
@@ -162,13 +239,17 @@ const TrialBalance: React.FC = () => {
               <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Financial Statement & Trial Balance
               </h1>
-              <span className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
-                SAP PP 71/2010 & PELITA
+              <span className={`text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded border ${
+                isSAP 
+                  ? 'bg-blue-50 text-blue-800 border-blue-200' 
+                  : 'bg-indigo-50 text-indigo-800 border-indigo-200'
+              }`}>
+                {isSAP ? 'STANDAR: SAP PP 71/2010' : `STANDAR: ${engagement.accountingStandard || 'SAK EP'}`}
               </span>
             </div>
             <p className="text-slate-500 text-xs mt-0.5">
               {engagement.clientName} | Periode: {engagement.auditPeriod || engagement.fiscalYear || '2025'} 
-              <span className="mx-1.5 text-slate-300">|</span> Standar: <strong className="text-slate-800">{engagement.accountingStandard || 'SAP'}</strong>
+              <span className="mx-1.5 text-slate-300">|</span> Standar: <strong className="text-slate-800">{engagement.accountingStandard || 'SAK EP'}</strong>
               <span className="mx-1.5 text-slate-300">|</span> Mata Uang: <strong className="text-slate-800">{engagement.currency}</strong> ({engagement.presentationUnit})
             </p>
           </div>
@@ -176,17 +257,31 @@ const TrialBalance: React.FC = () => {
         
         {/* Action Buttons */}
         <div className="flex items-center space-x-2 flex-wrap">
+          {/* Reset / Bersihkan Data Mock */}
           <button 
-            onClick={handleLoadSAPTemplate} 
+            type="button"
+            onClick={handleResetData}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-2xs"
+            title="Reset dan bersihkan seluruh data akun Neraca Saldo dan Laporan Keuangan"
+          >
+            <Trash2 size={14} className="text-rose-600" />
+            <span>Reset / Bersihkan Data</span>
+          </button>
+
+          {/* Muat Template Contoh */}
+          <button 
+            type="button"
+            onClick={handleLoadTemplate} 
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-atlas-blue border border-blue-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
-            title="Muat data contoh neraca saldo SAP lengkap untuk LO, LRA, LAK, dan LPSAL"
+            title={isSAP ? "Muat data contoh neraca saldo SAP lengkap untuk LO, LRA, LAK, dan LPSAL" : "Muat contoh neraca saldo standar komersial"}
           >
             <Sparkles size={14} className="text-blue-600" />
-            <span className="hidden sm:inline">Muat Template SAP</span>
-            <span className="sm:hidden">Template SAP</span>
+            <span className="hidden sm:inline">Contoh Template</span>
+            <span className="sm:hidden">Template</span>
           </button>
 
           <button 
+            type="button"
             onClick={handleOpenImport} 
             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-slate-200"
           >
@@ -195,6 +290,7 @@ const TrialBalance: React.FC = () => {
           </button>
 
           <button 
+            type="button"
             onClick={handleAddManual} 
             className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-slate-100 text-slate-700 text-xs font-medium rounded-lg transition-colors border border-slate-200 cursor-pointer"
           >
@@ -205,6 +301,7 @@ const TrialBalance: React.FC = () => {
           <ExportMenu worksheetCode="TrialBalance" clientName={engagement?.clientName} />
 
           <button 
+            type="button"
             onClick={handleSave} 
             className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-2xs flex items-center gap-1.5 transition-colors cursor-pointer"
           >
@@ -224,7 +321,7 @@ const TrialBalance: React.FC = () => {
 
       {/* ── WARNINGS & ALERTS ── */}
       <div className="px-6 sm:px-8 pt-3 shrink-0 space-y-2">
-        {!isBalanced && (
+        {accounts.length > 0 && !isBalanced && (
           <div className="bg-rose-50 border-l-4 border-rose-500 p-3 sm:p-3.5 rounded-r-lg flex items-start gap-2.5 shadow-2xs">
             <AlertTriangle className="text-rose-600 shrink-0 mt-0.5" size={17} />
             <div>
@@ -237,7 +334,7 @@ const TrialBalance: React.FC = () => {
         )}
       </div>
 
-      {/* ── SEGMENTED NAVIGATION TABS (TB, LO, LRA, LAK, LPSAL) ── */}
+      {/* ── SEGMENTED NAVIGATION TABS ── */}
       <div className="px-6 sm:px-8 pt-3 shrink-0">
         <div className="flex p-1 bg-slate-200/60 rounded-xl border border-slate-200/80 overflow-x-auto scrollbar-none gap-1 text-xs font-medium">
           {tabs.map((tab) => {
@@ -299,41 +396,75 @@ const TrialBalance: React.FC = () => {
                 </span>
               </div>
 
-              <div className="bg-white border border-slate-200/90 rounded-lg p-2.5 shadow-2xs">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Surplus/(Defisit) LO</span>
-                <span className={`text-sm sm:text-base font-bold mt-0.5 block font-mono ${lo.surplusDefisitAkhir >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                  Rp {formatCurrency(lo.surplusDefisitAkhir)}
-                </span>
-              </div>
+              {isSAP ? (
+                <>
+                  <div className="bg-white border border-slate-200/90 rounded-lg p-2.5 shadow-2xs">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Surplus/(Defisit) LO</span>
+                    <span className={`text-sm sm:text-base font-bold mt-0.5 block font-mono ${lo.surplusDefisitAkhir >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      Rp {formatCurrency(lo.surplusDefisitAkhir)}
+                    </span>
+                  </div>
 
-              <div className="bg-white border border-slate-200/90 rounded-lg p-2.5 shadow-2xs">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">SiLPA LRA</span>
-                <span className="text-sm sm:text-base font-bold text-purple-700 mt-0.5 block font-mono">
-                  Rp {formatCurrency(lra.silpa)}
-                </span>
-              </div>
+                  <div className="bg-white border border-slate-200/90 rounded-lg p-2.5 shadow-2xs">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">SiLPA LRA</span>
+                    <span className="text-sm sm:text-base font-bold text-purple-700 mt-0.5 block font-mono">
+                      Rp {formatCurrency(lra.silpa)}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="bg-white border border-slate-200/90 rounded-lg p-2.5 shadow-2xs">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Pendapatan Usaha</span>
+                    <span className="text-sm sm:text-base font-bold text-emerald-700 mt-0.5 block font-mono">
+                      Rp {formatCurrency(commercialPendapatan)}
+                    </span>
+                  </div>
+
+                  <div className="bg-white border border-slate-200/90 rounded-lg p-2.5 shadow-2xs">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Laba / (Rugi) Bersih</span>
+                    <span className={`text-sm sm:text-base font-bold mt-0.5 block font-mono ${commercialNetProfit >= 0 ? 'text-blue-700' : 'text-rose-700'}`}>
+                      Rp {formatCurrency(commercialNetProfit)}
+                    </span>
+                  </div>
+                </>
+              )}
 
               <div className={`col-span-2 lg:col-span-1 rounded-lg p-2.5 flex items-center justify-center font-bold text-xs uppercase tracking-wider border ${
-                isBalanced 
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
-                  : 'bg-rose-50 text-rose-800 border-rose-300'
+                accounts.length === 0
+                  ? 'bg-slate-100 text-slate-600 border-slate-200'
+                  : isBalanced 
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                    : 'bg-rose-50 text-rose-800 border-rose-300'
               }`}>
-                {isBalanced ? '✓ NERACA SEIMBANG' : '⚠ TIDAK SEIMBANG'}
+                {accounts.length === 0 ? 'DATA BERSIH (0 AKUN)' : isBalanced ? '✓ NERACA SEIMBANG' : '⚠ TIDAK SEIMBANG'}
               </div>
             </div>
 
-            {/* Filter Search */}
-            <div className="flex items-center space-x-3 bg-white p-2.5 border border-slate-200/90 rounded-lg shadow-2xs">
-              <div className="relative flex-1">
+            {/* Filter & Search Bar */}
+            <div className="bg-white border border-slate-200/90 rounded-lg p-3 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="relative w-full sm:w-80">
                 <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   type="text" 
-                  placeholder="Cari kode akun, nama akun, atau jenis laporan (LO, LRA, LAK, LPSAL)..." 
+                  placeholder="Cari kode akun, nama akun, atau jenis laporan..." 
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50/60 focus:bg-white border border-slate-200 rounded-md text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-atlas-blue"
                 />
               </div>
+
+              {accounts.length > 0 && (
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span>Menampilkan <strong>{accounts.length}</strong> akun</span>
+                  <button 
+                    onClick={handleResetData}
+                    className="text-rose-600 hover:text-rose-800 font-semibold cursor-pointer underline text-[11px]"
+                  >
+                    Bersihkan Semua
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Main Table Trial Balance */}
@@ -344,9 +475,9 @@ const TrialBalance: React.FC = () => {
                     <tr className="bg-slate-100/90 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
                       <th className="px-3.5 py-2.5 w-32">Kode Akun</th>
                       <th className="px-3.5 py-2.5">Nama Akun</th>
-                      <th className="px-3.5 py-2.5 w-36">Laporan SAP</th>
-                      <th className="px-3.5 py-2.5 w-44">Kelompok (Group)</th>
-                      <th className="px-3.5 py-2.5 w-48">Sub Kelompok</th>
+                      <th className="px-3.5 py-2.5 w-36">{isSAP ? 'Laporan SAP' : 'Jenis Laporan'}</th>
+                      <th className="px-3.5 py-2.5 w-48">Kelompok (Group)</th>
+                      <th className="px-3.5 py-2.5 w-44">Sub Kelompok</th>
                       <th className="px-3.5 py-2.5 w-32 text-right">Debit (Rp)</th>
                       <th className="px-3.5 py-2.5 w-32 text-right">Kredit (Rp)</th>
                       <th className="px-3.5 py-2.5 w-36 text-right">Saldo Akhir</th>
@@ -357,7 +488,8 @@ const TrialBalance: React.FC = () => {
                     {accounts.filter(a => 
                       a.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                       a.code.includes(searchTerm) ||
-                      (a.statementType && a.statementType.toLowerCase().includes(searchTerm.toLowerCase()))
+                      (a.statementType && a.statementType.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                      (a.group && a.group.toLowerCase().includes(searchTerm.toLowerCase()))
                     ).map((acc) => (
                       <tr key={acc.id} className="hover:bg-slate-50/80 transition-colors group">
                         <td className="px-3.5 py-2 font-mono font-bold text-slate-900">
@@ -381,24 +513,35 @@ const TrialBalance: React.FC = () => {
                         <td className="px-3.5 py-2">
                           <select 
                             className="w-full border border-slate-200 rounded px-2 py-1 text-[11px] font-bold focus:border-atlas-blue outline-none bg-slate-50/60"
-                            value={acc.statementType || 'LO'}
+                            value={acc.statementType || (isSAP ? 'LO' : 'Neraca')}
                             onChange={(e) => handleEditAccount(acc.id, 'statementType', e.target.value)}
                           >
-                            <option value="LO">LO (Operasional)</option>
-                            <option value="LRA">LRA (Anggaran)</option>
-                            <option value="LAK">LAK (Arus Kas)</option>
-                            <option value="LPSAL">LPSAL (SAL)</option>
-                            <option value="Neraca">Neraca</option>
+                            {isSAP ? (
+                              <>
+                                <option value="LO">LO (Operasional)</option>
+                                <option value="LRA">LRA (Anggaran)</option>
+                                <option value="LAK">LAK (Arus Kas)</option>
+                                <option value="LPSAL">LPSAL (SAL)</option>
+                                <option value="Neraca">Neraca</option>
+                              </>
+                            ) : (
+                              <>
+                                <option value="Neraca">Neraca (Posisi Keuangan)</option>
+                                <option value="Laba Rugi">Laporan Laba Rugi</option>
+                                <option value="Arus Kas">Laporan Arus Kas</option>
+                                <option value="Perubahan Ekuitas">Perubahan Ekuitas</option>
+                              </>
+                            )}
                           </select>
                         </td>
                         <td className="px-3.5 py-2">
                           <select 
-                            className="w-full border border-slate-200 rounded px-2 py-1 text-[11px] focus:border-atlas-blue outline-none bg-slate-50/60"
+                            className="w-full border border-slate-200 rounded px-2 py-1 text-[11px] focus:border-atlas-blue outline-none bg-slate-50/60 font-medium"
                             value={acc.group}
                             onChange={(e) => handleEditAccount(acc.id, 'group', e.target.value)}
                           >
                             <option value="">-- Pilih Group --</option>
-                            {ALL_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                            {availableGroups.map(g => <option key={g} value={g}>{g}</option>)}
                           </select>
                         </td>
                         <td className="px-3.5 py-2">
@@ -445,13 +588,31 @@ const TrialBalance: React.FC = () => {
                     ))}
                     {accounts.length === 0 && (
                       <tr>
-                        <td colSpan={9} className="px-6 py-12 text-center text-slate-500">
-                          <div className="flex flex-col items-center justify-center space-y-2">
-                            <Calculator size={28} className="text-slate-300" />
-                            <p className="font-bold text-slate-800 text-sm">Belum Ada Akun di Neraca Saldo</p>
-                            <p className="text-xs text-slate-400 max-w-md">
-                              Klik tombol <strong>"Muat Template SAP"</strong> di kanan atas untuk memuat akun standar lengkap SAP PP 71/2010 (LO, LRA, LAK, LPSAL), atau gunakan Import Excel untuk mengunggah neraca saldo klien.
+                        <td colSpan={9} className="px-6 py-14 text-center text-slate-500">
+                          <div className="flex flex-col items-center justify-center space-y-2.5">
+                            <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                              <Calculator size={24} />
+                            </div>
+                            <p className="font-bold text-slate-900 text-sm">Belum Ada Akun di Neraca Saldo</p>
+                            <p className="text-xs text-slate-400 max-w-md leading-relaxed">
+                              Neraca Saldo saat ini bersih tanpa data mock. Klik <strong>"Tambah Akun"</strong> untuk input manual, gunakan <strong>"Import Excel"</strong> untuk mengunggah neraca saldo klien, atau klik <strong>"Contoh Template"</strong> untuk melihat format standar.
                             </p>
+                            <div className="pt-2 flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={handleAddManual}
+                                className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                              >
+                                + Tambah Akun Manual
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleOpenImport}
+                                className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                              >
+                                Import Excel
+                              </button>
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -465,12 +626,12 @@ const TrialBalance: React.FC = () => {
         )}
 
         {/* ════════════════════════════════════════════════════════════════════ */}
-        {/* TABS 2-5: GOVERNMENT FINANCIAL STATEMENTS (LO, LRA, LAK, LPSAL)     */}
+        {/* TABS 2+: GOVERNMENT FINANCIAL STATEMENTS (SAP)                       */}
         {/* ════════════════════════════════════════════════════════════════════ */}
-        {activeTab !== 'TB' && (
+        {activeTab !== 'TB' && isSAP && (
           <GovernmentFinancialStatements 
             accounts={accounts}
-            activeStatement={activeTab}
+            activeStatement={activeTab as 'LO' | 'LRA' | 'LAK' | 'LPSAL'}
             clientName={engagement.clientName}
             period={engagement.auditPeriod || engagement.fiscalYear || '2025'}
             currency={engagement.currency || 'IDR'}
@@ -478,7 +639,58 @@ const TrialBalance: React.FC = () => {
           />
         )}
 
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {/* TABS 2+: COMMERCIAL FINANCIAL STATEMENTS (SAK / SAK EP / ETAP / EMKM) */}
+        {/* ════════════════════════════════════════════════════════════════════ */}
+        {activeTab !== 'TB' && !isSAP && (
+          <CommercialFinancialStatements 
+            accounts={accounts}
+            activeStatement={activeTab as 'NERACA' | 'LABA_RUGI' | 'ARUS_KAS' | 'PERUBAHAN_EKUITAS'}
+            clientName={engagement.clientName}
+            period={engagement.auditPeriod || engagement.fiscalYear || '2025'}
+            currency={engagement.currency || 'IDR'}
+            unit={engagement.presentationUnit || 'Full'}
+            accountingStandard={engagement.accountingStandard || 'SAK EP'}
+            onGoToTB={() => setActiveTab('TB')}
+          />
+        )}
+
       </div>
+
+      {/* ── RESET DATA CONFIRMATION MODAL ── */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-600 rounded-lg shrink-0">
+                <Trash2 size={22} />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Reset / Bersihkan Seluruh Data?</h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Tindakan ini akan <strong>menghapus seluruh {accounts.length} akun Neraca Saldo</strong> dan mengosongkan seluruh pemetaan Laporan Keuangan pada perikatan <strong>{engagement.clientName}</strong>. Data mock / pengujian akan dibersihkan kembali ke status kosong.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowResetModal(false)}
+                className="px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={confirmResetData}
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors cursor-pointer shadow-2xs"
+              >
+                Ya, Bersihkan Semua Data
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── EXCEL IMPORT MODAL ── */}
       <ExcelImportModal 

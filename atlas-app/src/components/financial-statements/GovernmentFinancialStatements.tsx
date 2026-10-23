@@ -41,6 +41,29 @@ export const GovernmentFinancialStatements: React.FC<Props> = ({
   currency,
   unit
 }) => {
+  if (!accounts || accounts.length === 0) {
+    const statementTitles: Record<string, string> = {
+      LO: 'Laporan Operasional (LO)',
+      LRA: 'Laporan Realisasi Anggaran (LRA)',
+      LAK: 'Laporan Arus Kas (LAK)',
+      LPSAL: 'Laporan Perubahan Saldo Anggaran Lebih (LPSAL)'
+    };
+
+    return (
+      <div className="bg-white border border-slate-200/90 rounded-xl shadow-2xs p-10 sm:p-14 text-center flex flex-col items-center justify-center space-y-3 font-sans">
+        <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+          <FileText size={26} />
+        </div>
+        <h3 className="font-bold text-slate-900 text-sm sm:text-base">
+          Belum Ada Data Akun di Neraca Saldo
+        </h3>
+        <p className="text-xs text-slate-500 max-w-md leading-relaxed">
+          {statementTitles[activeStatement] || 'Laporan Keuangan SAP'} otomatis akan disusun setelah Anda memasukkan atau mengimpor data akun pada tab <strong>Neraca Saldo (Trial Balance)</strong>.
+        </p>
+      </div>
+    );
+  }
+
   const lo = calculateLO(accounts);
   const lra = calculateLRA(accounts);
   const lak = calculateLAK(accounts, lra);

@@ -1,32 +1,30 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { useOutletContext, useParams } from 'react-router-dom';
+import { useOutletContext, useParams, Link } from 'react-router-dom';
 import type { Engagement, WorksheetA110 } from '../../../store/engagementStore';
 import { useEngagementStore } from '../../../store/engagementStore';
 import WorksheetContainer from '../../../components/WorksheetContainer';
 import A110ImportModal from '../../../components/A110ImportModal';
 import { 
   exportA110ToExcel, 
-  exportA110ToJSON, 
-  downloadA110ExcelTemplate, 
-  downloadA110CSVTemplate 
+  exportA110ToJSON 
 } from '../../../utils/a110ExcelService';
 import { 
-  AlertCircle, 
-  CheckCircle, 
-  CheckCircle2,
+  AlertTriangle, 
+  CheckCircle2, 
   ShieldAlert, 
-  FileSearch, 
-  Scale, 
+  Save, 
+  Upload, 
+  Download, 
+  Printer, 
+  ExternalLink, 
+  FileSpreadsheet, 
+  Building2, 
   ChevronDown, 
   Check, 
   X,
-  Upload,
-  Download,
-  FileSpreadsheet,
   FileText,
-  FileCode,
-  Printer,
-  Save
+  HelpCircle,
+  Sparkles
 } from 'lucide-react';
 
 export const STANDARD_INDUSTRIES = [
@@ -53,6 +51,23 @@ export const STANDARD_INDUSTRIES = [
   'Badan Layanan Umum (BLU) / BUMD / BUMN'
 ];
 
+export const PREVIOUS_REPORTING_CRITERIA_OPTIONS = [
+  'Entitas berdiri sejak lama dan Laporan keuangan periode sebelumnya tersedia dan telah diaudit auditor independen lain atau auditor yang bersangkutan',
+  'Entitas berdiri sejak lama dan Laporan keuangan periode sebelumnya tersedia dan telah diaudit oleh KAP yang sama (perikatan berulang)',
+  'Entitas baru berdiri dan laporan keuangan periode sebelumnya belum pernah diaudit',
+  'Laporan keuangan periode sebelumnya terdapat opini modifikasian / salah saji material',
+  'Terdapat pembatasan lingkup audit pada periode audit sebelumnya',
+  'Laporan keuangan periode sebelumnya tidak tersedia atau tidak diaudit'
+];
+
+export const OWNERSHIP_STATUS_OPTIONS = [
+  'Perusahaan Swasta Non-Go Public',
+  'Perusahaan Terbuka (Tbk) / Emiten Publik',
+  'Badan Usaha Milik Negara (BUMN) / BUMD',
+  'Badan Layanan Umum (BLU) / Lembaga Pemerintah',
+  'Organisasi Nirlaba / Yayasan / Koperasi'
+];
+
 const A110 = () => {
   const context = useOutletContext<{ engagement?: Engagement }>() || {};
   const { id: paramId } = useParams<{ id: string }>();
@@ -63,35 +78,49 @@ const A110 = () => {
   const addAuditLog = useEngagementStore(state => state.addAuditLog);
   
   const wsData = engagement?.worksheetA110 || {};
-  const [activeTab, setActiveTab] = useState('info');
-  const [decision, setDecision] = useState<'Accept' | 'Reject' | null>(wsData.decision || null);
-  const [industry, setIndustry] = useState(wsData.industry || engagement?.clientIndustry || '');
-  const [isIndustryDropdownOpen, setIsIndustryDropdownOpen] = useState(false);
-  const industryDropdownRef = useRef<HTMLDivElement>(null);
-  const industryInputRef = useRef<HTMLInputElement>(null);
 
-  const [alamat, setAlamat] = useState(wsData.boardOfDirectors || '');
-  const [usagePurpose, setUsagePurpose] = useState(wsData.usagePurpose || '');
-  const [anomalyExplanation, setAnomalyExplanation] = useState(wsData.anomalyExplanation || '');
-  const [reason, setReason] = useState(wsData.decisionReason || '');
+  // Form State matching ATLAS A.110 standard
+  const [industry, setIndustry] = useState(wsData.industry || engagement?.clientIndustry || 'Industri Pengolahan / Manufaktur');
+  const [industryRisk, setIndustryRisk] = useState<'low' | 'high'>(wsData.industryRisk || 'low');
+
+  const [ownershipStatus, setOwnershipStatus] = useState(wsData.clientOwnershipStatus || 'Perusahaan Swasta Non-Go Public');
+  const [ownershipRisk, setOwnershipRisk] = useState<'low' | 'high'>(wsData.ownershipRisk || 'low');
+
+  const [accountingStandardRisk, setAccountingStandardRisk] = useState<'low' | 'high'>(wsData.accountingStandardRisk || 'high');
+
+  const [prevCriteria, setPrevCriteria] = useState(
+    wsData.previousReportingIssueCriteria || 
+    'Entitas berdiri sejak lama dan Laporan keuangan periode sebelumnya tersedia dan telah diaudit auditor independen lain atau auditor yang bersangkutan'
+  );
+
   const [evals, setEvals] = useState<Record<string, 'low' | 'high' | ''>>({
-    'A.1101': wsData.evaluations?.['A.1101'] || '',
-    'A.1102': wsData.evaluations?.['A.1102'] || '',
-    'A.1103': wsData.evaluations?.['A.1103'] || '',
-    'A.1104': wsData.evaluations?.['A.1104'] || ''
+    'A.1101': wsData.evaluations?.['A.1101'] || 'high',
+    'A.1102': wsData.evaluations?.['A.1102'] || 'high',
+    'A.1103': wsData.evaluations?.['A.1103'] || 'low',
+    'A.1104': wsData.evaluations?.['A.1104'] || (engagement?.engagementType === 'First Year' ? 'high' : 'low')
   });
 
-  // Export & Import states
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [decision, setDecision] = useState<'Accept' | 'Reject' | null>(wsData.decision ?? 'Accept');
+  
+  const [mitigationExplanation, setMitigationExplanation] = useState(
+    wsData.riskMitigationExplanation || 
+    'KAP akan menambahkan ahli yg berpengalaman dalam penghitungan imbalan paska kerja.\nAkan dilibatkan seorang EQCR untuk membantu analisis rencana manajemen terkait isu going concern'
+  );
+
+  const [boardOfDirectors, setBoardOfDirectors] = useState(wsData.boardOfDirectors || 'Direktur Utama: Ir. Budi Santoso\nKomisaris Utama: Dr. Hendrawan');
+  const [usagePurpose, setUsagePurpose] = useState(wsData.usagePurpose || 'Pertanggungjawaban RUPS dan Fasilitas Kredit Perbankan');
+
+  // UI state
+  const [isIndustryDropdownOpen, setIsIndustryDropdownOpen] = useState(false);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
-  const [isTemplateMenuOpen, setIsTemplateMenuOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const industryDropdownRef = useRef<HTMLDivElement>(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
-  const templateMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdowns when clicking outside
+  // Close menus on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
@@ -101,124 +130,77 @@ const A110 = () => {
       if (exportMenuRef.current && !exportMenuRef.current.contains(target)) {
         setIsExportMenuOpen(false);
       }
-      if (templateMenuRef.current && !templateMenuRef.current.contains(target)) {
-        setIsTemplateMenuOpen(false);
-      }
-    };
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsIndustryDropdownOpen(false);
-        setIsExportMenuOpen(false);
-        setIsTemplateMenuOpen(false);
-      }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('keydown', handleKeyDown);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 4000);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Filtered industry options for combobox
+  // Filtered industries
   const filteredIndustries = useMemo(() => {
     if (!industry.trim()) return STANDARD_INDUSTRIES;
     const query = industry.toLowerCase();
-    const matches = STANDARD_INDUSTRIES.filter(item => item.toLowerCase().includes(query));
-    return matches;
+    return STANDARD_INDUSTRIES.filter(item => item.toLowerCase().includes(query));
   }, [industry]);
 
-  const handleSelectIndustry = (selected: string) => {
-    setIndustry(selected);
-    setIsIndustryDropdownOpen(false);
-  };
-
-  // Overall Risk auto-computation
+  // Overall Risk auto-computation: High if any of the 7 criteria is High
   const calculatedOverallRisk: 'low' | 'high' = useMemo(() => {
-    const list = Object.values(evals);
-    if (list.some(val => val === 'high')) {
+    const allRisks = [
+      industryRisk,
+      ownershipRisk,
+      accountingStandardRisk,
+      evals['A.1101'],
+      evals['A.1102'],
+      evals['A.1103'],
+      engagement?.engagementType === 'First Year' ? evals['A.1104'] : 'low'
+    ];
+    if (allRisks.some(val => val === 'high')) {
       return 'high';
     }
     return 'low';
-  }, [evals]);
+  }, [industryRisk, ownershipRisk, accountingStandardRisk, evals, engagement?.engagementType]);
 
-  const tabs = [
-    { id: 'info', name: 'Informasi Klien & Perikatan', icon: <FileSearch size={16} /> },
-    { id: 'eval', name: 'Evaluasi & Risiko', icon: <ShieldAlert size={16} /> },
-    { id: 'keputusan', name: 'Kesimpulan & Keputusan', icon: <Scale size={16} /> },
-  ];
+  // Completion calculation for sync
+  const isAllAnswered = 
+    !!industryRisk && 
+    !!ownershipRisk && 
+    !!accountingStandardRisk && 
+    !!evals['A.1101'] && 
+    !!evals['A.1102'] && 
+    !!evals['A.1103'] && 
+    (engagement?.engagementType !== 'First Year' || !!evals['A.1104']);
 
-  const handleValidate = () => {
-    const missing = [];
-    if (!industry.trim()) missing.push('Bidang Usaha / Industri');
-    if (!alamat.trim()) missing.push('Susunan Dewan Komisaris & Direksi Utama');
-    if (!decision) missing.push('Keputusan Penerimaan Klien (Tab 3)');
-    return missing;
-  };
+  const isDecisionMade = decision !== null;
+  const isMitigationFilled = calculatedOverallRisk === 'high' ? mitigationExplanation.trim().length > 0 : true;
+  
+  // Status is Completed when all answered, decision is Accept/Ya, and mitigation is provided when high risk
+  const isCompleted = isAllAnswered && isDecisionMade && isMitigationFilled && decision === 'Accept';
+  const statusKKP = isCompleted ? 'Completed' : 'Uncompleted';
 
-  // Snapshot current state for export
-  const getCurrentData = () => ({
-    industry,
-    boardOfDirectors: alamat,
-    usagePurpose,
-    evaluations: evals,
-    overallRisk: calculatedOverallRisk,
-    anomalyExplanation,
-    decision,
-    decisionReason: reason,
-    status: wsData.status || 'In Progress',
-    preparedBy: engagement?.auditorName || 'Senior Auditor',
-    reviewedBy: engagement?.managerName || 'Audit Manager',
-    auditPeriod: engagement?.auditPeriod || engagement?.fiscalYear || '2025',
-    accountingStandard: engagement?.accountingStandard || 'SAK EP'
-  });
-
-  // Export handlers
-  const handleExportExcel = () => {
+  // Handle Save
+  const handleSave = () => {
     if (!engagement) return;
-    setIsExportMenuOpen(false);
-    try {
-      exportA110ToExcel(engagement, getCurrentData());
-      showToast('Kertas Kerja A.110 berhasil diekspor ke format Excel (.xlsx)');
-    } catch (err: any) {
-      alert(`Gagal mengekspor Excel: ${err?.message || 'Terjadi kesalahan sistem'}`);
-    }
-  };
 
-  const handleExportJSON = () => {
-    if (!engagement) return;
-    setIsExportMenuOpen(false);
-    try {
-      exportA110ToJSON(engagement, getCurrentData());
-      showToast('Data A.110 berhasil diekspor ke file JSON (.json)');
-    } catch (err: any) {
-      alert(`Gagal mengekspor JSON: ${err?.message || 'Terjadi kesalahan sistem'}`);
-    }
-  };
-
-  const handlePrint = () => {
-    setIsExportMenuOpen(false);
-    window.print();
-  };
-
-  // Quick save draft
-  const handleSaveDraft = () => {
-    if (!engagement) return;
     const updatedA110: WorksheetA110 = {
       industry,
-      boardOfDirectors: alamat,
+      boardOfDirectors,
       usagePurpose,
       evaluations: evals,
       overallRisk: calculatedOverallRisk,
-      anomalyExplanation,
+      anomalyExplanation: mitigationExplanation,
       decision,
-      decisionReason: reason,
-      status: wsData.status || 'In Progress'
+      decisionReason: mitigationExplanation,
+      status: (statusKKP as any),
+      clientOwnershipStatus: ownershipStatus,
+      ownershipRisk,
+      industryRisk,
+      accountingStandardRisk,
+      previousReportingIssueCriteria: prevCriteria,
+      riskMitigationExplanation: mitigationExplanation
     };
 
     updateEngagement(engagement.id, {
@@ -229,766 +211,742 @@ const A110 = () => {
     addAuditLog({
       engagementId: engagement.id,
       user: engagement.auditorName || 'Auditor',
-      action: 'Saved Draft',
-      module: 'A.110',
-      record: 'Perubahan data Kertas Kerja A.110 tersimpan'
+      action: 'Saved Worksheet',
+      module: 'A.110 Analisis Penerimaan Klien',
+      record: `Kertas kerja A.110 disimpan dengan status: ${statusKKP}`
     });
 
     setIsSaved(true);
-    showToast('Perubahan Kertas Kerja A.110 berhasil disimpan!');
+    showToast('Kertas Kerja A.110 berhasil disimpan!');
     setTimeout(() => setIsSaved(false), 3000);
   };
 
-  // Import handler from modal
-  const handleImportSuccess = (imported: Partial<WorksheetA110>, fileName: string) => {
+  const handleExportExcel = () => {
     if (!engagement) return;
-
-    if (imported.industry !== undefined) setIndustry(imported.industry);
-    if (imported.boardOfDirectors !== undefined) setAlamat(imported.boardOfDirectors);
-    if (imported.usagePurpose !== undefined) setUsagePurpose(imported.usagePurpose);
-    if (imported.evaluations) {
-      setEvals(prev => ({ ...prev, ...imported.evaluations }));
+    setIsExportMenuOpen(false);
+    try {
+      exportA110ToExcel(engagement, {
+        industry,
+        boardOfDirectors,
+        usagePurpose,
+        evaluations: evals,
+        overallRisk: calculatedOverallRisk,
+        anomalyExplanation: mitigationExplanation,
+        decision,
+        decisionReason: mitigationExplanation,
+        status: statusKKP,
+        preparedBy: engagement.auditorName || 'Senior Auditor',
+        reviewedBy: engagement.managerName || 'Audit Manager',
+        auditPeriod: engagement.auditPeriod || engagement.fiscalYear || '2025',
+        accountingStandard: engagement.accountingStandard || 'SAK EP'
+      });
+      showToast('Kertas Kerja A.110 berhasil diekspor ke Excel (.xlsx)');
+    } catch (err: any) {
+      alert(`Gagal mengekspor Excel: ${err?.message || 'Terjadi kesalahan'}`);
     }
-    if (imported.anomalyExplanation !== undefined) setAnomalyExplanation(imported.anomalyExplanation);
-    if (imported.decision !== undefined) setDecision(imported.decision);
-    if (imported.decisionReason !== undefined) setReason(imported.decisionReason);
-
-    // Persist immediately to engagement store
-    const mergedA110: WorksheetA110 = {
-      industry: imported.industry !== undefined ? imported.industry : industry,
-      boardOfDirectors: imported.boardOfDirectors !== undefined ? imported.boardOfDirectors : alamat,
-      usagePurpose: imported.usagePurpose !== undefined ? imported.usagePurpose : usagePurpose,
-      evaluations: imported.evaluations ? { ...evals, ...imported.evaluations } : evals,
-      overallRisk: imported.overallRisk || calculatedOverallRisk,
-      anomalyExplanation: imported.anomalyExplanation !== undefined ? imported.anomalyExplanation : anomalyExplanation,
-      decision: imported.decision !== undefined ? imported.decision : decision,
-      decisionReason: imported.decisionReason !== undefined ? imported.decisionReason : reason,
-      status: (imported.status as any) || wsData.status || 'In Progress'
-    };
-
-    updateEngagement(engagement.id, {
-      worksheetA110: mergedA110,
-      clientIndustry: mergedA110.industry
-    });
-
-    addAuditLog({
-      engagementId: engagement.id,
-      user: engagement.auditorName || 'Auditor',
-      action: 'Imported Data',
-      module: 'A.110 Analisis Penerimaan',
-      record: `Data diimpor dari file: ${fileName}`
-    });
-
-    showToast(`Data Kertas Kerja A.110 berhasil diimpor dari ${fileName}!`);
   };
 
-  const handleAjukanReview = () => {
+  const handleExportJSON = () => {
     if (!engagement) return;
-    const updatedA110: WorksheetA110 = {
-      industry,
-      boardOfDirectors: alamat,
-      usagePurpose,
-      evaluations: evals,
-      overallRisk: calculatedOverallRisk,
-      anomalyExplanation,
-      decision,
-      decisionReason: reason,
-      status: 'Pending Review'
-    };
-
-    updateEngagement(engagement.id, {
-      worksheetA110: updatedA110,
-      clientIndustry: industry,
-      status: 'Pending Review'
-    });
-
-    addAuditLog({
-      engagementId: engagement.id,
-      user: engagement.auditorName || 'Auditor',
-      action: 'Submitted for Review',
-      module: 'A.110 Analisis Penerimaan',
-      record: 'Status updated to Pending Review'
-    });
-
-    showToast('Kertas kerja berhasil diajukan! Notifikasi dikirim ke Partner untuk direview.');
+    setIsExportMenuOpen(false);
+    try {
+      exportA110ToJSON(engagement, {
+        industry,
+        boardOfDirectors,
+        usagePurpose,
+        evaluations: evals,
+        overallRisk: calculatedOverallRisk,
+        anomalyExplanation: mitigationExplanation,
+        decision,
+        decisionReason: mitigationExplanation,
+        status: statusKKP,
+        preparedBy: engagement.auditorName,
+        reviewedBy: engagement.managerName,
+        auditPeriod: engagement.auditPeriod || '2025',
+        accountingStandard: engagement.accountingStandard || 'SAK EP'
+      });
+      showToast('Data A.110 berhasil diekspor ke JSON (.json)');
+    } catch (err: any) {
+      alert(`Gagal mengekspor JSON: ${err?.message || 'Terjadi kesalahan'}`);
+    }
   };
 
   if (!engagement) {
     return (
-      <div className="p-8 text-center text-slate-500">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-atlas-blue mx-auto mb-4" />
-        <p>Memuat data perikatan...</p>
+      <div className="p-8 text-center text-slate-500 font-sans">
+        Data perikatan tidak ditemukan. Silakan kembali ke daftar perikatan.
       </div>
     );
   }
 
   return (
     <WorksheetContainer
-      code="A.110"
-      name="Analisis Penerimaan Klien (Client Acceptance)"
-      purpose="Modul evaluasi terpadu penerimaan calon klien berdasarkan risiko, independensi, dan benturan kepentingan."
-      status={wsData.status || 'In Progress'}
-      reviewer={engagement.managerName || 'Menunggu Reviewer'}
-      lastUpdated="Baru saja"
-      validateCompletion={handleValidate}
+      title="A.110 Analisis Risiko Penerimaan & Keberlanjutan Hubungan Klien"
+      worksheetId="A.110"
+      status={statusKKP}
+      engagementId={engagement.id}
     >
-      {/* ── TOAST NOTIFICATION ── */}
-      {toastMessage && (
-        <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-900 px-4 py-3 rounded-xl text-xs font-semibold flex items-center justify-between gap-2 shadow-sm animate-in fade-in duration-200">
+      <div className="space-y-6 font-sans">
+        
+        {/* ── TOP ACTION BAR ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200/90 shadow-2xs">
           <div className="flex items-center gap-2">
-            <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
-            <span>{toastMessage}</span>
-          </div>
-          <button 
-            type="button" 
-            onClick={() => setToastMessage(null)}
-            className="text-emerald-700 hover:text-emerald-950 p-1 cursor-pointer"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
-      {/* ── TOOLBAR: EXPORT, IMPORT, & ACTION STRIP ── */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200 mb-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-blue-50 text-atlas-blue border border-blue-200">
-            KKP A.110
-          </span>
-          <span className="text-xs text-slate-500 font-medium hidden sm:inline">
-            Analisis Penerimaan & Keberlanjutan Hubungan Klien
-          </span>
-        </div>
-
-        {/* Action Buttons Group */}
-        <div className="flex items-center gap-2 flex-wrap shrink-0">
-          
-          {/* Template Menu */}
-          <div className="relative inline-block text-left" ref={templateMenuRef}>
-            <button
-              type="button"
-              onClick={() => setIsTemplateMenuOpen(!isTemplateMenuOpen)}
-              className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-              title="Unduh format template untuk pengisian data A.110"
-            >
-              <Download size={14} className="text-slate-500" />
-              <span>Unduh Template</span>
-              <ChevronDown size={12} className={`text-slate-400 transition-transform duration-150 ${isTemplateMenuOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isTemplateMenuOpen && (
-              <div className="origin-top-right absolute right-0 mt-1.5 w-56 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-slate-100 z-50 animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-3 py-2 bg-slate-50 rounded-t-xl text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Pilihan Format Template
-                </div>
-                <div className="py-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsTemplateMenuOpen(false);
-                      downloadA110ExcelTemplate(engagement.clientName, engagement.fiscalYear);
-                      showToast('Template Excel (.xlsx) berhasil diunduh!');
-                    }}
-                    className="flex w-full items-center px-3.5 py-2 text-xs text-slate-700 hover:bg-blue-50 hover:text-atlas-blue transition-colors cursor-pointer font-medium"
-                  >
-                    <FileSpreadsheet className="mr-2.5 text-emerald-600" size={16} />
-                    <span>Template Excel (.xlsx)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsTemplateMenuOpen(false);
-                      downloadA110CSVTemplate();
-                      showToast('Template CSV (.csv) berhasil diunduh!');
-                    }}
-                    className="flex w-full items-center px-3.5 py-2 text-xs text-slate-700 hover:bg-blue-50 hover:text-atlas-blue transition-colors cursor-pointer font-medium"
-                  >
-                    <FileText className="mr-2.5 text-blue-600" size={16} />
-                    <span>Template CSV (.csv)</span>
-                  </button>
-                </div>
-              </div>
-            )}
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Indeks KKP:</span>
+            <span className="px-2.5 py-1 bg-blue-50 text-atlas-blue font-bold text-xs rounded-md border border-blue-200">
+              A.110
+            </span>
+            <span className="text-xs text-slate-400">|</span>
+            <span className="text-xs text-slate-600 font-medium">SA 210, SA 220 & SPM 1</span>
           </div>
 
-          {/* Import Button */}
-          <button
-            type="button"
-            onClick={() => setIsImportModalOpen(true)}
-            className="px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-            title="Import data A.110 dari file Excel (.xlsx), CSV (.csv), atau JSON (.json)"
-          >
-            <Upload size={14} className="text-emerald-700" />
-            <span>Import Data</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Export Menu */}
+            <div className="relative" ref={exportMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsExportMenuOpen(prev => !prev)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-slate-200"
+              >
+                <Download size={14} />
+                <span>Export</span>
+                <ChevronDown size={14} className={`transition-transform duration-200 ${isExportMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
 
-          {/* Export Dropdown Menu */}
-          <div className="relative inline-block text-left" ref={exportMenuRef}>
-            <button
-              type="button"
-              onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-              className="px-3.5 py-1.5 bg-atlas-blue hover:bg-blue-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-              title="Ekspor seluruh data kertas kerja A.110"
-            >
-              <Download size={14} />
-              <span>Export A.110</span>
-              <ChevronDown size={12} className={`text-blue-200 transition-transform duration-150 ${isExportMenuOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {isExportMenuOpen && (
-              <div className="origin-top-right absolute right-0 mt-1.5 w-60 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-slate-100 z-50 animate-in fade-in zoom-in-95 duration-100">
-                <div className="px-3.5 py-2.5 bg-slate-50 rounded-t-xl text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Format Ekspor KKP A.110
-                </div>
-                <div className="py-1">
+              {isExportMenuOpen && (
+                <div className="absolute right-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-30 text-xs">
                   <button
                     type="button"
                     onClick={handleExportExcel}
-                    className="flex w-full items-center px-3.5 py-2.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-atlas-blue transition-colors cursor-pointer font-medium"
+                    className="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-medium cursor-pointer"
                   >
-                    <FileSpreadsheet className="mr-3 text-emerald-600" size={17} />
-                    <div className="text-left">
-                      <div className="font-semibold">Excel Workbook (.xlsx)</div>
-                      <div className="text-[10px] text-slate-400">Termasuk lembar data & format import</div>
-                    </div>
+                    <FileSpreadsheet size={15} className="text-emerald-600" />
+                    <span>Export Excel (.xlsx)</span>
                   </button>
-
                   <button
                     type="button"
                     onClick={handleExportJSON}
-                    className="flex w-full items-center px-3.5 py-2.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-atlas-blue transition-colors cursor-pointer font-medium"
+                    className="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-medium cursor-pointer"
                   >
-                    <FileCode className="mr-3 text-purple-600" size={17} />
-                    <div className="text-left">
-                      <div className="font-semibold">Data JSON (.json)</div>
-                      <div className="text-[10px] text-slate-400">Format cadangan & integrasi sistem</div>
-                    </div>
+                    <FileText size={15} className="text-blue-600" />
+                    <span>Export JSON (.json)</span>
                   </button>
-
                   <button
                     type="button"
-                    onClick={handlePrint}
-                    className="flex w-full items-center px-3.5 py-2.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-atlas-blue transition-colors cursor-pointer font-medium border-t border-slate-100"
+                    onClick={() => { setIsExportMenuOpen(false); window.print(); }}
+                    className="w-full text-left px-3.5 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-medium cursor-pointer border-t border-slate-100"
                   >
-                    <Printer className="mr-3 text-slate-600" size={17} />
-                    <div className="text-left">
-                      <div className="font-semibold">Cetak Kertas Kerja (Print / PDF)</div>
-                      <div className="text-[10px] text-slate-400">Tata letak standar pengarsipan audit</div>
-                    </div>
+                    <Printer size={15} className="text-slate-600" />
+                    <span>Cetak Kertas Kerja</span>
                   </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Import */}
+            <button
+              type="button"
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-slate-200"
+            >
+              <Upload size={14} />
+              <span>Import</span>
+            </button>
+
+            {/* Simpan */}
+            <button
+              type="button"
+              onClick={handleSave}
+              className="flex items-center gap-1.5 px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-2xs"
+            >
+              {isSaved ? <CheckCircle2 size={15} className="text-emerald-400" /> : <Save size={15} />}
+              <span>{isSaved ? 'Tersimpan' : 'Simpan Kertas Kerja'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* ── TOAST NOTIFICATION ── */}
+        {toastMessage && (
+          <div className="bg-emerald-50 border border-emerald-200 text-emerald-900 px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center gap-2 shadow-2xs animate-in fade-in duration-150">
+            <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+
+        {/* ── BANNER HEADER & STATUS ── */}
+        <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
+                SA 210 & SA 220
+              </span>
+              <span className="text-slate-400 text-xs">|</span>
+              <span className="text-xs text-slate-500 font-medium">Standar Pengendalian Mutu (SPM 1)</span>
+            </div>
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">
+              ANALISIS RISIKO PENERIMAAN DAN KEBERLANJUTAN HUBUNGAN DENGAN KLIEN
+            </h1>
+            <p className="text-xs text-slate-500 max-w-2xl">
+              Evaluasi komprehensif atas integritas manajemen, standar pelaporan, independensi, serta kompetensi personel KAP untuk memutuskan penerimaan atau penolakan perikatan.
+            </p>
           </div>
 
-          {/* Save Draft Button */}
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            className={`px-3.5 py-1.5 border rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs ${
-              isSaved 
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-700' 
-                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
-            }`}
-            title="Simpan perubahan draf isian saat ini"
-          >
-            {isSaved ? <CheckCircle2 size={14} className="text-emerald-600" /> : <Save size={14} className="text-slate-500" />}
-            <span>{isSaved ? 'Tersimpan' : 'Simpan Draf'}</span>
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className={`px-4 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-2xs ${
+              statusKKP === 'Completed' 
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                : 'bg-rose-50 text-rose-800 border-rose-300'
+            }`}>
+              {statusKKP === 'Completed' ? (
+                <>
+                  <CheckCircle2 size={16} className="text-emerald-600" />
+                  <span>STATUS: COMPLETED</span>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle size={16} className="text-rose-600" />
+                  <span>STATUS: UNCOMPLETED</span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Tabs Navigation */}
-      <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex overflow-x-auto mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 py-3 px-4 text-sm font-medium rounded-lg whitespace-nowrap transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer ${
-              activeTab === tab.id 
-                ? 'bg-blue-50 text-atlas-blue shadow-sm font-bold' 
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            {tab.icon}
-            <span>{tab.name}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        {/* Tab 1: Informasi Klien & Perikatan */}
-        {activeTab === 'info' && (
-          <div className="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">1. Informasi Calon Klien & Manajemen</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Nama Entitas</label>
-                  <input type="text" defaultValue={engagement.clientName} className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-gray-700 focus:outline-none" readOnly />
-                </div>
-
-                {/* Combobox: Bidang Usaha / Industri (Dropdown & Manual Input) */}
-                <div className="relative" ref={industryDropdownRef}>
-                  <div className="flex items-center justify-between mb-1">
-                    <label htmlFor="industry-input" className="block text-sm font-bold text-gray-700">
-                      Bidang Usaha / Industri <span className="text-red-500">*</span>
-                    </label>
-                    <span className="text-[11px] text-gray-400">Pilih dropdown atau ketik manual</span>
-                  </div>
-
-                  <div className="relative flex items-center">
-                    <input 
-                      id="industry-input"
-                      ref={industryInputRef}
-                      type="text" 
-                      list="industry-options-datalist"
-                      value={industry} 
-                      onChange={(e) => {
-                        setIndustry(e.target.value);
-                        setIsIndustryDropdownOpen(true);
-                      }}
-                      onFocus={() => setIsIndustryDropdownOpen(true)}
-                      placeholder="Pilih atau ketik bidang usaha..." 
-                      className="w-full border border-gray-300 rounded-lg pl-3 pr-16 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none transition-colors"
-                      autoComplete="off"
-                      role="combobox"
-                      aria-expanded={isIndustryDropdownOpen}
-                      aria-controls="industry-options-list"
-                    />
-
-                    {/* Action buttons inside right of input */}
-                    <div className="absolute right-1 flex items-center space-x-0.5">
-                      {industry && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIndustry('');
-                            industryInputRef.current?.focus();
-                          }}
-                          className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md transition-colors"
-                          title="Hapus isian"
-                          aria-label="Hapus isian bidang usaha"
-                        >
-                          <X size={15} />
-                        </button>
-                      )}
+        {/* ── TABEL UTAMA: 7 KRITERIA EVALUASI PENERIMAAN KLIEN ── */}
+        <div className="bg-white border border-slate-200/90 rounded-xl overflow-hidden shadow-2xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs min-w-[800px]">
+              <thead>
+                <tr className="bg-slate-100/90 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
+                  <th className="py-3 px-4 w-12 text-center">No</th>
+                  <th className="py-3 px-4">Parameter / Kriteria Evaluasi Penerimaan</th>
+                  <th className="py-3 px-4 w-40 text-center border-l border-slate-200">Referensi</th>
+                  <th className="py-3 px-4 w-48 text-center border-l border-slate-200">Hasil Analisis</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                
+                {/* 1. Jenis Usaha Klien */}
+                <tr className="hover:bg-slate-50/70 transition-colors">
+                  <td className="py-3.5 px-4 text-center font-bold text-slate-600">1</td>
+                  <td className="py-3.5 px-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <span className="font-semibold text-slate-900">Jenis Usaha Klien <span className="text-rose-500">*</span></span>
+                      <div className="relative w-full sm:w-80" ref={industryDropdownRef}>
+                        <input
+                          type="text"
+                          value={industry}
+                          onChange={(e) => setIndustry(e.target.value)}
+                          onFocus={() => setIsIndustryDropdownOpen(true)}
+                          className="w-full border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-800 bg-slate-50/60 focus:bg-white focus:border-atlas-blue outline-none"
+                          placeholder="Pilih atau ketik industri..."
+                        />
+                        {isIndustryDropdownOpen && (
+                          <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto divide-y divide-slate-100 text-xs">
+                            {filteredIndustries.map(item => (
+                              <button
+                                key={item}
+                                type="button"
+                                onClick={() => { setIndustry(item); setIsIndustryDropdownOpen(false); }}
+                                className="w-full text-left px-3 py-1.5 hover:bg-blue-50 text-slate-700 font-medium"
+                              >
+                                {item}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                      Home
+                    </span>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
                       <button
                         type="button"
-                        onClick={() => setIsIndustryDropdownOpen(prev => !prev)}
-                        className="p-2 text-gray-400 hover:text-atlas-blue hover:bg-blue-50 rounded-md transition-colors"
-                        title="Tampilkan daftar opsi industri"
-                        aria-label="Buka menu pilihan bidang usaha"
+                        onClick={() => setIndustryRisk('low')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          industryRisk === 'low' 
+                            ? 'bg-emerald-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
                       >
-                        <ChevronDown size={16} className={`transition-transform duration-200 ${isIndustryDropdownOpen ? 'rotate-180 text-atlas-blue' : ''}`} />
+                        Low
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIndustryRisk('high')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          industryRisk === 'high' 
+                            ? 'bg-rose-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        High
                       </button>
                     </div>
-                  </div>
+                  </td>
+                </tr>
 
-                  {/* Fallback Native Datalist for Browser Accessibility */}
-                  <datalist id="industry-options-datalist">
-                    {STANDARD_INDUSTRIES.map(item => (
-                      <option key={item} value={item} />
-                    ))}
-                  </datalist>
-
-                  {/* Custom Accessible Dropdown Menu */}
-                  {isIndustryDropdownOpen && (
-                    <div 
-                      id="industry-options-list"
-                      role="listbox"
-                      className="absolute z-30 left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-xl max-h-64 overflow-y-auto text-sm divide-y divide-gray-50 animate-in fade-in zoom-in-95 duration-150"
-                    >
-                      <div className="p-2 bg-gray-50/80 sticky top-0 border-b border-gray-100 flex items-center justify-between text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
-                        <span>Pilihan Standar ({filteredIndustries.length})</span>
-                        {industry && <span className="text-atlas-blue lowercase font-medium">isi manual aktif</span>}
-                      </div>
-
-                      {filteredIndustries.length > 0 ? (
-                        filteredIndustries.map((item) => {
-                          const isSelected = industry.trim().toLowerCase() === item.toLowerCase();
-                          return (
-                            <button
-                              key={item}
-                              type="button"
-                              role="option"
-                              aria-selected={isSelected}
-                              onClick={() => handleSelectIndustry(item)}
-                              className={`w-full text-left px-3.5 py-2.5 flex items-center justify-between transition-colors min-h-[40px] cursor-pointer ${
-                                isSelected 
-                                  ? 'bg-blue-50/80 text-atlas-blue font-bold' 
-                                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                              }`}
-                            >
-                              <span className="truncate pr-2">{item}</span>
-                              {isSelected && <Check size={16} className="text-atlas-blue shrink-0" />}
-                            </button>
-                          );
-                        })
-                      ) : (
-                        <div className="p-4 text-center text-xs text-gray-500 space-y-1">
-                          <p className="font-medium text-gray-700">Tidak ada dalam daftar standar</p>
-                          <p className="text-gray-400">
-                            Isian manual Anda <span className="font-semibold text-gray-800">"{industry}"</span> akan tetap disimpan.
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Manual Entry Hint Footer */}
-                      <div className="p-2.5 bg-slate-50 text-[11px] text-slate-500 flex items-center justify-between border-t border-gray-100">
-                        <span>Bisa ketik nama bidang usaha kustom apa saja</span>
-                        <button
-                          type="button"
-                          onClick={() => setIsIndustryDropdownOpen(false)}
-                          className="text-atlas-blue font-bold hover:underline cursor-pointer"
-                        >
-                          Tutup
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">
-                    Susunan Dewan Komisaris & Direksi Utama <span className="text-red-500">*</span>
-                  </label>
-                  <textarea 
-                    value={alamat} 
-                    onChange={(e) => setAlamat(e.target.value)} 
-                    className="w-full border border-gray-300 rounded-lg p-2.5 text-gray-700 focus:border-atlas-blue outline-none" 
-                    rows={3} 
-                    placeholder="Sebutkan nama dan jabatan eksekutif kunci, misalnya: Direktur Utama: Bpk. Andi, Komisaris: Ibu Dewi..."
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">2. Informasi Perikatan</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Jenis Perikatan</label>
-                  <input 
-                    type="text" 
-                    value={engagement.engagementType === 'First Year' ? 'Perikatan Tahun Pertama' : 'Perikatan Berkelanjutan (Recurring)'} 
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-gray-700 focus:outline-none" 
-                    readOnly 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Standar Akuntansi yang Digunakan</label>
-                  <input type="text" defaultValue={engagement.accountingStandard} className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-gray-700 focus:outline-none" readOnly />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">Tujuan Penggunaan Laporan Keuangan</label>
-                  <textarea 
-                    value={usagePurpose}
-                    onChange={(e) => setUsagePurpose(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg p-2.5 text-gray-700 focus:border-atlas-blue outline-none" 
-                    rows={2} 
-                    placeholder="Mis: Untuk pertanggungjawaban RUPS pemegang saham, pengajuan fasilitas kredit perbankan, tender proyek, dll..."
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-end pt-4">
-              <button 
-                type="button"
-                onClick={() => setActiveTab('eval')} 
-                className="bg-atlas-blue text-white px-6 py-2.5 rounded-lg font-bold hover:bg-blue-800 transition-colors cursor-pointer"
-              >
-                Lanjut ke Evaluasi Risiko &rarr;
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Tab 2: Evaluasi & Risiko (Kontrol Kertas Kerja Pendukung) */}
-        {activeTab === 'eval' && (
-          <div className="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">3. Kontrol Isian Kertas Kerja Pendukung</h2>
-              <p className="text-sm text-gray-600 mb-6">
-                Kertas kerja ini merupakan kontrol atas isian 4 (empat) kertas kerja pendukung. Auditor harus melengkapi evaluasi kertas kerja pendukung berikut sebelum mengambil keputusan.
-              </p>
-              
-              <div className="space-y-4">
-                {/* A.1101 */}
-                <div className="p-4 bg-white border border-gray-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
-                  <div>
-                    <h3 className="font-bold text-gray-800"><span className="text-atlas-blue mr-2">A.1101</span> Isu Pelaporan Keuangan Terdahulu</h3>
-                    <p className="text-xs text-gray-500 mt-1">Mengevaluasi isu-isu pelaporan keuangan pada periode sebelumnya.</p>
-                  </div>
-                  <div className="flex space-x-3 shrink-0 items-center">
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${evals['A.1101'] ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                      {evals['A.1101'] ? 'Completed' : 'Draft'}
-                    </span>
-                    <select 
-                      value={evals['A.1101']} 
-                      onChange={(e) => setEvals({...evals, 'A.1101': e.target.value as 'low' | 'high'})}
-                      className="border border-gray-300 rounded px-3 py-1.5 text-sm outline-none focus:border-atlas-blue font-bold text-gray-700 cursor-pointer"
-                    >
-                      <option value="">-- Pilih Risiko --</option>
-                      <option value="low">Risiko Rendah</option>
-                      <option value="high">Risiko Tinggi</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* A.1102 */}
-                <div className="p-4 bg-white border border-gray-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm group hover:border-atlas-blue transition-colors">
-                  <div>
-                    <h3 className="font-bold text-gray-800 flex items-center">
-                      <span className="text-atlas-blue mr-2">A.1102</span> Integritas Manajemen
-                      <a href={`/workspace/${engagement.id}/worksheet/a1102`} className="ml-3 text-xs bg-gray-100 hover:bg-atlas-blue hover:text-white text-gray-600 px-2 py-1 rounded transition-colors font-medium">Buka Kertas Kerja &rarr;</a>
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-1">Mengevaluasi integritas manajemen, termasuk indikasi pencucian uang/ilegal.</p>
-                  </div>
-                  <div className="flex space-x-3 shrink-0 items-center">
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${evals['A.1102'] ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                      {evals['A.1102'] ? 'Completed' : 'Draft'}
-                    </span>
-                    <select 
-                      value={evals['A.1102']} 
-                      onChange={(e) => setEvals({...evals, 'A.1102': e.target.value as 'low' | 'high'})}
-                      className="border border-gray-300 rounded px-3 py-1.5 text-sm outline-none focus:border-atlas-blue font-bold text-gray-700 cursor-pointer"
-                    >
-                      <option value="">-- Pilih Risiko --</option>
-                      <option value="low">Risiko Rendah</option>
-                      <option value="high">Risiko Tinggi</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* A.1103 */}
-                <div className="p-4 bg-white border border-gray-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm group hover:border-atlas-blue transition-colors">
-                  <div>
-                    <h3 className="font-bold text-gray-800 flex items-center">
-                      <span className="text-atlas-blue mr-2">A.1103</span> Kompetensi, Waktu, & Independensi Personel KAP
-                      <a href={`/workspace/${engagement.id}/worksheet/a1103`} className="ml-3 text-xs bg-gray-100 hover:bg-atlas-blue hover:text-white text-gray-600 px-2 py-1 rounded transition-colors font-medium">Buka Kertas Kerja &rarr;</a>
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-1">Mengevaluasi kompetensi tim, ketersediaan waktu, dan benturan kepentingan.</p>
-                  </div>
-                  <div className="flex space-x-3 shrink-0 items-center">
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${evals['A.1103'] ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                      {evals['A.1103'] ? 'Completed' : 'Draft'}
-                    </span>
-                    <select 
-                      value={evals['A.1103']} 
-                      onChange={(e) => setEvals({...evals, 'A.1103': e.target.value as 'low' | 'high'})}
-                      className="border border-gray-300 rounded px-3 py-1.5 text-sm outline-none focus:border-atlas-blue font-bold text-gray-700 cursor-pointer"
-                    >
-                      <option value="">-- Pilih Risiko --</option>
-                      <option value="low">Risiko Rendah</option>
-                      <option value="high">Risiko Tinggi</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* A.1104 - Conditional based on Engagement Type */}
-                {engagement.engagementType === 'First Year' ? (
-                  <div className="p-4 bg-white border border-gray-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm group hover:border-atlas-blue transition-colors">
-                    <div>
-                      <h3 className="font-bold text-gray-800 flex items-center">
-                        <span className="text-atlas-blue mr-2">A.1104</span> Komunikasi dengan Auditor Pendahulu
-                        <a href={`/workspace/${engagement.id}/worksheet/a1104`} className="ml-3 text-xs bg-gray-100 hover:bg-atlas-blue hover:text-white text-gray-600 px-2 py-1 rounded transition-colors font-medium">Buka Kertas Kerja &rarr;</a>
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">Wajib untuk perikatan tahun pertama.</p>
-                    </div>
-                    <div className="flex space-x-3 shrink-0 items-center">
-                      <span className={`text-xs font-bold px-3 py-1 rounded-full ${evals['A.1104'] ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
-                        {evals['A.1104'] ? 'Completed' : 'Draft'}
-                      </span>
-                      <select 
-                        value={evals['A.1104']} 
-                        onChange={(e) => setEvals({...evals, 'A.1104': e.target.value as 'low' | 'high'})}
-                        className="border border-gray-300 rounded px-3 py-1.5 text-sm outline-none focus:border-atlas-blue font-bold text-gray-700 cursor-pointer"
+                {/* 2. Status Kepemilikan Klien */}
+                <tr className="hover:bg-slate-50/70 transition-colors">
+                  <td className="py-3.5 px-4 text-center font-bold text-slate-600">2</td>
+                  <td className="py-3.5 px-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <span className="font-semibold text-slate-900">Status Kepemilikan Klien <span className="text-rose-500">*</span></span>
+                      <select
+                        value={ownershipStatus}
+                        onChange={(e) => setOwnershipStatus(e.target.value)}
+                        className="w-full sm:w-80 border border-slate-200 rounded px-2.5 py-1 text-xs text-slate-800 bg-slate-50/60 focus:bg-white focus:border-atlas-blue outline-none font-medium"
                       >
-                        <option value="">-- Pilih Risiko --</option>
-                        <option value="low">Risiko Rendah</option>
-                        <option value="high">Risiko Tinggi</option>
+                        {OWNERSHIP_STATUS_OPTIONS.map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
                       </select>
                     </div>
-                  </div>
-                ) : (
-                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm opacity-60 group hover:border-atlas-blue transition-colors">
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                      Home
+                    </span>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+                      <button
+                        type="button"
+                        onClick={() => setOwnershipRisk('low')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          ownershipRisk === 'low' 
+                            ? 'bg-emerald-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Low
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOwnershipRisk('high')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          ownershipRisk === 'high' 
+                            ? 'bg-rose-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        High
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                {/* 3. Standar Akuntansi Keuangan */}
+                <tr className="hover:bg-slate-50/70 transition-colors">
+                  <td className="py-3.5 px-4 text-center font-bold text-slate-600">3</td>
+                  <td className="py-3.5 px-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <span className="font-semibold text-slate-900 block">Standar Akuntansi Keuangan yang digunakan oleh klien <span className="text-rose-500">*</span></span>
+                        <span className="text-[11px] text-slate-500">Kerangka pelaporan: <strong>{engagement.accountingStandard || 'SAK EP'}</strong></span>
+                      </div>
+                      <span className="text-xs px-2.5 py-1 bg-slate-100 text-slate-700 font-bold rounded border border-slate-200 self-start sm:self-center">
+                        {engagement.accountingStandard || 'SAK EP'}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                      Home
+                    </span>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+                      <button
+                        type="button"
+                        onClick={() => setAccountingStandardRisk('low')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          accountingStandardRisk === 'low' 
+                            ? 'bg-emerald-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Low
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAccountingStandardRisk('high')}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          accountingStandardRisk === 'high' 
+                            ? 'bg-rose-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        High
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                {/* 4. Isu Pelaporan Keuangan terdahulu */}
+                <tr className="hover:bg-slate-50/70 transition-colors">
+                  <td className="py-3.5 px-4 text-center font-bold text-slate-600 align-top">4</td>
+                  <td className="py-3.5 px-4 space-y-2">
                     <div>
-                      <h3 className="font-bold text-gray-500 flex items-center">
-                        <span className="text-gray-400 mr-2">A.1104</span> Komunikasi dengan Auditor Pendahulu
-                        <a href={`/workspace/${engagement.id}/worksheet/a1104`} className="ml-3 text-xs bg-gray-100 hover:bg-atlas-blue hover:text-white text-gray-600 px-2 py-1 rounded transition-colors font-medium">Buka Kertas Kerja &rarr;</a>
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">Tidak relevan (Bukan Perikatan Tahun Pertama).</p>
+                      <span className="font-semibold text-slate-900 block">Isu Pelaporan Keuangan terdahulu <span className="text-rose-500">*</span></span>
                     </div>
-                    <div className="flex space-x-3 shrink-0 items-center">
-                      <span className="text-xs font-bold px-3 py-1 bg-gray-200 text-gray-500 rounded-full">N/A</span>
+                    <div className="bg-slate-50/90 border border-slate-200 rounded-lg p-2.5">
+                      <span className="text-[11px] font-bold text-slate-500 italic block mb-1">Pilih kriteria evaluasi pelaporan terdahulu:</span>
+                      <select
+                        value={prevCriteria}
+                        onChange={(e) => setPrevCriteria(e.target.value)}
+                        className="w-full border border-slate-200 rounded px-2.5 py-1.5 text-xs text-slate-800 bg-white focus:border-atlas-blue outline-none leading-relaxed font-medium"
+                      >
+                        {PREVIOUS_REPORTING_CRITERIA_OPTIONS.map(opt => (
+                          <option key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
                     </div>
-                  </div>
-                )}
-              </div>
-            </div>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200 align-middle">
+                    <Link
+                      to={`/workspace/${engagement.id}/worksheet/a1101`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-atlas-blue hover:bg-blue-100 border border-blue-200 transition-colors"
+                      title="Buka Kertas Kerja Pendukung A.1101"
+                    >
+                      <span>A1101</span>
+                      <ExternalLink size={12} />
+                    </Link>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200 align-middle">
+                    <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+                      <button
+                        type="button"
+                        onClick={() => setEvals({...evals, 'A.1101': 'low'})}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          evals['A.1101'] === 'low' 
+                            ? 'bg-emerald-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Low
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEvals({...evals, 'A.1101': 'high'})}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          evals['A.1101'] === 'high' 
+                            ? 'bg-rose-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        High
+                      </button>
+                    </div>
+                  </td>
+                </tr>
 
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">4. Simpulan Risiko & Penjelasan Anomali</h2>
-              <div className="space-y-6">
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <p className="font-bold text-blue-900">Tingkat Risiko Perikatan secara Keseluruhan (Overall Engagement Risk)</p>
-                    <p className="text-xs text-blue-800 mt-1">Dihitung otomatis berdasarkan hasil pengisian kertas kerja pendukung di atas.</p>
-                  </div>
-                  <div className={`px-6 py-2 rounded-lg font-black border shrink-0 text-base shadow-sm ${
-                    calculatedOverallRisk === 'high' 
-                      ? 'bg-rose-50 border-rose-300 text-rose-700' 
-                      : 'bg-white border-blue-200 text-atlas-blue'
-                  }`}>
-                    {calculatedOverallRisk === 'high' ? 'TINGGI (HIGH)' : 'RENDAH (LOW)'}
-                  </div>
-                </div>
+                {/* 5. Integritas Manajemen */}
+                <tr className="hover:bg-slate-50/70 transition-colors">
+                  <td className="py-3.5 px-4 text-center font-bold text-slate-600">5</td>
+                  <td className="py-3.5 px-4">
+                    <span className="font-semibold text-slate-900">Integritas manajemen</span>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Mengevaluasi itikad baik pimpinan, rekam jejak kepatuhan hukum, dan ketiadaan indikasi fraud.</p>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <Link
+                      to={`/workspace/${engagement.id}/worksheet/a1102`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-atlas-blue hover:bg-blue-100 border border-blue-200 transition-colors"
+                      title="Buka Kertas Kerja Pendukung A.1102"
+                    >
+                      <span>A1102</span>
+                      <ExternalLink size={12} />
+                    </Link>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+                      <button
+                        type="button"
+                        onClick={() => setEvals({...evals, 'A.1102': 'low'})}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          evals['A.1102'] === 'low' 
+                            ? 'bg-emerald-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Low
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEvals({...evals, 'A.1102': 'high'})}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          evals['A.1102'] === 'high' 
+                            ? 'bg-rose-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        High
+                      </button>
+                    </div>
+                  </td>
+                </tr>
 
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
-                    Penjelasan Jawaban Anomali <span className="text-xs font-normal text-gray-500 ml-1">(Wajib diisi jika terdapat risiko tinggi atau kondisi khusus)</span>
-                  </label>
-                  <textarea 
-                    value={anomalyExplanation}
-                    onChange={(e) => setAnomalyExplanation(e.target.value)}
-                    className="w-full border border-gray-300 rounded-xl p-4 text-gray-700 focus:border-red-400 focus:ring-1 focus:ring-red-400 outline-none min-h-[100px] bg-red-50/20" 
-                    placeholder="Jelaskan alasan auditor jika mengisi dengan jawaban anomali atau risiko tinggi pada kertas kerja pendukung..."
-                  />
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-between pt-4">
-              <button 
-                type="button"
-                onClick={() => setActiveTab('info')} 
-                className="text-gray-500 font-bold hover:text-gray-800 px-4 py-2 cursor-pointer"
-              >
-                &larr; Kembali
-              </button>
-              <button 
-                type="button"
-                onClick={() => setActiveTab('keputusan')} 
-                className="bg-atlas-blue text-white px-6 py-2.5 rounded-lg font-bold hover:bg-blue-800 transition-colors cursor-pointer"
-              >
-                Lanjut ke Keputusan Akhir &rarr;
-              </button>
-            </div>
+                {/* 6. Kompetensi & Independensi Personel KAP */}
+                <tr className="hover:bg-slate-50/70 transition-colors">
+                  <td className="py-3.5 px-4 text-center font-bold text-slate-600">6</td>
+                  <td className="py-3.5 px-4">
+                    <span className="font-semibold text-slate-900">
+                      Kompetensi, Ketersediaan waktu, dan Independensi personel KAP untuk penunjukan Tim Perikatan
+                    </span>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Memastikan kecukupan kompetensi auditor, ketersediaan jam kerja, dan independensi tim audit.</p>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <Link
+                      to={`/workspace/${engagement.id}/worksheet/a1103`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-atlas-blue hover:bg-blue-100 border border-blue-200 transition-colors"
+                      title="Buka Kertas Kerja Pendukung A.1103"
+                    >
+                      <span>A1103</span>
+                      <ExternalLink size={12} />
+                    </Link>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+                      <button
+                        type="button"
+                        onClick={() => setEvals({...evals, 'A.1103': 'low'})}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          evals['A.1103'] === 'low' 
+                            ? 'bg-emerald-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Low
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEvals({...evals, 'A.1103': 'high'})}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          evals['A.1103'] === 'high' 
+                            ? 'bg-rose-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        High
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                {/* 7. Komunikasi dengan Auditor Pendahulu */}
+                <tr className="hover:bg-slate-50/70 transition-colors">
+                  <td className="py-3.5 px-4 text-center font-bold text-slate-600">7</td>
+                  <td className="py-3.5 px-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div>
+                        <span className="font-semibold text-slate-900">Komunikasi dengan Auditor Pendahulu</span>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          {engagement.engagementType === 'First Year' 
+                            ? 'Wajib dilakukan konfirmasi profesional untuk perikatan tahun pertama.' 
+                            : 'Perikatan berulang (Recurring engagement) — Tidak diwajibkan konfirmasi pendahulu.'}
+                        </p>
+                      </div>
+                      <span className="text-[11px] px-2 py-0.5 bg-slate-100 rounded text-slate-600 font-bold border border-slate-200">
+                        {engagement.engagementType === 'First Year' ? 'Tahun Pertama' : 'Perikatan Berulang'}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <Link
+                      to={`/workspace/${engagement.id}/worksheet/a1104`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-atlas-blue hover:bg-blue-100 border border-blue-200 transition-colors"
+                      title="Buka Kertas Kerja Pendukung A.1104"
+                    >
+                      <span>A1104</span>
+                      <ExternalLink size={12} />
+                    </Link>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-200">
+                    <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
+                      <button
+                        type="button"
+                        onClick={() => setEvals({...evals, 'A.1104': 'low'})}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          evals['A.1104'] === 'low' 
+                            ? 'bg-emerald-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Low
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEvals({...evals, 'A.1104': 'high'})}
+                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                          evals['A.1104'] === 'high' 
+                            ? 'bg-rose-600 text-white shadow-xs' 
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        High
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+
+                {/* ── SUMMARY ROW: RINGKASAN RISIKO PENERIMAAN ── */}
+                <tr className="bg-slate-900 text-white font-bold text-xs border-t-2 border-slate-900">
+                  <td className="py-3.5 px-4 text-center text-slate-300">★</td>
+                  <td className="py-3.5 px-4" colSpan={2}>
+                    <span className="uppercase tracking-wider">
+                      Ringkasan Risiko Penerimaan dan Keberlanjutan Hubungan Dengan Klien
+                    </span>
+                  </td>
+                  <td className="py-3.5 px-4 text-center border-l border-slate-800">
+                    <span className={`inline-block px-4 py-1.5 rounded-lg font-black text-xs uppercase tracking-wider shadow-sm ${
+                      calculatedOverallRisk === 'high' 
+                        ? 'bg-rose-600 text-white ring-2 ring-rose-400' 
+                        : 'bg-emerald-600 text-white ring-2 ring-emerald-400'
+                    }`}>
+                      {calculatedOverallRisk === 'high' ? 'High' : 'Low'}
+                    </span>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
           </div>
-        )}
+        </div>
 
-        {/* Tab 3: Keputusan Akhir */}
-        {activeTab === 'keputusan' && (
-          <div className="p-8 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        {/* ── BAGIAN KEPUTUSAN PENERIMAAN KLIEN ── */}
+        <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs space-y-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-4 border-b pb-2">5. Keputusan Penerimaan Klien (Accept/Reject)</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <button 
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-tight">
+                APAKAH ANDA AKAN MENERIMA ATAU MELANJUTKAN HUBUNGAN DENGAN KLIEN ?
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Pilih keputusan perikatan berdasarkan hasil evaluasi risiko di atas dan pertimbangan profesional auditor.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0 flex-wrap">
+              {/* YA / TIDAK Buttons */}
+              <div className="inline-flex rounded-lg border border-slate-300 p-1 bg-slate-100 shadow-2xs">
+                <button
                   type="button"
                   onClick={() => setDecision('Accept')}
-                  className={`p-6 rounded-2xl border-2 text-left transition-all cursor-pointer ${decision === 'Accept' ? 'border-green-500 bg-green-50 shadow-md ring-4 ring-green-500/20' : 'border-gray-200 hover:border-green-300'}`}
+                  className={`px-5 py-2 text-xs font-black rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                    decision === 'Accept'
+                      ? 'bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-500'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 >
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${decision === 'Accept' ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                      <CheckCircle size={20} />
-                    </div>
-                    <span className={`text-xl font-black ${decision === 'Accept' ? 'text-green-700' : 'text-gray-700'}`}>ACCEPT (Terima)</span>
-                  </div>
-                  <p className="text-sm text-gray-600">Risiko dapat dikelola, tim independen dan kompeten. Perikatan dapat dilaksanakan.</p>
+                  <Check size={14} />
+                  <span>YA (TERIMA)</span>
                 </button>
-
-                <button 
+                <button
                   type="button"
                   onClick={() => setDecision('Reject')}
-                  className={`p-6 rounded-2xl border-2 text-left transition-all cursor-pointer ${decision === 'Reject' ? 'border-red-500 bg-red-50 shadow-md ring-4 ring-red-500/20' : 'border-gray-200 hover:border-red-300'}`}
+                  className={`px-5 py-2 text-xs font-black rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                    decision === 'Reject'
+                      ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-500'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 >
-                  <div className="flex items-center space-x-3 mb-2">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${decision === 'Reject' ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                      <AlertCircle size={20} />
-                    </div>
-                    <span className={`text-xl font-black ${decision === 'Reject' ? 'text-red-700' : 'text-gray-700'}`}>REJECT (Tolak)</span>
-                  </div>
-                  <p className="text-sm text-gray-600">Terdapat benturan kepentingan atau risiko yang tidak dapat dimitigasi. Perikatan ditolak.</p>
+                  <X size={14} />
+                  <span>TIDAK (TOLAK)</span>
                 </button>
               </div>
 
-              {decision === 'Accept' && (
-                <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-xl animate-in fade-in duration-300">
-                  <h3 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
-                    <FileSearch size={18} />
-                    Langkah Selanjutnya: Input Data Laporan Keuangan
-                  </h3>
-                  <p className="text-sm text-blue-800 mb-4">
-                    Anda telah memutuskan untuk menerima klien ini. Pengisian data laporan keuangan pada template berikut akan digunakan seterusnya secara otomatis dalam mendukung tahapan audit selanjutnya.
-                  </p>
-                  <a 
-                    href={`/workspace/${engagement.id}/worksheet/d100`}
-                    className="inline-flex items-center gap-2 bg-white text-atlas-blue font-bold px-5 py-2.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors shadow-sm"
-                  >
-                    Buka Template Laporan Keuangan &rarr;
-                  </a>
-                </div>
-              )}
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Alasan Keputusan & Mitigasi (Jika Ada)</label>
-                  <textarea 
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    className="w-full border border-gray-300 rounded-xl p-4 text-gray-700 focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none min-h-[120px]" 
-                    placeholder="Contoh: Kami memutuskan menerima perikatan ini dengan pertimbangan mitigasi risiko..."
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 flex items-start space-x-4">
-              <ShieldAlert className="text-amber-500 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-bold text-amber-800">Ketentuan Workflow Persetujuan</h4>
-                <p className="text-sm text-amber-700 mt-1">
-                  Draft ini akan diajukan kepada <strong>{engagement.partnerName || 'Partner'}</strong> untuk direview. 
-                  Jika disetujui status akan berubah menjadi <strong>Approved</strong>. Jika ditolak akan dikembalikan menjadi <strong>Needs Revision</strong>.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-between pt-4">
-              <button 
-                type="button"
-                onClick={() => setActiveTab('eval')} 
-                className="text-gray-500 font-bold hover:text-gray-800 px-4 py-2 cursor-pointer"
+              {/* Template Laporan Keuangan Link */}
+              <Link
+                to={`/workspace/${engagement.id}/trial-balance`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-atlas-blue border border-blue-200 font-bold text-xs rounded-lg transition-colors shadow-2xs"
+                title="Buka Modul Template Data Keuangan & Trial Balance"
               >
-                &larr; Kembali
-              </button>
-              <button 
-                type="button"
-                onClick={handleAjukanReview}
-                disabled={!decision || wsData.status === 'Pending Review' || wsData.status === 'Approved'}
-                className={`px-8 py-3 rounded-lg font-bold text-white shadow-sm transition-colors cursor-pointer ${
-                  decision && wsData.status !== 'Pending Review' && wsData.status !== 'Approved'
-                    ? 'bg-atlas-blue hover:bg-blue-800' 
-                    : 'bg-gray-300 cursor-not-allowed'
-                }`}
-              >
-                {wsData.status === 'Pending Review' ? 'Menunggu Review' : wsData.status === 'Approved' ? 'Telah Disetujui' : 'Ajukan Review'}
-              </button>
+                <FileSpreadsheet size={15} className="text-atlas-blue" />
+                <span>TEMPLATE LAPORAN KEUANGAN</span>
+              </Link>
             </div>
           </div>
-        )}
+
+          {/* ── BAGIAN MITIGASI RISIKO ── */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                JELASKAN BAGAIMANA AUDITOR MELAKUKAN MITIGASI RISIKO ?
+              </label>
+              {calculatedOverallRisk === 'high' && (
+                <span className="text-[11px] text-rose-600 font-bold">
+                  * Wajib diisi karena terdapat parameter risiko tinggi (High)
+                </span>
+              )}
+            </div>
+
+            <textarea
+              value={mitigationExplanation}
+              onChange={(e) => setMitigationExplanation(e.target.value)}
+              rows={4}
+              placeholder="Jelaskan langkah mitigasi risiko, contoh: KAP akan menambahkan ahli berpengalaman dalam penghitungan aktuaria imbalan paska kerja. Akan dilibatkan seorang EQCR untuk membantu analisis rencana manajemen terkait isu going concern..."
+              className="w-full border border-slate-200 rounded-lg p-3.5 text-xs text-slate-800 focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none leading-relaxed bg-slate-50/40 focus:bg-white font-medium"
+            />
+
+            <p className="text-[11px] text-slate-500 italic pt-1">
+              * Kesimpulan dapat diperoleh berdasarkan hasil analisis kertas kerja indeks A1101 s.d A1104.
+            </p>
+          </div>
+
+          {/* ── SUSUNAN MANAJEMEN & INFORMASI PERIKATAN TAMBAHAN (COLLAPSIBLE / RINGKAS) ── */}
+          <details className="pt-2 text-xs text-slate-600 border-t border-slate-100">
+            <summary className="font-semibold text-slate-700 cursor-pointer hover:text-atlas-blue flex items-center gap-1.5 py-1">
+              <Building2 size={14} />
+              <span>Detail Informasi Manajemen & Dewan Direksi</span>
+            </summary>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Susunan Dewan Komisaris & Direksi Utama
+                </label>
+                <textarea
+                  value={boardOfDirectors}
+                  onChange={(e) => setBoardOfDirectors(e.target.value)}
+                  rows={2}
+                  className="w-full border border-slate-200 rounded p-2 text-xs text-slate-800 bg-slate-50/60 focus:bg-white focus:border-atlas-blue outline-none"
+                  placeholder="Direktur Utama, Komisaris, dll..."
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                  Tujuan Penggunaan Laporan Keuangan
+                </label>
+                <textarea
+                  value={usagePurpose}
+                  onChange={(e) => setUsagePurpose(e.target.value)}
+                  rows={2}
+                  className="w-full border border-slate-200 rounded p-2 text-xs text-slate-800 bg-slate-50/60 focus:bg-white focus:border-atlas-blue outline-none"
+                  placeholder="Tujuan audit, fasilitas kredit, RUPS, dsb..."
+                />
+              </div>
+            </div>
+          </details>
+
+        </div>
+
       </div>
 
       {/* ── IMPORT MODAL ── */}
       <A110ImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
-        onImportSuccess={handleImportSuccess}
-        clientName={engagement.clientName}
-        fiscalYear={engagement.auditPeriod || engagement.fiscalYear || '2025'}
+        onImportSuccess={(data, fileName) => {
+          if (data.industry) setIndustry(data.industry);
+          if (data.clientOwnershipStatus) setOwnershipStatus(data.clientOwnershipStatus);
+          if (data.evaluations) setEvals(prev => ({ ...prev, ...data.evaluations }));
+          if (data.decision) setDecision(data.decision);
+          if (data.riskMitigationExplanation) setMitigationExplanation(data.riskMitigationExplanation);
+          showToast(`Data A.110 berhasil diimpor dari ${fileName}!`);
+        }}
+        currentClientName={engagement.clientName}
       />
     </WorksheetContainer>
   );

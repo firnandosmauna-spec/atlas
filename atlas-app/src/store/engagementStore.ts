@@ -85,6 +85,19 @@ export interface WorksheetA110 {
   decision: 'Accept' | 'Reject' | null;
   decisionReason: string;
   status: 'In Progress' | 'Pending Review' | 'Approved' | 'Needs Revision';
+  clientOwnershipStatus?: string;
+  ownershipRisk?: 'low' | 'high';
+  industryRisk?: 'low' | 'high';
+  accountingStandardRisk?: 'low' | 'high';
+  previousReportingIssueCriteria?: string;
+  riskMitigationExplanation?: string;
+}
+
+export interface WorksheetA1101 {
+  answers: Record<string, 'Ya' | 'Tidak' | ''>;
+  acceptanceReason: string;
+  isCompleted: boolean;
+  status: string;
 }
 
 export interface Engagement {
@@ -122,6 +135,7 @@ export interface Engagement {
   risks?: ComprehensiveRisk[];
   procedures?: AuditProcedure[];
   worksheetA110?: WorksheetA110;
+  worksheetA1101?: WorksheetA1101;
 }
 
 export interface ReviewNote {
@@ -235,6 +249,19 @@ export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [
       decision: 'Accept',
       decisionReason: 'Klien beritikad baik, independensi dan kompetensi tim audit mencukupi standar SPM 1 dan SA 220.',
       status: 'In Progress'
+    },
+    worksheetA1101: {
+      answers: {
+        '1a': 'Ya',
+        '1b': 'Tidak',
+        '2': 'Ya',
+        '3': 'Ya',
+        '4': 'Tidak',
+        '5': 'Tidak'
+      },
+      acceptanceReason: 'KAP akan menambahkan ahli yg berpengalaman dalam mengevaluasi imbalan paska kerja.\nAkan dilibatkan seorang EQCR untuk membantu analisis rencana manajemen terkait isu going concern',
+      isCompleted: true,
+      status: 'Completed'
     }
   }
 ];
