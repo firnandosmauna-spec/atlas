@@ -107,6 +107,38 @@ export interface WorksheetA1102 {
   status: string;
 }
 
+export interface PersonnelA1103 {
+  id: string;
+  no: number;
+  nama: string;
+  jabatan: string;
+  lampiranKompetensi: string;
+  lampiranWaktu: string;
+  pengalamanTahun: number;
+  pemahamanEntitas: 'Memadai' | 'Tidak Memadai';
+  pemahamanStandarAudit: 'Memadai' | 'Tidak Memadai';
+  pemahamanPeraturan: 'Memadai' | 'Tidak Memadai';
+  pemahamanTI: 'Memadai' | 'Tidak Memadai';
+  pemahamanStandarAkuntansi: 'Memadai' | 'Tidak Memadai';
+  pemahamanKebijakanKAP: 'Memadai' | 'Tidak Memadai';
+  cuti: 'Ya' | 'Tidak';
+  resign: 'Ya' | 'Tidak';
+  phk: 'Ya' | 'Tidak';
+  akhirMasaKerja: 'Ya' | 'Tidak';
+  perikatanLain: 'Ya' | 'Tidak';
+  lainnya: 'Ya' | 'Tidak';
+  independensi: 'Independen' | 'Tidak Independen';
+  dipilih: 'Ya' | 'Tidak';
+  peran: string;
+}
+
+export interface WorksheetA1103 {
+  personnelList: PersonnelA1103[];
+  temaPelatihan?: string;
+  isCompleted: boolean;
+  status: string;
+}
+
 export interface Engagement {
   id: string;
   clientId: string;
@@ -144,6 +176,7 @@ export interface Engagement {
   worksheetA110?: WorksheetA110;
   worksheetA1101?: WorksheetA1101;
   worksheetA1102?: WorksheetA1102;
+  worksheetA1103?: WorksheetA1103;
 }
 
 export interface ReviewNote {
@@ -284,6 +317,252 @@ export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [
         '9': 'Tidak'
       },
       acceptanceReason: 'walaupun berdasarkan pemberitaan di internet, salah satu direksi memiliki keluarga yang terdapat pelanggaran terhadap hukum, tapi tidak ada pemberitaan yang menunjukan peran dari direksi yang telah melakukan pelanggaran hukum bersama dengan keluarganya tersebut.\nWalaupun dirut termasuk dalam pengurus partai besar Lembu Perjuangan, tapi dirut belum pernah menjadi wakil rakyat daerah/pusat',
+      isCompleted: true,
+      status: 'Completed'
+    },
+    worksheetA1103: {
+      personnelList: [
+        {
+          id: 'p1',
+          no: 1,
+          nama: 'Agus',
+          jabatan: 'Partner',
+          lampiranKompetensi: 'CV_dan_sertifikat PPL1',
+          lampiranWaktu: 'Evaluasi_pembagian_tugas.pdf',
+          pengalamanTahun: 10,
+          pemahamanEntitas: 'Memadai',
+          pemahamanStandarAudit: 'Memadai',
+          pemahamanPeraturan: 'Memadai',
+          pemahamanTI: 'Memadai',
+          pemahamanStandarAkuntansi: 'Memadai',
+          pemahamanKebijakanKAP: 'Memadai',
+          cuti: 'Tidak',
+          resign: 'Tidak',
+          phk: 'Tidak',
+          akhirMasaKerja: 'Tidak',
+          perikatanLain: 'Tidak',
+          lainnya: 'Tidak',
+          independensi: 'Independen',
+          dipilih: 'Ya',
+          peran: 'Partner'
+        },
+        {
+          id: 'p2',
+          no: 2,
+          nama: 'Arie',
+          jabatan: 'Partner',
+          lampiranKompetensi: 'CV_dan_sertifikat PPL2',
+          lampiranWaktu: 'Evaluasi_pembagian_tugas.pdf',
+          pengalamanTahun: 8,
+          pemahamanEntitas: 'Memadai',
+          pemahamanStandarAudit: 'Memadai',
+          pemahamanPeraturan: 'Memadai',
+          pemahamanTI: 'Memadai',
+          pemahamanStandarAkuntansi: 'Memadai',
+          pemahamanKebijakanKAP: 'Memadai',
+          cuti: 'Tidak',
+          resign: 'Tidak',
+          phk: 'Tidak',
+          akhirMasaKerja: 'Tidak',
+          perikatanLain: 'Tidak',
+          lainnya: 'Tidak',
+          independensi: 'Independen',
+          dipilih: 'Tidak',
+          peran: 'Reviewer'
+        },
+        {
+          id: 'p3',
+          no: 3,
+          nama: 'Triyanto',
+          jabatan: 'Manager',
+          lampiranKompetensi: 'CV_dan_sertifikat PPL3',
+          lampiranWaktu: 'Evaluasi_pembagian_tugas.pdf',
+          pengalamanTahun: 6,
+          pemahamanEntitas: 'Memadai',
+          pemahamanStandarAudit: 'Memadai',
+          pemahamanPeraturan: 'Memadai',
+          pemahamanTI: 'Memadai',
+          pemahamanStandarAkuntansi: 'Memadai',
+          pemahamanKebijakanKAP: 'Memadai',
+          cuti: 'Tidak',
+          resign: 'Tidak',
+          phk: 'Tidak',
+          akhirMasaKerja: 'Tidak',
+          perikatanLain: 'Tidak',
+          lainnya: 'Tidak',
+          independensi: 'Independen',
+          dipilih: 'Ya',
+          peran: 'Manager'
+        },
+        {
+          id: 'p4',
+          no: 4,
+          nama: 'Eko',
+          jabatan: 'Manager',
+          lampiranKompetensi: 'CV_dan_sertifikat PPL4',
+          lampiranWaktu: 'Evaluasi_pembagian_tugas.pdf',
+          pengalamanTahun: 6,
+          pemahamanEntitas: 'Memadai',
+          pemahamanStandarAudit: 'Memadai',
+          pemahamanPeraturan: 'Memadai',
+          pemahamanTI: 'Memadai',
+          pemahamanStandarAkuntansi: 'Tidak Memadai',
+          pemahamanKebijakanKAP: 'Memadai',
+          cuti: 'Tidak',
+          resign: 'Tidak',
+          phk: 'Tidak',
+          akhirMasaKerja: 'Tidak',
+          perikatanLain: 'Tidak',
+          lainnya: 'Tidak',
+          independensi: 'Independen',
+          dipilih: 'Tidak',
+          peran: 'Manager'
+        },
+        {
+          id: 'p5',
+          no: 5,
+          nama: 'Adib',
+          jabatan: 'Staf',
+          lampiranKompetensi: 'CV_dan_sertifikat PPL5',
+          lampiranWaktu: 'Evaluasi_pembagian_tugas.pdf',
+          pengalamanTahun: 4,
+          pemahamanEntitas: 'Memadai',
+          pemahamanStandarAudit: 'Memadai',
+          pemahamanPeraturan: 'Memadai',
+          pemahamanTI: 'Memadai',
+          pemahamanStandarAkuntansi: 'Memadai',
+          pemahamanKebijakanKAP: 'Memadai',
+          cuti: 'Tidak',
+          resign: 'Tidak',
+          phk: 'Tidak',
+          akhirMasaKerja: 'Tidak',
+          perikatanLain: 'Tidak',
+          lainnya: 'Tidak',
+          independensi: 'Independen',
+          dipilih: 'Ya',
+          peran: 'Ketua Tim'
+        },
+        {
+          id: 'p6',
+          no: 6,
+          nama: 'Joko',
+          jabatan: 'Staf',
+          lampiranKompetensi: 'CV_dan_sertifikat PPL6',
+          lampiranWaktu: 'Evaluasi_pembagian_tugas.pdf',
+          pengalamanTahun: 4,
+          pemahamanEntitas: 'Memadai',
+          pemahamanStandarAudit: 'Memadai',
+          pemahamanPeraturan: 'Memadai',
+          pemahamanTI: 'Memadai',
+          pemahamanStandarAkuntansi: 'Memadai',
+          pemahamanKebijakanKAP: 'Memadai',
+          cuti: 'Tidak',
+          resign: 'Tidak',
+          phk: 'Tidak',
+          akhirMasaKerja: 'Tidak',
+          perikatanLain: 'Tidak',
+          lainnya: 'Tidak',
+          independensi: 'Independen',
+          dipilih: 'Ya',
+          peran: 'Anggota Tim'
+        },
+        {
+          id: 'p7',
+          no: 7,
+          nama: 'Yoga',
+          jabatan: 'Staf',
+          lampiranKompetensi: 'CV_dan_sertifikat PPL7',
+          lampiranWaktu: 'Evaluasi_pembagian_tugas.pdf',
+          pengalamanTahun: 4,
+          pemahamanEntitas: 'Memadai',
+          pemahamanStandarAudit: 'Memadai',
+          pemahamanPeraturan: 'Memadai',
+          pemahamanTI: 'Memadai',
+          pemahamanStandarAkuntansi: 'Memadai',
+          pemahamanKebijakanKAP: 'Memadai',
+          cuti: 'Tidak',
+          resign: 'Tidak',
+          phk: 'Tidak',
+          akhirMasaKerja: 'Tidak',
+          perikatanLain: 'Tidak',
+          lainnya: 'Tidak',
+          independensi: 'Independen',
+          dipilih: 'Ya',
+          peran: 'Anggota Tim'
+        },
+        {
+          id: 'p8',
+          no: 8,
+          nama: 'Isyana',
+          jabatan: 'Staf',
+          lampiranKompetensi: 'CV_dan_sertifikat PPL8',
+          lampiranWaktu: 'Evaluasi_pembagian_tugas.pdf',
+          pengalamanTahun: 4,
+          pemahamanEntitas: 'Memadai',
+          pemahamanStandarAudit: 'Memadai',
+          pemahamanPeraturan: 'Memadai',
+          pemahamanTI: 'Memadai',
+          pemahamanStandarAkuntansi: 'Memadai',
+          pemahamanKebijakanKAP: 'Memadai',
+          cuti: 'Tidak',
+          resign: 'Tidak',
+          phk: 'Tidak',
+          akhirMasaKerja: 'Tidak',
+          perikatanLain: 'Tidak',
+          lainnya: 'Tidak',
+          independensi: 'Independen',
+          dipilih: 'Ya',
+          peran: 'Anggota Tim'
+        },
+        {
+          id: 'p9',
+          no: 9,
+          nama: 'Septin',
+          jabatan: 'Staf',
+          lampiranKompetensi: 'CV_dan_sertifikat PPL9',
+          lampiranWaktu: 'Evaluasi_pembagian_tugas.pdf',
+          pengalamanTahun: 4,
+          pemahamanEntitas: 'Memadai',
+          pemahamanStandarAudit: 'Memadai',
+          pemahamanPeraturan: 'Memadai',
+          pemahamanTI: 'Memadai',
+          pemahamanStandarAkuntansi: 'Memadai',
+          pemahamanKebijakanKAP: 'Memadai',
+          cuti: 'Ya',
+          resign: 'Tidak',
+          phk: 'Tidak',
+          akhirMasaKerja: 'Tidak',
+          perikatanLain: 'Tidak',
+          lainnya: 'Tidak',
+          independensi: 'Independen',
+          dipilih: 'Tidak',
+          peran: 'Staf'
+        },
+        {
+          id: 'p10',
+          no: 10,
+          nama: 'Gerry',
+          jabatan: 'Staf',
+          lampiranKompetensi: 'CV_dan_sertifikat PPL10',
+          lampiranWaktu: 'Evaluasi_pembagian_tugas.pdf',
+          pengalamanTahun: 4,
+          pemahamanEntitas: 'Memadai',
+          pemahamanStandarAudit: 'Memadai',
+          pemahamanPeraturan: 'Memadai',
+          pemahamanTI: 'Memadai',
+          pemahamanStandarAkuntansi: 'Memadai',
+          pemahamanKebijakanKAP: 'Memadai',
+          cuti: 'Tidak',
+          resign: 'Tidak',
+          phk: 'Tidak',
+          akhirMasaKerja: 'Tidak',
+          perikatanLain: 'Tidak',
+          lainnya: 'Ya',
+          independensi: 'Independen',
+          dipilih: 'Tidak',
+          peran: 'Staf'
+        }
+      ],
       isCompleted: true,
       status: 'Completed'
     }
