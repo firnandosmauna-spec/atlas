@@ -296,7 +296,7 @@ const A110 = () => {
               A.110
             </span>
             <span className="text-xs text-slate-400">|</span>
-            <span className="text-xs text-slate-600 font-medium">SA 210, SA 220 & SPM 1</span>
+            <span className="text-xs text-slate-600 font-medium">SPM 1, SA 210, SA 220, SA 300</span>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -373,40 +373,56 @@ const A110 = () => {
         )}
 
         {/* ── BANNER HEADER & STATUS ── */}
-        <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
-                SA 210 & SA 220
-              </span>
-              <span className="text-slate-400 text-xs">|</span>
-              <span className="text-xs text-slate-500 font-medium">Standar Pengendalian Mutu (SPM 1)</span>
+        <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-2xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
+                  SPM 1, SA 210, SA 220, SA 300
+                </span>
+                <span className="text-slate-400 text-xs">|</span>
+                <span className="text-xs text-slate-500 font-medium">Standar Pengendalian Mutu & Auditing</span>
+              </div>
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">
+                ANALISIS RISIKO PENERIMAAN DAN KEBERLANJUTAN HUBUNGAN DENGAN KLIEN
+              </h1>
+              <p className="text-xs text-slate-500 max-w-2xl">
+                Evaluasi komprehensif atas integritas manajemen, standar pelaporan, independensi, serta kompetensi personel KAP untuk memutuskan penerimaan atau penolakan perikatan.
+              </p>
             </div>
-            <h1 className="text-base sm:text-lg font-bold text-slate-900 uppercase tracking-tight">
-              ANALISIS RISIKO PENERIMAAN DAN KEBERLANJUTAN HUBUNGAN DENGAN KLIEN
-            </h1>
-            <p className="text-xs text-slate-500 max-w-2xl">
-              Evaluasi komprehensif atas integritas manajemen, standar pelaporan, independensi, serta kompetensi personel KAP untuk memutuskan penerimaan atau penolakan perikatan.
-            </p>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <div className={`px-4 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-2xs ${
+                statusKKP === 'Completed' 
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                  : 'bg-rose-50 text-rose-800 border-rose-300'
+              }`}>
+                {statusKKP === 'Completed' ? (
+                  <>
+                    <CheckCircle2 size={16} className="text-emerald-600" />
+                    <span>STATUS: COMPLETED</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle size={16} className="text-rose-600" />
+                    <span>STATUS: UNCOMPLETED</span>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <div className={`px-4 py-2 rounded-lg border text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-2xs ${
-              statusKKP === 'Completed' 
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
-                : 'bg-rose-50 text-rose-800 border-rose-300'
-            }`}>
-              {statusKKP === 'Completed' ? (
-                <>
-                  <CheckCircle2 size={16} className="text-emerald-600" />
-                  <span>STATUS: COMPLETED</span>
-                </>
-              ) : (
-                <>
-                  <AlertTriangle size={16} className="text-rose-600" />
-                  <span>STATUS: UNCOMPLETED</span>
-                </>
-              )}
+          {/* ── SA YANG RELEVAN (SESUAI STANDAR LEMBAR KERJA ATLAS) ── */}
+          <div className="pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 text-xs">
+            <div className="font-bold text-slate-800 sm:w-44 shrink-0 flex items-center justify-between sm:justify-start gap-2">
+              <span className="text-slate-900">SA yang relevan</span>
+              <span className="text-slate-600 font-bold">:</span>
+            </div>
+            <div className="space-y-1 text-slate-700 font-medium leading-relaxed">
+              <div>Standar Pengendalian Mutu No 1</div>
+              <div><span className="font-semibold text-slate-900">SA 210</span> : Persetujuan Atas Ketentuan Perikatan Audit</div>
+              <div><span className="font-semibold text-slate-900">SA 220</span> : Pengendalian Mutu Audit atas Laporan keuangan</div>
+              <div><span className="font-semibold text-slate-900">SA 300</span> : Perencanaan Suatu Audit atas Laporan Keuangan</div>
             </div>
           </div>
         </div>
