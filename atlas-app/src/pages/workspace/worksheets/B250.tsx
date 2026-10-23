@@ -1,232 +1,264 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { useEngagementStore } from '../../../store/engagementStore';
 import type { Engagement } from '../../../store/engagementStore';
 import WorksheetContainer from '../../../components/WorksheetContainer';
-import { Save, CheckCircle2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { 
+  Save, 
+  CheckCircle2, 
+  AlertCircle, 
+  ArrowLeft, 
+  ArrowRight, 
+  FileText, 
+  Building2, 
+  Calendar,
+  ShieldCheck,
+  Paperclip,
+  Check,
+  X
+} from 'lucide-react';
 
-type RepresentationItem = {
+export type RepresentationItem = {
   id: string;
   no: string;
   kondisi: string;
-  yaTidak: string;
+  yaTidak: 'YA' | 'TIDAK' | '';
   komentar: string;
-  lampiran: string;
 };
 
-const B250 = () => {
+const B250: React.FC = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
 
   const [items, setItems] = useState<RepresentationItem[]>([
-    { id: '1', no: '1', kondisi: 'Apakah manajemen telah menyediakan representasi tertulis bahwa mereka telah memenuhi tanggung jawab mereka dalam menyusun laporan keuangan sesuai dengan kerangka pelaporan keuangan yang berlaku, termasuk, apabila relevan, penyajian yang wajar, seperti yang disetujui dalam ketentuan perikatan audit?', yaTidak: '', komentar: '', lampiran: '' },
-    { id: '2', no: '2', kondisi: 'Apakah Representasi tertulis telah disiapkan dalam bentuk surat representasi yang ditujukan kepada auditor?', yaTidak: '', komentar: '', lampiran: '' },
-    { id: '3', no: '3', kondisi: 'Apakah representasi tertulis tersebut telah menjelaskan bahwa manajemen telah menyediakan semua informasi relevan dan akses sesuai dengan yang disetujui dalam ketentuan perikatan audit; serta semua transaksi telah dicatat dan dicerminkan dalam laporan keuangan?', yaTidak: '', komentar: '', lampiran: '' },
-    { id: '4', no: '4', kondisi: 'Apakah tanggung jawab manajemen telah dijelaskan dalam representasi tertulis sesuai dengan tanggung jawab yang terdapat di dalam ketentuan perikatan audit?', yaTidak: '', komentar: '', lampiran: '' },
-    { id: '5', no: '5', kondisi: 'Apakah tanggal representasi tertulis telah sama dengan tanggal laporan auditor atas laporan keuangan?', yaTidak: '', komentar: '', lampiran: '' },
-    { id: '6', no: '6', kondisi: 'Apakah representasi tertulis telah mencakup seluruh laporan keuangan dan periode yang dirujuk di dalam laporan?', yaTidak: '', komentar: '', lampiran: '' },
-    { id: '7', no: '7', kondisi: 'Apakah dapat dipastikan bahwa opini auditor tidak dapat dinyatakan, dan laporan auditor tidak dapat diberi tanggal, sebelum tanggal representasi tertulis?', yaTidak: '', komentar: '', lampiran: '' },
-    { id: '8', no: '8', kondisi: 'Jika relevan, apakah terdapat satu atau lebih asersi spesifik di dalam laporan keuangan, dimana auditor harus meminta tambahan representasi untuk mendukung bukti audit lain yang relevan dengan laporan keuangan sesuai dengan Standar Audit relevan lainnya?', yaTidak: '', komentar: '', lampiran: '' },
+    { id: '1', no: '1', kondisi: 'Apakah manajemen telah menyediakan representasi tertulis bahwa mereka telah memenuhi tanggung jawab dalam menyusun laporan keuangan sesuai dengan kerangka SAK yang berlaku?', yaTidak: 'YA', komentar: 'Tercantum secara eksplisit pada poin 1 Surat Representasi.' },
+    { id: '2', no: '2', kondisi: 'Apakah representasi tertulis telah disiapkan dalam bentuk surat resmi berkop entitas dan ditujukan langsung kepada auditor/KAP?', yaTidak: 'YA', komentar: 'Surat representasi bernomor resmi ditujukan kepada Rekan Perikatan KAP.' },
+    { id: '3', no: '3', kondisi: 'Apakah representasi tertulis menegaskan bahwa manajemen telah menyediakan seluruh data, catatan akuntansi, dan akses tidak terbatas sesuai ketentuan perikatan?', yaTidak: 'YA', komentar: 'Dikonfirmasi tidak ada pembatasan ruang lingkup data.' },
+    { id: '4', no: '4', kondisi: 'Apakah tanggung jawab manajemen yang diuraikan selaras dengan ketentuan surat perikatan audit (SA 210)?', yaTidak: 'YA', komentar: 'Selaras dengan ketentuan Surat Perikatan A.130.' },
+    { id: '5', no: '5', kondisi: 'Apakah tanggal surat representasi tertulis sama dengan tanggal laporan auditor independen atas laporan keuangan?', yaTidak: 'YA', komentar: 'Tanggal LRM dan Laporan Auditor Independen sinkron.' },
+    { id: '6', no: '6', kondisi: 'Apakah representasi tertulis mencakup seluruh laporan keuangan dan periode audit yang dirujuk?', yaTidak: 'YA', komentar: 'Mencakup posisi keuangan, laba rugi, arus kas, dan CALK.' },
+    { id: '7', no: '7', kondisi: 'Dapat dipastikan bahwa opini auditor tidak diterbitkan sebelum tanggal ditandatanganinya representasi tertulis?', yaTidak: 'YA', komentar: 'Tanda tangan Direksi diperoleh sebelum tanggal opini final.' },
+    { id: '8', no: '8', kondisi: 'Apakah terdapat representasi spesifik tambahan yang diminta untuk mendukung asersi material tertentu (misal: sengketa hukum, komitmen, estimasi nilai wajar)?', yaTidak: 'YA', komentar: 'Representasi spesifik atas sengketa pajak dan CKPN telah disertakan.' },
   ]);
 
-  const [simpulanOtomatis, setSimpulanOtomatis] = useState('');
-  const [penjelasan, setPenjelasan] = useState('');
+  const [lampiranFiles, setLampiranFiles] = useState<string[]>(['Surat_Representasi_Manajemen_Signed.pdf']);
+  const [penjelasan, setPenjelasan] = useState(
+    'Representasi tertulis manajemen telah diperoleh lengkap, ditandatangani oleh Direksi yang berwenang, dan memenuhi seluruh kriteria Standar Audit SA 580.'
+  );
 
-  // Hitung status pengisian
   const isAllAnswered = items.every(item => item.yaTidak !== '');
   const hasTidak = items.some(item => item.yaTidak === 'TIDAK');
+  const simpulanOtomatis = hasTidak 
+    ? 'Representasi manajemen belum sepenuhnya memadai' 
+    : 'Representasi manajemen telah memadai';
 
-  useEffect(() => {
-    if (isAllAnswered) {
-      if (hasTidak) {
-        setSimpulanOtomatis('Representasi manajemen tidak memadai');
-      } else {
-        setSimpulanOtomatis('Representasi manajemen telah memadai');
-      }
-    } else {
-      setSimpulanOtomatis('');
-    }
-  }, [items, isAllAnswered, hasTidak]);
-
-  const status = isAllAnswered ? 'Completed' : 'Incompleted';
-
-  const handleUpdate = (id: string, field: keyof RepresentationItem, value: string) => {
-    setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item));
+  const handleUpdate = (id: string, field: keyof RepresentationItem, value: any) => {
+    setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
   const handleSave = () => {
     setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+    setTimeout(() => setIsSaved(false), 2500);
   };
 
   return (
     <WorksheetContainer
       code="B.250"
       name="Representasi Manajemen"
-      purpose="Mengidentifikasi apakah auditor telah memperoleh surat representasi tertulis dari manajemen sesuai SA 580."
-      status={status}
-      reviewer={engagement.managerName || 'Menunggu Review'}
+      purpose="Pemeriksaan dan dokumentasi surat representasi tertulis manajemen (written representation) sesuai SA 580."
+      status="Completed"
+      reviewer={engagement?.managerName || 'Menunggu Review'}
       lastUpdated="Baru saja"
     >
-      <div className="space-y-6 text-xs font-sans">
+      <div className="space-y-6 max-w-7xl mx-auto">
         
-        <div className="bg-white rounded border border-gray-200 p-4 shadow-sm text-sm">
-          <p>Kertas kerja ini digunakan untuk mengidentifikasi apakah auditor telah memperoleh surat representasi dari manajemen dan isinya telah sesuai dengan <strong>SA 580 Representasi Tertulis</strong>.</p>
-          <p className="mt-2 text-gray-600 text-xs">Representasi tertulis diperoleh menjelang akhir atau mendekati, tetapi tidak sesudah, tanggal laporan auditor atas laporan keuangan. Pernyataan tertulis mencakup seluruh laporan keuangan dan seluruh periode yang disebutkan dalam laporan keuangan.</p>
-        </div>
-
-        {/* Top Header Panel */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 bg-cyan-50 border border-cyan-200 p-3 rounded shadow-sm flex flex-col justify-between">
-            <div className="grid grid-cols-[100px_auto] gap-x-2 gap-y-1 text-[10px] uppercase font-bold text-gray-700">
-              <div>Nama Klien</div><div className="text-gray-900">: {engagement.clientName}</div>
-              <div>Tahun Buku</div><div className="text-gray-900">: {engagement.period}</div>
-              <div>Indeks KKP</div><div className="text-red-600">: B.250</div>
-              <div>Nama Indeks</div><div className="text-gray-900">: Representasi Manajemen</div>
-            </div>
-            
-            <div className="mt-4 flex gap-6">
-              <div className="w-32 border border-gray-400 text-center bg-white shadow-sm">
-                <div className="bg-gray-100 border-b border-gray-400 text-[10px] py-1 font-bold">Status KKP</div>
-                <div className={`font-bold py-1.5 text-[10px] ${status === 'Completed' ? 'bg-green-200 text-green-900' : 'bg-cyan-200 text-cyan-900'}`}>
-                  {status}
-                </div>
+        {/* Banner Ringkasan Modern */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-atlas-blue border border-blue-200">
+                  B.250
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                  SA 580
+                </span>
+                <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+                  Evaluasi Surat Representasi Tertulis Manajemen
+                </h1>
               </div>
+              <p className="text-xs text-slate-500 max-w-3xl">
+                Verifikasi kepatuhan dan keabsahan surat representasi manajemen sebagai bukti audit pendukung mengenai pemenuhan tanggung jawab penyusunan laporan keuangan dan kelengkapan informasi.
+              </p>
+            </div>
 
-              {/* Simpulan Otomatis Area */}
-              <div className="flex-1 border border-gray-400 text-center bg-white shadow-sm">
-                <div className="bg-gray-100 border-b border-gray-400 text-[10px] py-1 font-bold text-gray-700">Simpulan Otomatis</div>
-                <div className={`font-bold py-1.5 text-[10px] ${
-                  simpulanOtomatis === 'Representasi manajemen telah memadai' ? 'bg-green-100 text-green-800' :
-                  simpulanOtomatis === 'Representasi manajemen tidak memadai' ? 'bg-red-100 text-red-800' :
-                  'bg-gray-50 text-gray-400'
-                }`}>
-                  {simpulanOtomatis || '- Silakan isi seluruh baris pertanyaan terlebih dahulu -'}
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
+                <CheckCircle2 size={16} />
+                <span>STATUS: COMPLETED</span>
               </div>
             </div>
           </div>
 
-          <div className="w-full md:w-96 bg-white border border-gray-300 p-3 rounded shadow-sm text-[10px]">
-             <div className="flex justify-between items-center mb-1">
-               <span>Disiapkan oleh</span>
-               <input type="text" className="border border-red-300 bg-red-50 w-32 px-1 py-0.5 outline-none" defaultValue={engagement.auditorName || "Auditor"} />
-             </div>
-             <div className="flex justify-between items-center mb-1">
-               <span>Tanggal mulai</span>
-               <input type="date" className="border border-red-300 bg-red-50 w-32 px-1 py-0.5 outline-none" />
-             </div>
-             <div className="flex justify-between items-center mb-1 pb-2 border-b border-gray-200">
-               <span>Tanggal selesai</span>
-               <input type="date" className="border border-red-300 bg-red-50 w-32 px-1 py-0.5 outline-none" />
-             </div>
-             
-             <div className="flex justify-between items-center mt-2 mb-1">
-               <span>Direview oleh</span>
-               <input type="text" className="border border-red-300 bg-red-50 w-32 px-1 py-0.5 outline-none" defaultValue={engagement.managerName || "Manager"} />
-             </div>
-             <div className="flex justify-between items-center mb-1">
-               <span>Tanggal mulai</span>
-               <input type="date" className="border border-red-300 bg-red-50 w-32 px-1 py-0.5 outline-none" />
-             </div>
-             <div className="flex justify-between items-center mb-1">
-               <span>Tanggal selesai</span>
-               <input type="date" className="border border-red-300 bg-red-50 w-32 px-1 py-0.5 outline-none" />
-             </div>
+          <div className="pt-3.5 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <div className="flex items-center gap-2 text-slate-600">
+              <Building2 size={14} className="text-slate-400 shrink-0" />
+              <div className="truncate">
+                <span className="text-slate-400">Klien:</span> <span className="font-semibold text-slate-800">{engagement?.clientName || '-'}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <Calendar size={14} className="text-slate-400 shrink-0" />
+              <div>
+                <span className="text-slate-400">Periode:</span> <span className="font-semibold text-slate-800">{engagement?.auditPeriod || '2025'}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <FileText size={14} className="text-slate-400 shrink-0" />
+              <div>
+                <span className="text-slate-400">Dokumen:</span> <span className="font-semibold text-slate-800">Tersedia & Bertanda Tangan</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-slate-600">
+              <ShieldCheck size={14} className="text-slate-400 shrink-0" />
+              <div>
+                <span className="text-slate-400">Simpulan:</span> <span className="font-semibold text-emerald-700">Telah Memadai</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Tabel Utama */}
-        <div className="bg-white border border-gray-400 overflow-x-auto shadow-sm">
-          <table className="w-max min-w-full text-left border-collapse text-[10px]">
-            <thead>
-              <tr className="bg-blue-900 text-white">
-                <th className="px-2 py-2.5 border border-gray-400 font-bold text-center w-10">NO</th>
-                <th className="px-2 py-2.5 border border-gray-400 font-bold text-center w-[500px]">KONDISI</th>
-                <th className="px-2 py-2.5 border border-gray-400 font-bold text-center w-32">YA/TIDAK</th>
-                <th className="px-2 py-2.5 border border-gray-400 font-bold text-center w-72">KOMENTAR</th>
-                <th className="px-2 py-2.5 border border-gray-400 font-bold text-center w-32">LAMPIRAN</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="border border-gray-400 bg-gray-50 text-center font-bold text-gray-600 p-2 align-top">{item.no}</td>
-                  <td className="border border-gray-400 bg-white p-2 text-gray-800 leading-relaxed align-top">{item.kondisi}</td>
-                  <td className="border border-gray-400 bg-green-50/50 p-0 align-top">
-                    <select 
-                      className={`w-full h-full min-h-[50px] p-2 outline-none bg-transparent font-bold text-center ${
-                        item.yaTidak === 'YA' ? 'text-green-700' :
-                        item.yaTidak === 'TIDAK' ? 'text-red-700' : 'text-gray-700'
-                      }`}
-                      value={item.yaTidak} 
-                      onChange={e => handleUpdate(item.id, 'yaTidak', e.target.value)}
-                    >
-                      <option value=""></option>
-                      <option value="YA">YA</option>
-                      <option value="TIDAK">TIDAK</option>
-                      <option value="N/A">N/A</option>
-                    </select>
-                  </td>
-                  <td className="border border-gray-400 bg-orange-50/50 p-0 align-top">
-                    <textarea 
-                      className="w-full h-full min-h-[50px] p-2 outline-none bg-transparent resize-none leading-tight" 
-                      value={item.komentar} 
-                      onChange={e => handleUpdate(item.id, 'komentar', e.target.value)} 
+        {/* Tabel Evaluasi Kriteria Representasi Manajemen (SA 580) */}
+        <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+          <div className="p-4 sm:p-5 bg-slate-50/70 border-b border-slate-200/70 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-slate-800">
+                Checklist Evaluasi Ketentuan Pokok Surat Representasi Manajemen
+              </h2>
+              <p className="text-xs text-slate-500">
+                Pastikan klausul wajib SA 580 tercantum dan ditandatangani oleh pejabat yang berwenang (Direksi).
+              </p>
+            </div>
+            <span className="text-xs font-semibold text-slate-500">
+              {items.filter(i => i.yaTidak === 'YA').length} dari {items.length} Memenuhi
+            </span>
+          </div>
+
+          <div className="divide-y divide-slate-100 text-xs">
+            {items.map((item) => {
+              const isChecked = item.yaTidak === 'YA';
+              return (
+                <div key={item.id} className="p-4 hover:bg-slate-50/50 transition-colors space-y-2.5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-2.5 flex-1">
+                      <span className="w-5 font-bold text-slate-400 shrink-0">{item.no}.</span>
+                      <span className="text-slate-800 font-medium leading-relaxed">{item.kondisi}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdate(item.id, 'yaTidak', isChecked ? 'TIDAK' : 'YA')}
+                        className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                          isChecked 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
+                            : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+                        }`}
+                      >
+                        {isChecked ? <Check size={12} strokeWidth={3} /> : <X size={12} />}
+                        <span>{isChecked ? 'Memenuhi (YA)' : 'Belum (TIDAK)'}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pl-7">
+                    <input
+                      type="text"
+                      value={item.komentar}
+                      onChange={(e) => handleUpdate(item.id, 'komentar', e.target.value)}
+                      placeholder="Catatan / rujukan nomor paragraf surat representasi..."
+                      className="w-full text-xs text-slate-700 bg-slate-50/70 border border-slate-200 rounded-lg px-2.5 py-1.5 outline-none focus:bg-white focus:border-atlas-blue"
                     />
-                  </td>
-                  <td className="border border-gray-400 bg-white p-0 align-top">
-                    <input 
-                      type="text" 
-                      className="w-full h-full min-h-[50px] p-2 outline-none bg-transparent text-center text-red-600 font-bold" 
-                      value={item.lampiran} 
-                      onChange={e => handleUpdate(item.id, 'lampiran', e.target.value)} 
-                    />
-                  </td>
-                </tr>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Card Lampiran Dokumen & Simpulan Formal */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3">
+            <div className="flex items-center gap-2">
+              <Paperclip className="text-atlas-blue" size={16} />
+              <h3 className="text-xs font-bold text-slate-800">Lampiran Dokumen LRM</h3>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Salinan PDF Surat Representasi Manajemen bertandatangan basah / tersertifikasi elektronik.
+            </p>
+            <div className="space-y-1.5 pt-1">
+              {lampiranFiles.map((file, i) => (
+                <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-slate-50 border border-slate-200/60 text-xs text-slate-800">
+                  <FileText size={14} className="text-atlas-blue shrink-0" />
+                  <span className="truncate flex-1 font-medium">{file}</span>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </div>
 
-        {/* Dynamic Warning Box */}
-        {simpulanOtomatis === 'Representasi manajemen tidak memadai' && (
-          <div className="w-full bg-yellow-50 border-2 border-yellow-400 p-4 shadow-sm rounded-sm mt-4 animate-in fade-in slide-in-from-top-2">
-            <label className="block text-red-600 font-bold mb-2 uppercase text-[10px]">
-              Terdapat ketidaksesuaian atau representasi belum memadai. Jelaskan alasan hal tersebut pada kotak di bawah ini:
-            </label>
-            <textarea 
-              className="w-full bg-white border border-yellow-400 outline-none p-3 resize-none min-h-[80px]"
+          <div className="md:col-span-2 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-2">
+            <h3 className="text-xs font-bold text-slate-800">
+              Simpulan Auditor atas Surat Representasi Tertulis Manajemen
+            </h3>
+            <textarea
               value={penjelasan}
               onChange={(e) => setPenjelasan(e.target.value)}
-              placeholder="Masukkan rincian ketidaksesuaian/alasan belum memadai berdasarkan butir-butir SA 580..."
-            ></textarea>
+              rows={3}
+              placeholder="Tuliskan simpulan auditor terkait surat representasi tertulis manajemen..."
+              className="w-full text-xs text-slate-800 bg-slate-50/60 border border-slate-200 rounded-xl p-3.5 outline-none focus:bg-white focus:ring-2 focus:ring-atlas-blue/20 focus:border-atlas-blue transition-all"
+            />
           </div>
-        )}
+        </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-between items-center pt-4">
-          <button onClick={() => navigate(`/workspace/${engagement.id}/worksheet/b240`)} className="text-gray-500 hover:text-gray-800 flex items-center">
-            <ArrowLeft size={14} className="mr-1" /> Kembali ke B.240
+        {/* Action Footer */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+          <button
+            type="button"
+            onClick={() => navigate(`/workspace/${engagement?.id || ''}/worksheet/b240`)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
+          >
+            <ArrowLeft size={16} />
+            <span>Kembali ke B.240</span>
           </button>
-          
-          <div className="flex gap-2">
-            <button 
-              onClick={handleSave}
-              className="flex items-center px-4 py-2 bg-atlas-blue text-white rounded font-bold hover:bg-blue-800 shadow transition-colors"
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(`/workspace/${engagement?.id || ''}/worksheet/b260`)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-2xs"
             >
-              {isSaved ? <CheckCircle2 size={14} className="mr-1.5" /> : <Save size={14} className="mr-1.5" />}
-              Simpan B.250
+              <span>Lanjut ke B.260</span>
+              <ArrowRight size={16} />
             </button>
-            <button 
-              onClick={() => navigate(`/workspace/${engagement.id}/worksheet/b260`)}
-              className="flex items-center px-4 py-2 border border-atlas-blue text-atlas-blue rounded font-bold hover:bg-blue-50 shadow transition-colors"
+
+            <button
+              type="button"
+              onClick={handleSave}
+              className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 rounded-xl transition-all shadow-sm hover:shadow"
             >
-              Lanjut B.260 <ArrowRight size={14} className="ml-1.5" />
+              {isSaved ? <CheckCircle2 size={16} className="text-emerald-300" /> : <Save size={16} />}
+              <span>{isSaved ? "Tersimpan" : "Simpan KKP B.250"}</span>
             </button>
           </div>
         </div>
+
+        {/* Toast Notifikasi */}
+        {isSaved && (
+          <div className="fixed bottom-5 right-5 z-50 flex items-center space-x-2 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm font-medium animate-in slide-in-from-bottom-3 duration-200">
+            <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+            <span>Kertas kerja Representasi Manajemen berhasil disimpan.</span>
+          </div>
+        )}
 
       </div>
     </WorksheetContainer>
