@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useOutletContext, useNavigate, useParams } from "react-router-dom";
 import type { Engagement } from "../../../store/engagementStore";
 import { useEngagementStore } from "../../../store/engagementStore";
@@ -18,6 +18,20 @@ import {
   Check,
   X
 } from "lucide-react";
+
+export interface SAChecklistItem {
+  id: string;
+  code: string;
+  title: string;
+}
+
+export const RELEVANT_SA_A130: SAChecklistItem[] = [
+  {
+    id: 'sa210',
+    code: 'SA 210',
+    title: 'SA 210 : Persetujuan atas Ketentuan Perikatan Audit'
+  }
+];
 
 const A130: React.FC = () => {
   const context = useOutletContext<{ engagement?: Engagement }>();
@@ -66,6 +80,30 @@ const A130: React.FC = () => {
 
   const [isSaved, setIsSaved] = useState(false);
 
+  // SA Checklist State (berfungsi menentukan kelengkapan KKP Complete vs Uncompleted)
+  const [saChecklist, setSaChecklist] = useState<Record<string, boolean>>(() => {
+    if (wsData.saChecklist && typeof wsData.saChecklist === 'object') {
+      return {
+        sa210: wsData.saChecklist.sa210 ?? true
+      };
+    }
+    return {
+      sa210: true
+    };
+  });
+
+  const handleToggleSA = (id: string) => {
+    setSaChecklist(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+    setIsSaved(false);
+  };
+
+  const isAllSAChecked = useMemo(() => {
+    return RELEVANT_SA_A130.every(item => saChecklist[item.id] === true);
+  }, [saChecklist]);
+
   const handleAnswerChange = (key: string, value: string) => {
     setAnswers((prev) => {
       const next = { ...prev, [key]: value };
@@ -83,7 +121,7 @@ const A130: React.FC = () => {
   const isAllAnswered = answeredCount === totalCriteria;
   const hasNoAnswers = Object.values(answers).some((val) => val === "Tidak");
   const isMemadai = isAllAnswered && !hasNoAnswers;
-  const isCompleted = isAllAnswered && !hasNoAnswers;
+  const isCompleted = isAllAnswered && !hasNoAnswers && isAllSAChecked;
   const statusKKP = isCompleted ? "Completed" : "Uncompleted";
 
   const handleAddContohFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,6 +170,7 @@ const A130: React.FC = () => {
           modificationReason: catatanPenjelasan,
           isCompleted,
           status: statusKKP,
+          saChecklist,
         },
       } as any);
     }
@@ -183,35 +222,101 @@ const A130: React.FC = () => {
     >
       <div className="space-y-6 max-w-7xl mx-auto">
         {/* Banner Ringkasan Modern */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-atlas-blue border border-blue-200">
-                SA 210
-              </span>
-              <h1 className="text-lg font-bold text-slate-900 tracking-tight">
-                Evaluasi Kelengkapan Surat Perikatan
-              </h1>
+        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-atlas-blue border border-blue-200">
+                  SA 210
+                </span>
+                <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+                  Evaluasi Kelengkapan Surat Perikatan
+                </h1>
+              </div>
+              <p className="text-xs text-slate-500">
+                Pastikan seluruh klausul pokok dan tanggung jawab manajemen telah termaktub secara tertulis dalam surat perikatan.
+              </p>
             </div>
-            <p className="text-xs text-slate-500">
-              Pastikan seluruh klausul pokok dan tanggung jawab manajemen telah termaktub secara tertulis dalam surat perikatan.
-            </p>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-xs text-slate-500">Progress Evaluasi</div>
-              <div className="text-sm font-bold text-slate-800">
-                {answeredCount} dari {totalCriteria} kriteria ({Math.round((answeredCount / totalCriteria) * 100)}%)
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-xs text-slate-500">Progress Evaluasi</div>
+                <div className="text-sm font-bold text-slate-800">
+                  {answeredCount} dari {totalCriteria} kriteria ({Math.round((answeredCount / totalCriteria) * 100)}%)
+                </div>
+              </div>
+              <div className={`px-4 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
+                isCompleted 
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                  : "bg-rose-50 text-rose-700 border-rose-200"
+              }`}>
+                {isCompleted ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                <span>{isCompleted ? "STATUS: COMPLETED" : "STATUS: UNCOMPLETED"}</span>
               </div>
             </div>
-            <div className={`px-4 py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 ${
-              isCompleted 
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
-                : "bg-rose-50 text-rose-700 border-rose-200"
-            }`}>
-              {isCompleted ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-              <span>{isCompleted ? "STATUS: COMPLETED" : "STATUS: UNCOMPLETED"}</span>
+          </div>
+
+          {/* ── SA YANG RELEVAN (SESUAI STANDAR LEMBAR KERJA ATLAS DENGAN FUNGSI CHECKLIST KERTAS KERJA) ── */}
+          <div className="pt-3.5 border-t border-slate-100 space-y-2.5 text-xs">
+            <div className="font-bold text-slate-800 flex items-center gap-2">
+              <span className="text-slate-900 font-bold">SA yang relevan</span>
+              <span className="text-slate-600 font-bold">:</span>
+            </div>
+
+            {/* Checklist Items Container (Full Width) */}
+            <div className="w-full space-y-1.5">
+              {RELEVANT_SA_A130.map((item) => {
+                const isChecked = !!saChecklist[item.id];
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => handleToggleSA(item.id)}
+                    className={`group flex items-center justify-between p-2.5 rounded-lg border transition-all cursor-pointer select-none w-full ${
+                      isChecked 
+                        ? 'bg-emerald-50/40 border-emerald-200/80 hover:bg-emerald-50/70' 
+                        : 'bg-slate-50/60 border-slate-200 hover:bg-slate-100/70'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      {/* Checkbox Icon Box */}
+                      <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-all ${
+                        isChecked 
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-2xs' 
+                          : 'bg-white border-slate-300 group-hover:border-slate-400'
+                      }`}>
+                        {isChecked && <Check size={12} strokeWidth={3} />}
+                      </div>
+
+                      <div className="leading-tight truncate">
+                        <span className={isChecked ? 'text-slate-900' : 'text-slate-600'}>
+                          <span className="font-semibold text-slate-900">{item.code}</span> : {item.title.split(' : ')[1]}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Status Pill on the Right */}
+                    <div className="shrink-0">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                        isChecked 
+                          ? 'bg-emerald-100/80 text-emerald-800' 
+                          : 'bg-slate-200/80 text-slate-600'
+                      }`}>
+                        {isChecked ? (
+                          <>
+                            <Check size={10} className="text-emerald-700" />
+                            <span>Memenuhi</span>
+                          </>
+                        ) : (
+                          <>
+                            <X size={10} className="text-slate-500" />
+                            <span>Belum</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

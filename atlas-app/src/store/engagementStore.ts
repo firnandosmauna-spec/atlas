@@ -149,6 +149,18 @@ export interface WorksheetA1104 {
   status: string;
 }
 
+export interface WorksheetA130 {
+  answers: Record<string, string>;
+  contohFiles: string[];
+  lampiranFiles: string[];
+  simpulan: string;
+  catatanPenjelasan: string;
+  modificationReason?: string;
+  isCompleted: boolean;
+  status: string;
+  saChecklist?: Record<string, boolean>;
+}
+
 export interface WorksheetA140 {
   answers: Record<string, string>;
   contohFiles: string[];
@@ -234,6 +246,7 @@ export interface Engagement {
   worksheetA1102?: WorksheetA1102;
   worksheetA1103?: WorksheetA1103;
   worksheetA1104?: WorksheetA1104;
+  worksheetA130?: WorksheetA130;
   worksheetA140?: WorksheetA140;
   worksheetA150?: WorksheetA150;
   worksheetA160?: WorksheetA160;
