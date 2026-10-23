@@ -151,8 +151,17 @@ const WorksheetView = () => {
     const indeks = worksheetId.split('-')[1];
     return <LeadSchedule indeks={indeks} />;
   }
-  if (worksheetId.startsWith('bp-') || worksheetId === 'bank-prosedur' || worksheetId === 'bank-procedures' || worksheetId === 'bp' || worksheetId === 'bankprosedur') {
-    const indeks = worksheetId.startsWith('bp-') ? worksheetId.split('-')[1] : 'A';
+  if (
+    worksheetId.startsWith('bp-') || 
+    worksheetId === 'bank-prosedur' || 
+    worksheetId === 'bank-procedures' || 
+    worksheetId === 'bp' || 
+    worksheetId === 'bankprosedur' ||
+    worksheetId === 'kas' ||
+    worksheetId === 'kas-dan-setara-kas' ||
+    worksheetId === 'kas-setara-kas'
+  ) {
+    const indeks = worksheetId.startsWith('bp-') ? worksheetId.split('-')[1] : 'I';
     return <BankProsedur indeks={indeks} />;
   }
   if (worksheetId === 'b210') {

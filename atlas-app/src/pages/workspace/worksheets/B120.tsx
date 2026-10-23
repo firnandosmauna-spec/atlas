@@ -35,7 +35,7 @@ export interface AccountItem {
 }
 
 const DEFAULT_ACCOUNTS: AccountItem[] = [
-  { id: 'acc-1', no: 1, name: 'Kas dan setara kas', category: 'Aset', index: 'I', route: 'b210', kesimpulan: 'Akun tersebut telah disajikan secara wajar', keterangan: '' },
+  { id: 'acc-1', no: 1, name: 'Kas dan setara kas', category: 'Aset', index: 'I', route: 'kas', kesimpulan: 'Akun tersebut telah disajikan secara wajar', keterangan: '' },
   { id: 'acc-2', no: 2, name: 'Piutang usaha', category: 'Aset', index: 'II', route: 'b220', kesimpulan: 'Akun tersebut telah disajikan secara wajar', keterangan: '' },
   { id: 'acc-3', no: 3, name: 'Uang muka dan beban dibayar dimuka', category: 'Aset', index: 'III', route: 'b230', kesimpulan: 'Akun tersebut telah disajikan secara wajar', keterangan: '' },
   { id: 'acc-4', no: 4, name: 'Persediaan', category: 'Aset', index: 'IV', route: 'b240', kesimpulan: 'Akun tersebut belum sepenuhnya disajikan secara wajar', keterangan: 'Terdapat selisih fisik stok opname' },
@@ -61,6 +61,8 @@ const KESIMPULAN_OPTIONS = [
 ];
 
 const WORKSHEET_ROUTES = [
+  { value: 'kas', label: 'Kas dan Setara Kas (Bank Prosedur SA 505)' },
+  { value: 'ls-i', label: 'Lead Schedule I - Kas & Bank' },
   { value: 'b210', label: 'B.210 - Estimasi Akuntansi & Nilai Wajar' },
   { value: 'b220', label: 'B.220 - Hubungan & Transaksi Pihak Berelasi' },
   { value: 'b230', label: 'B.230 - Peristiwa Setelah Tanggal Neraca' },
