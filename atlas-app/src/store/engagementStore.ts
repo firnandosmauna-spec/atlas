@@ -91,6 +91,8 @@ export interface WorksheetA110 {
   accountingStandardRisk?: 'low' | 'high';
   previousReportingIssueCriteria?: string;
   riskMitigationExplanation?: string;
+  saChecklist?: Record<string, boolean>;
+  isCompleted?: boolean;
 }
 
 export interface WorksheetA1101 {

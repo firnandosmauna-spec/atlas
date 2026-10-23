@@ -27,6 +27,40 @@ import {
   Sparkles
 } from 'lucide-react';
 
+export interface SAChecklistItem {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+}
+
+export const RELEVANT_SA_STANDARDS: SAChecklistItem[] = [
+  {
+    id: 'spm1',
+    code: 'SPM 1',
+    title: 'Standar Pengendalian Mutu No 1',
+    description: 'Sistem pengendalian mutu KAP atas penugasan audit dan asurans'
+  },
+  {
+    id: 'sa210',
+    code: 'SA 210',
+    title: 'SA 210 : Persetujuan Atas Ketentuan Perikatan Audit',
+    description: 'Prakondisi suatu audit dan kesepahaman ketentuan penugasan'
+  },
+  {
+    id: 'sa220',
+    code: 'SA 220',
+    title: 'SA 220 : Pengendalian Mutu Audit atas Laporan keuangan',
+    description: 'Tanggung jawab rekan perikatan atas kualitas dan review mutu audit'
+  },
+  {
+    id: 'sa300',
+    code: 'SA 300',
+    title: 'SA 300 : Perencanaan Suatu Audit atas Laporan Keuangan',
+    description: 'Penyusunan strategi menyeluruh dan rencana audit yang terarah'
+  }
+];
+
 export const STANDARD_INDUSTRIES = [
   'Pertanian, Kehutanan, dan Perikanan',
   'Pertambangan dan Penggalian',
@@ -164,6 +198,48 @@ const A110 = () => {
     return 'low';
   }, [industryRisk, ownershipRisk, accountingStandardRisk, evals, engagement?.engagementType]);
 
+  // SA Checklist State (berfungsi menentukan kelengkapan KKP Complete vs Uncompleted)
+  const [saChecklist, setSaChecklist] = useState<Record<string, boolean>>(() => {
+    if (wsData.saChecklist && typeof wsData.saChecklist === 'object') {
+      return {
+        spm1: wsData.saChecklist.spm1 ?? true,
+        sa210: wsData.saChecklist.sa210 ?? true,
+        sa220: wsData.saChecklist.sa220 ?? true,
+        sa300: wsData.saChecklist.sa300 ?? true
+      };
+    }
+    return {
+      spm1: true,
+      sa210: true,
+      sa220: true,
+      sa300: true
+    };
+  });
+
+  const handleToggleSA = (id: string) => {
+    setSaChecklist(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+    setIsSaved(false);
+  };
+
+  const handleSetAllSA = (checked: boolean) => {
+    setSaChecklist({
+      spm1: checked,
+      sa210: checked,
+      sa220: checked,
+      sa300: checked
+    });
+    setIsSaved(false);
+  };
+
+  const checkedSACount = useMemo(() => {
+    return RELEVANT_SA_STANDARDS.filter(item => saChecklist[item.id] === true).length;
+  }, [saChecklist]);
+
+  const isAllSAChecked = checkedSACount === RELEVANT_SA_STANDARDS.length;
+
   // Completion calculation for sync
   const isAllAnswered = 
     !!industryRisk && 
@@ -177,8 +253,8 @@ const A110 = () => {
   const isDecisionMade = decision !== null;
   const isMitigationFilled = calculatedOverallRisk === 'high' ? mitigationExplanation.trim().length > 0 : true;
   
-  // Status is Completed when all answered, decision is Accept/Ya, and mitigation is provided when high risk
-  const isCompleted = isAllAnswered && isDecisionMade && isMitigationFilled && decision === 'Accept';
+  // Status is Completed when all answered, decision is Accept/Ya, mitigation is provided when high risk, AND all relevant SA standards are checked
+  const isCompleted = isAllAnswered && isDecisionMade && isMitigationFilled && decision === 'Accept' && isAllSAChecked;
   const statusKKP = isCompleted ? 'Completed' : 'Uncompleted';
 
   // Handle Save
@@ -200,7 +276,9 @@ const A110 = () => {
       industryRisk,
       accountingStandardRisk,
       previousReportingIssueCriteria: prevCriteria,
-      riskMitigationExplanation: mitigationExplanation
+      riskMitigationExplanation: mitigationExplanation,
+      saChecklist,
+      isCompleted
     };
 
     updateEngagement(engagement.id, {
@@ -412,17 +490,114 @@ const A110 = () => {
             </div>
           </div>
 
-          {/* ── SA YANG RELEVAN (SESUAI STANDAR LEMBAR KERJA ATLAS) ── */}
-          <div className="pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 text-xs">
-            <div className="font-bold text-slate-800 sm:w-44 shrink-0 flex items-center justify-between sm:justify-start gap-2">
-              <span className="text-slate-900">SA yang relevan</span>
-              <span className="text-slate-600 font-bold">:</span>
+          {/* ── SA YANG RELEVAN (SESUAI STANDAR LEMBAR KERJA ATLAS DENGAN FUNGSI CHECKLIST KERTAS KERJA) ── */}
+          <div className="pt-3.5 border-t border-slate-100 flex flex-col md:flex-row md:items-start justify-between gap-3 text-xs">
+            <div className="flex flex-col sm:w-48 shrink-0 space-y-1.5">
+              <div className="font-bold text-slate-800 flex items-center justify-between sm:justify-start gap-2">
+                <span className="text-slate-900 font-bold">SA yang relevan</span>
+                <span className="text-slate-600 font-bold">:</span>
+              </div>
+              
+              {/* Badge & Quick Action */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide border flex items-center gap-1 ${
+                  isAllSAChecked 
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                    : 'bg-rose-50 text-rose-800 border-rose-300'
+                }`}>
+                  {isAllSAChecked ? <Check size={11} className="text-emerald-600" /> : <AlertTriangle size={11} className="text-rose-600" />}
+                  <span>{isAllSAChecked ? '4/4 Completed' : `${checkedSACount}/4 Uncompleted`}</span>
+                </span>
+                
+                <div className="flex items-center gap-1 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={() => handleSetAllSA(true)}
+                    className="text-atlas-blue hover:underline font-semibold cursor-pointer"
+                    title="Centang semua SA yang relevan"
+                  >
+                    Semua
+                  </button>
+                  <span className="text-slate-300">/</span>
+                  <button
+                    type="button"
+                    onClick={() => handleSetAllSA(false)}
+                    className="text-slate-500 hover:text-slate-700 hover:underline font-semibold cursor-pointer"
+                    title="Kosongkan centang SA"
+                  >
+                    Kosongkan
+                  </button>
+                </div>
+              </div>
             </div>
-            <div className="space-y-1 text-slate-700 font-medium leading-relaxed">
-              <div>Standar Pengendalian Mutu No 1</div>
-              <div><span className="font-semibold text-slate-900">SA 210</span> : Persetujuan Atas Ketentuan Perikatan Audit</div>
-              <div><span className="font-semibold text-slate-900">SA 220</span> : Pengendalian Mutu Audit atas Laporan keuangan</div>
-              <div><span className="font-semibold text-slate-900">SA 300</span> : Perencanaan Suatu Audit atas Laporan Keuangan</div>
+
+            {/* Checklist Items Container */}
+            <div className="flex-1 space-y-1.5">
+              {RELEVANT_SA_STANDARDS.map((item) => {
+                const isChecked = !!saChecklist[item.id];
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => handleToggleSA(item.id)}
+                    className={`group flex items-center justify-between p-2 rounded-lg border transition-all cursor-pointer select-none ${
+                      isChecked 
+                        ? 'bg-emerald-50/40 border-emerald-200/80 hover:bg-emerald-50/70' 
+                        : 'bg-slate-50/60 border-slate-200 hover:bg-slate-100/70'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      {/* Checkbox Icon Box */}
+                      <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-all ${
+                        isChecked 
+                          ? 'bg-emerald-600 border-emerald-600 text-white shadow-2xs' 
+                          : 'bg-white border-slate-300 group-hover:border-slate-400'
+                      }`}>
+                        {isChecked && <Check size={12} strokeWidth={3} />}
+                      </div>
+
+                      <div className="leading-tight truncate">
+                        {item.id === 'spm1' ? (
+                          <span className={`font-medium ${isChecked ? 'text-slate-900 font-semibold' : 'text-slate-600'}`}>
+                            Standar Pengendalian Mutu No 1
+                          </span>
+                        ) : (
+                          <span className={isChecked ? 'text-slate-900' : 'text-slate-600'}>
+                            <span className="font-semibold text-slate-900">{item.code}</span> : {item.title.split(' : ')[1]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Status Pill on the Right */}
+                    <div className="shrink-0">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                        isChecked 
+                          ? 'bg-emerald-100/80 text-emerald-800' 
+                          : 'bg-slate-200/80 text-slate-600'
+                      }`}>
+                        {isChecked ? (
+                          <>
+                            <Check size={10} className="text-emerald-700" />
+                            <span>Memenuhi</span>
+                          </>
+                        ) : (
+                          <>
+                            <X size={10} className="text-slate-500" />
+                            <span>Belum</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {!isAllSAChecked && (
+                <div className="pt-1 flex items-center gap-1.5 text-[11px] text-rose-600 font-medium">
+                  <AlertTriangle size={13} className="text-rose-600 shrink-0" />
+                  <span>Kertas kerja berstatus <strong>Uncompleted</strong> sampai seluruh Standar Audit (SA) yang relevan diceklis memenuhi.</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -960,6 +1135,7 @@ const A110 = () => {
           if (data.evaluations) setEvals(prev => ({ ...prev, ...data.evaluations }));
           if (data.decision) setDecision(data.decision);
           if (data.riskMitigationExplanation) setMitigationExplanation(data.riskMitigationExplanation);
+          if (data.saChecklist) setSaChecklist(data.saChecklist);
           showToast(`Data A.110 berhasil diimpor dari ${fileName}!`);
         }}
         currentClientName={engagement.clientName}
