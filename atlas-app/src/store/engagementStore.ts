@@ -184,6 +184,17 @@ export interface WorksheetA160 {
   saChecklist?: Record<string, boolean>;
 }
 
+export interface WorksheetA170 {
+  answers: Record<string, string>;
+  contohFiles: string[];
+  lampiranFiles: string[];
+  simpulan: string;
+  catatanPenjelasan: string;
+  isCompleted: boolean;
+  status: string;
+  saChecklist?: Record<string, boolean>;
+}
+
 export interface Engagement {
   id: string;
   clientId: string;
@@ -226,6 +237,7 @@ export interface Engagement {
   worksheetA140?: WorksheetA140;
   worksheetA150?: WorksheetA150;
   worksheetA160?: WorksheetA160;
+  worksheetA170?: WorksheetA170;
 }
 
 export interface ReviewNote {
