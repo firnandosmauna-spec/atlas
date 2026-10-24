@@ -6,7 +6,8 @@ import type { Engagement, ReviewNote } from '../store/engagementStore';
 import EngagementFormModal from '../components/EngagementFormModal';
 import { 
   getWorksheetProgress, 
-  getMatrixProgressSummary 
+  getMatrixProgressSummary,
+  getEngagementMatrixCardData
 } from '../services/worksheetProgressService';
 import { 
   Activity,
@@ -20,7 +21,8 @@ import {
   ChevronRight,
   Filter,
   FolderKanban,
-  Info
+  Info,
+  CheckCircle2
 } from 'lucide-react';
 
 interface AtlasModuleItem {
@@ -282,17 +284,205 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* ── KARTU METRIK KERTAS KERJA AUDIT UNTUK MASING-MASING PERIKATAN ── */}
+      <div className="mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5">
+          <div>
+            <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+              <span className="w-2 h-4 bg-atlas-blue rounded-xs inline-block" />
+              Kartu Metrik Kertas Kerja Audit per Perikatan
+              <span className="text-[10px] font-semibold text-gray-600 bg-gray-100 border border-gray-300 px-2 py-0.5 rounded">
+                {engagements.length} Perikatan
+              </span>
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Pantau progres keterisian kertas kerja audit (Full vs Belum Full) untuk masing-masing perikatan. Klik kartu untuk menampilkan rincian 36 matriks kertas kerja di bawah.
+            </p>
+          </div>
+        </div>
+
+        {/* Grid Kartu Metrik Perikatan */}
+        {engagements.length === 0 ? (
+          <div className="p-8 bg-white border border-gray-200 text-center text-gray-500 text-xs rounded-xl">
+            Belum ada perikatan audit yang dibuat. Buat perikatan baru untuk melihat kartu metrik.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {engagements.map((eng) => {
+              const cardData = getEngagementMatrixCardData(eng, allModuleCodes);
+              const isSelected = eng.id === selectedEngagementId;
+
+              return (
+                <div
+                  key={eng.id}
+                  onClick={() => handleSelectEngagement(eng.id)}
+                  className={`relative flex flex-col justify-between p-4 rounded-xl border transition-all cursor-pointer bg-white group ${
+                    isSelected
+                      ? 'border-blue-600 ring-2 ring-blue-500/20 shadow-md bg-gradient-to-b from-blue-50/20 to-white'
+                      : 'border-gray-200 hover:border-gray-400 hover:shadow-xs'
+                  }`}
+                >
+                  {/* Active Indicator Top Tag */}
+                  {isSelected && (
+                    <div className="absolute -top-2.5 right-4 bg-blue-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-xs flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                      <span>Matriks Aktif Dipilih</span>
+                    </div>
+                  )}
+
+                  <div>
+                    {/* Header: Client & ID */}
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-gray-900 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                            {eng.id}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${getStatusColor(eng.status)}`}>
+                            {eng.status}
+                          </span>
+                        </div>
+                        <h3 className="font-bold text-sm text-gray-900 group-hover:text-atlas-blue transition-colors truncate mt-1.5" title={eng.clientName}>
+                          {eng.clientName}
+                        </h3>
+                        <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                          {eng.clientIndustry || 'Umum'} · {eng.auditPeriod || `Tahun ${eng.fiscalYear}`} · {eng.accountingStandard || 'SAK EP'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Progress Audit Bar */}
+                    <div className="mt-3 pt-3 border-t border-gray-100">
+                      <div className="flex justify-between items-center mb-1 text-xs">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                          Progres Audit Total
+                        </span>
+                        <span className="font-bold text-gray-900 font-mono text-xs">
+                          {eng.progress}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ease-out ${
+                            eng.progress === 100
+                              ? 'bg-emerald-500'
+                              : eng.progress >= 50
+                              ? 'bg-blue-600'
+                              : 'bg-amber-500'
+                          }`}
+                          style={{ width: `${eng.progress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Metrik Kertas Kerja (ATLAS 36 Modul) */}
+                    <div className="mt-3.5 bg-slate-50 border border-slate-200/80 rounded-lg p-2.5">
+                      <div className="flex items-center justify-between text-[10px] font-bold text-gray-600 uppercase tracking-wider mb-2">
+                        <span>Status 36 Kertas Kerja:</span>
+                        <span className="text-gray-900 font-mono font-black">{cardData.summary.averageProgress}% Keterisian</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-center">
+                        <div className="bg-emerald-50 border border-emerald-200 rounded py-1.5 px-1">
+                          <div className="text-[9px] font-semibold text-emerald-700 uppercase tracking-wider">Full</div>
+                          <div className="text-xs font-bold text-emerald-800 font-mono mt-0.5">{cardData.summary.fullCount} KKP</div>
+                        </div>
+                        <div className="bg-amber-50 border border-amber-200 rounded py-1.5 px-1">
+                          <div className="text-[9px] font-semibold text-amber-700 uppercase tracking-wider">Belum Full</div>
+                          <div className="text-xs font-bold text-amber-800 font-mono mt-0.5">{cardData.summary.inProgressCount} KKP</div>
+                        </div>
+                        <div className="bg-slate-100 border border-slate-200 rounded py-1.5 px-1">
+                          <div className="text-[9px] font-semibold text-slate-500 uppercase tracking-wider">Belum Mulai</div>
+                          <div className="text-xs font-bold text-slate-700 font-mono mt-0.5">{cardData.summary.notStartedCount} KKP</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Indikator Modul Utama (Quick Glance) */}
+                    <div className="mt-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">
+                        Indikator Modul Utama:
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 text-[10px]">
+                        {/* A.110 */}
+                        <span 
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border font-semibold ${cardData.keyWorksheets.a110.statusBadge.bgColor} ${cardData.keyWorksheets.a110.statusBadge.textColor} ${cardData.keyWorksheets.a110.statusBadge.borderColor}`}
+                          title={`A.110 Analisis Penerimaan: ${cardData.keyWorksheets.a110.summary}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${cardData.keyWorksheets.a110.statusBadge.dotColor}`} />
+                          <span>A.110 ({cardData.keyWorksheets.a110.isFull ? 'Full' : `${cardData.keyWorksheets.a110.progress}%`})</span>
+                        </span>
+
+                        {/* A.120 */}
+                        <span 
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border font-semibold ${cardData.keyWorksheets.a120.statusBadge.bgColor} ${cardData.keyWorksheets.a120.statusBadge.textColor} ${cardData.keyWorksheets.a120.statusBadge.borderColor}`}
+                          title={`A.120 Alokasi Jam: ${cardData.keyWorksheets.a120.summary}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${cardData.keyWorksheets.a120.statusBadge.dotColor}`} />
+                          <span>A.120 ({cardData.keyWorksheets.a120.isFull ? 'Full' : `${cardData.keyWorksheets.a120.progress}%`})</span>
+                        </span>
+
+                        {/* A.210 */}
+                        <span 
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border font-semibold ${cardData.keyWorksheets.a210.statusBadge.bgColor} ${cardData.keyWorksheets.a210.statusBadge.textColor} ${cardData.keyWorksheets.a210.statusBadge.borderColor}`}
+                          title={`A.210 Materialitas: ${cardData.keyWorksheets.a210.summary}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${cardData.keyWorksheets.a210.statusBadge.dotColor}`} />
+                          <span>A.210 ({cardData.keyWorksheets.a210.isFull ? 'Full' : `${cardData.keyWorksheets.a210.progress}%`})</span>
+                        </span>
+
+                        {/* D.100 */}
+                        <span 
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded border font-semibold ${cardData.keyWorksheets.d100.statusBadge.bgColor} ${cardData.keyWorksheets.d100.statusBadge.textColor} ${cardData.keyWorksheets.d100.statusBadge.borderColor}`}
+                          title={`D.100 Trial Balance: ${cardData.keyWorksheets.d100.summary}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${cardData.keyWorksheets.d100.statusBadge.dotColor}`} />
+                          <span>D.100 ({cardData.keyWorksheets.d100.isFull ? 'Full' : `${cardData.keyWorksheets.d100.progress}%`})</span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer Action */}
+                  <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                    <span className={`text-[11px] font-bold ${isSelected ? 'text-blue-700' : 'text-gray-500 group-hover:text-blue-700'} flex items-center gap-1`}>
+                      {isSelected ? '✓ Matriks Sedang Ditampilkan' : 'Klik untuk Tampilkan Matriks'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/workspace/${eng.id}`);
+                      }}
+                      className="p-1.5 text-gray-500 hover:text-white hover:bg-gray-900 rounded transition-colors"
+                      title="Buka Workspace Perikatan Ini"
+                    >
+                      <ExternalLink size={13} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* ── MATRIKS INDEKS KERTAS KERJA AUDIT (ATLAS) - DENGAN INDIKATOR BERJALAN DINAMIS PER PERIKATAN ── */}
       <div className="mb-8 bg-white border border-gray-300 shadow-xs">
         {/* Top Control Bar - Ramping & Sederhana */}
         <div className="px-5 py-3 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
               Matriks Kertas Kerja Audit (ATLAS)
               <span className="text-[10px] font-semibold text-gray-600 bg-white border border-gray-300 px-2 py-0.5">
                 36 Modul
               </span>
             </h2>
+            {selectedEngagement && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-blue-100/80 text-blue-900 font-bold text-[10px] rounded border border-blue-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+                <span>Klien Aktif: <strong>{selectedEngagement.clientName}</strong> ({selectedEngagement.id})</span>
+              </span>
+            )}
           </div>
 
           {/* Right Controls: Engagement Picker & Search */}
@@ -586,15 +776,32 @@ const Dashboard = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 border-r border-gray-100">
-                        <div className="flex flex-col space-y-1.5">
-                          <span className="text-[10px] font-bold text-gray-900">{eng.progress}% Selesai</span>
-                          <div className="w-full bg-gray-200 h-1.5 rounded-none">
-                            <div 
-                              className={`h-1.5 ${getProgressColor(eng.progress, eng.status)}`} 
-                              style={{ width: `${eng.progress}%` }}
-                            ></div>
-                          </div>
-                        </div>
+                        {(() => {
+                          const engSummary = getMatrixProgressSummary(eng, allModuleCodes);
+                          return (
+                            <div className="flex flex-col space-y-1.5 min-w-[150px]">
+                              <div className="flex justify-between items-baseline">
+                                <span className="text-[10px] font-bold text-gray-900 font-mono">{eng.progress}%</span>
+                                <span className="text-[9px] text-gray-500 font-mono">
+                                  {engSummary.fullCount} Full / {engSummary.inProgressCount} Berjalan
+                                </span>
+                              </div>
+                              <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-1.5 rounded-full transition-all duration-500 ${getProgressColor(eng.progress, eng.status)}`} 
+                                  style={{ width: `${eng.progress}%` }}
+                                ></div>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-[9px] font-medium">
+                                <span className="text-emerald-700 font-bold">{engSummary.fullCount} Full</span>
+                                <span className="text-gray-300">·</span>
+                                <span className="text-amber-700 font-semibold">{engSummary.inProgressCount} Belum Full</span>
+                                <span className="text-gray-300">·</span>
+                                <span className="text-slate-400">{engSummary.notStartedCount} Kosong</span>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest border ${getStatusColor(eng.status)}`}>

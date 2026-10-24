@@ -424,12 +424,20 @@ const makeResult = (
   };
 };
 
+export const DEFAULT_ATLAS_MODULE_CODES: string[] = [
+  'A110', 'A120', 'A130', 'A140', 'A150', 'A160', 'A170',
+  'A210', 'A220', 'A230', 'A240', 'A250', 'A260', 'A270', 'A280',
+  'B100', 'B210', 'B220', 'B230', 'B240', 'B250', 'B260', 'B270', 'B280',
+  'C110', 'C120', 'C200', 'C300', 'C400', 'C510', 'C520', 'C530',
+  'D100', 'D200', 'D300', 'D400'
+];
+
 /**
  * Returns a summary of counts (Total, Full, Belum Full, Belum Dimulai) across all 36 ATLAS modules
  */
 export const getMatrixProgressSummary = (
   engagement?: Engagement | null,
-  moduleCodes: string[] = []
+  moduleCodes: string[] = DEFAULT_ATLAS_MODULE_CODES
 ) => {
   if (!engagement || moduleCodes.length === 0) {
     return {
@@ -464,3 +472,47 @@ export const getMatrixProgressSummary = (
     averageProgress,
   };
 };
+
+export interface KeyWorksheetSummary {
+  a110: WorksheetProgressResult;
+  a120: WorksheetProgressResult;
+  a210: WorksheetProgressResult;
+  b100: WorksheetProgressResult;
+  c530: WorksheetProgressResult;
+  d100: WorksheetProgressResult;
+}
+
+export const getKeyWorksheetsProgress = (engagement?: Engagement | null): KeyWorksheetSummary => {
+  return {
+    a110: getWorksheetProgress(engagement, 'A110'),
+    a120: getWorksheetProgress(engagement, 'A120'),
+    a210: getWorksheetProgress(engagement, 'A210'),
+    b100: getWorksheetProgress(engagement, 'B100'),
+    c530: getWorksheetProgress(engagement, 'C530'),
+    d100: getWorksheetProgress(engagement, 'D100'),
+  };
+};
+
+export interface EngagementMatrixCardData {
+  engagement: Engagement;
+  summary: {
+    total: number;
+    fullCount: number;
+    inProgressCount: number;
+    notStartedCount: number;
+    averageProgress: number;
+  };
+  keyWorksheets: KeyWorksheetSummary;
+}
+
+export const getEngagementMatrixCardData = (
+  engagement: Engagement,
+  allModuleCodes: string[] = DEFAULT_ATLAS_MODULE_CODES
+): EngagementMatrixCardData => {
+  return {
+    engagement,
+    summary: getMatrixProgressSummary(engagement, allModuleCodes),
+    keyWorksheets: getKeyWorksheetsProgress(engagement),
+  };
+};
+

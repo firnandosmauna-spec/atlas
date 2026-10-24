@@ -4,9 +4,10 @@ import type { Engagement } from '../../store/engagementStore';
 import { useEngagementStore } from '../../store/engagementStore';
 import { useAuthStore } from '../../store/authStore';
 import { useAccountingStandardStore } from '../../store/accountingStandardStore';
-import { Users, Building, FileSpreadsheet, Save, CheckCircle, Edit2, X, Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { Users, Building, FileSpreadsheet, Save, CheckCircle, Edit2, X, Plus, Trash2, AlertTriangle, ChevronRight, CheckCircle2 } from 'lucide-react';
 import EngagementFormModal from '../../components/EngagementFormModal';
 import { getSynchronizedKAPUsersSync } from '../../utils/userManagement';
+import { getEngagementMatrixCardData } from '../../services/worksheetProgressService';
 
 // ─── Field renderers ────────────────────────────────────────────────
 const FieldRow = ({
@@ -192,6 +193,11 @@ const WorkspaceBeranda = () => {
       setIsDeleting(false);
     }
   };
+
+  // ── Metric Card for this Engagement ──
+  const cardData = useMemo(() => {
+    return getEngagementMatrixCardData(engagement);
+  }, [engagement]);
 
   // ── Section 1: Dynamic Audit Team Management ──
   const [editAuditor, setEditAuditor] = useState(false);
@@ -477,6 +483,185 @@ const WorkspaceBeranda = () => {
                 />
               </div>
               <span className="text-base font-bold text-gray-900 leading-none">{engagement.progress || 0}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── KARTU METRIK KERTAS KERJA AUDIT PERIKATAN INI ── */}
+      <div className="mb-8 bg-white border border-gray-200 rounded-xl p-5 shadow-xs">
+        {/* Card Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-100 gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <span className="font-mono text-xs font-bold text-gray-900 bg-gray-100 px-2 py-0.5 rounded border border-gray-200">
+                {engagement.id}
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-atlas-blue bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200">
+                Kartu Metrik Kertas Kerja Perikatan Ini
+              </span>
+              <span className="text-xs text-gray-500 font-medium truncate max-w-xs">
+                {engagement.clientName}
+              </span>
+            </div>
+            <h2 className="text-base font-bold text-gray-900">
+              Status & Progres Kertas Kerja Audit
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Rangkuman keterisian seluruh 36 modul ATLAS (Full vs Belum Full) untuk perikatan audit ini.
+            </p>
+          </div>
+
+          {/* Quick Metrics Bar */}
+          <div className="flex items-center gap-4 bg-slate-50 border border-slate-200 px-4 py-2 rounded-lg self-start sm:self-auto">
+            <div className="text-right">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Keterisian Modul</span>
+              <span className="text-base font-bold text-gray-900 font-mono leading-tight">{cardData.summary.averageProgress}%</span>
+            </div>
+            <div className="h-8 w-px bg-slate-200" />
+            <div className="text-right">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Progres Audit</span>
+              <span className="text-base font-bold text-blue-700 font-mono leading-tight">{engagement.progress || 0}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Status Cards (Full vs Belum Full vs Belum Mulai) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
+          <div className="bg-emerald-50/70 border border-emerald-200 rounded-lg p-3">
+            <div className="flex items-center justify-between text-xs font-semibold text-emerald-800">
+              <span>Kertas Kerja Full / Lengkap</span>
+              <CheckCircle2 size={15} className="text-emerald-600" />
+            </div>
+            <div className="text-xl font-bold font-mono text-emerald-900 mt-1">
+              {cardData.summary.fullCount} <span className="text-xs font-normal text-emerald-700">/ 36 Modul</span>
+            </div>
+            <p className="text-[11px] text-emerald-700/90 mt-0.5">Dokumentasi audit lengkap dan terverifikasi</p>
+          </div>
+
+          <div className="bg-amber-50/70 border border-amber-200 rounded-lg p-3">
+            <div className="flex items-center justify-between text-xs font-semibold text-amber-800">
+              <span>Sedang Berjalan (Belum Full)</span>
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            </div>
+            <div className="text-xl font-bold font-mono text-amber-900 mt-1">
+              {cardData.summary.inProgressCount} <span className="text-xs font-normal text-amber-700">/ 36 Modul</span>
+            </div>
+            <p className="text-[11px] text-amber-700/90 mt-0.5">Sedang dalam proses pengerjaan atau review</p>
+          </div>
+
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+            <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+              <span>Belum Dimulai</span>
+              <span className="w-2 h-2 rounded-full bg-slate-300" />
+            </div>
+            <div className="text-xl font-bold font-mono text-slate-900 mt-1">
+              {cardData.summary.notStartedCount} <span className="text-xs font-normal text-slate-500">/ 36 Modul</span>
+            </div>
+            <p className="text-[11px] text-slate-600 mt-0.5">Kertas kerja belum diisi atau dibuka</p>
+          </div>
+        </div>
+
+        {/* Indikator Modul Utama & Akses Langsung */}
+        <div className="pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between mb-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              Indikator Kertas Kerja Kunci:
+            </p>
+            <span className="text-[11px] text-gray-400">Pilih modul untuk langsung menuju ke halaman kertas kerja</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            {/* A.110 */}
+            <div className="border border-gray-200 rounded-lg p-2.5 bg-gray-50/50 flex flex-col justify-between hover:border-gray-300 transition-colors">
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span className="font-mono text-xs font-bold text-gray-900">A.110</span>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${cardData.keyWorksheets.a110.statusBadge.bgColor} ${cardData.keyWorksheets.a110.statusBadge.textColor} ${cardData.keyWorksheets.a110.statusBadge.borderColor}`}>
+                    {cardData.keyWorksheets.a110.isFull ? 'Full (100%)' : cardData.keyWorksheets.a110.progress > 0 ? `Belum Full (${cardData.keyWorksheets.a110.progress}%)` : 'Belum Mulai'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-600 font-medium line-clamp-1" title="Analisis Penerimaan & Keberlanjutan Hubungan Klien">
+                  Analisis Penerimaan Klien
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(`/workspace/${engagement.id}/worksheet/a110`)}
+                className="mt-2 text-[11px] font-semibold text-atlas-blue hover:text-blue-800 flex items-center gap-1 self-start"
+              >
+                <span>Buka Kertas Kerja</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+
+            {/* A.120 */}
+            <div className="border border-gray-200 rounded-lg p-2.5 bg-gray-50/50 flex flex-col justify-between hover:border-gray-300 transition-colors">
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span className="font-mono text-xs font-bold text-gray-900">A.120</span>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${cardData.keyWorksheets.a120.statusBadge.bgColor} ${cardData.keyWorksheets.a120.statusBadge.textColor} ${cardData.keyWorksheets.a120.statusBadge.borderColor}`}>
+                    {cardData.keyWorksheets.a120.isFull ? 'Full (100%)' : cardData.keyWorksheets.a120.progress > 0 ? `Belum Full (${cardData.keyWorksheets.a120.progress}%)` : 'Belum Mulai'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-600 font-medium line-clamp-1" title="Alokasi Jam Jasa dan Perencanaan Lainnya">
+                  Alokasi Jam Jasa & Rencana
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(`/workspace/${engagement.id}/worksheet/a120`)}
+                className="mt-2 text-[11px] font-semibold text-atlas-blue hover:text-blue-800 flex items-center gap-1 self-start"
+              >
+                <span>Buka Kertas Kerja</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+
+            {/* A.210 */}
+            <div className="border border-gray-200 rounded-lg p-2.5 bg-gray-50/50 flex flex-col justify-between hover:border-gray-300 transition-colors">
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span className="font-mono text-xs font-bold text-gray-900">A.210</span>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${cardData.keyWorksheets.a210.statusBadge.bgColor} ${cardData.keyWorksheets.a210.statusBadge.textColor} ${cardData.keyWorksheets.a210.statusBadge.borderColor}`}>
+                    {cardData.keyWorksheets.a210.isFull ? 'Full (100%)' : cardData.keyWorksheets.a210.progress > 0 ? `Belum Full (${cardData.keyWorksheets.a210.progress}%)` : 'Belum Mulai'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-600 font-medium line-clamp-1" title="Materialitas Awal">
+                  Materialitas Awal
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(`/workspace/${engagement.id}/worksheet/a210`)}
+                className="mt-2 text-[11px] font-semibold text-atlas-blue hover:text-blue-800 flex items-center gap-1 self-start"
+              >
+                <span>Buka Kertas Kerja</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+
+            {/* D.100 */}
+            <div className="border border-gray-200 rounded-lg p-2.5 bg-gray-50/50 flex flex-col justify-between hover:border-gray-300 transition-colors">
+              <div>
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span className="font-mono text-xs font-bold text-gray-900">D.100</span>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${cardData.keyWorksheets.d100.statusBadge.bgColor} ${cardData.keyWorksheets.d100.statusBadge.textColor} ${cardData.keyWorksheets.d100.statusBadge.borderColor}`}>
+                    {cardData.keyWorksheets.d100.isFull ? 'Full (100%)' : cardData.keyWorksheets.d100.progress > 0 ? `Belum Full (${cardData.keyWorksheets.d100.progress}%)` : 'Belum Mulai'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-gray-600 font-medium line-clamp-1" title="Input Laporan Keuangan (Trial Balance)">
+                  Trial Balance (Input LK)
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(`/workspace/${engagement.id}/trial-balance`)}
+                className="mt-2 text-[11px] font-semibold text-atlas-blue hover:text-blue-800 flex items-center gap-1 self-start"
+              >
+                <span>Buka Trial Balance</span>
+                <ChevronRight size={13} />
+              </button>
             </div>
           </div>
         </div>
