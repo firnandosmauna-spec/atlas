@@ -3,7 +3,8 @@ import { persist } from 'zustand/middleware';
 import { 
   upsertCloudEngagement, 
   deleteCloudEngagement, 
-  syncEngagementsBidirectional 
+  syncEngagementsBidirectional,
+  markEngagementAsDeleted
 } from '../services/engagementSyncService';
 
 export interface Account {
@@ -777,6 +778,7 @@ export const useEngagementStore = create<EngagementState>()(
       },
 
       deleteEngagement: async (id) => {
+        markEngagementAsDeleted(id);
         set((state) => ({
           engagements: state.engagements.filter(e => e.id !== id),
           activeEngagementId: state.activeEngagementId === id ? null : state.activeEngagementId,
@@ -784,6 +786,18 @@ export const useEngagementStore = create<EngagementState>()(
           attachments: state.attachments.filter(a => a.engagementId !== id),
           reviewNotes: state.reviewNotes.filter(r => r.engagementId !== id)
         }));
+        try {
+          const raw = localStorage.getItem('atlas_engagements_store');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed?.state?.engagements) {
+              parsed.state.engagements = parsed.state.engagements.filter((e: any) => e.id !== id);
+              localStorage.setItem('atlas_engagements_store', JSON.stringify(parsed));
+            }
+          }
+        } catch (e) {
+          console.warn('[Store] LocalStorage purge error on delete:', e);
+        }
         try {
           await deleteCloudEngagement(id);
         } catch (e) {

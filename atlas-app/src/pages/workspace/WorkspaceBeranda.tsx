@@ -4,7 +4,7 @@ import type { Engagement } from '../../store/engagementStore';
 import { useEngagementStore } from '../../store/engagementStore';
 import { useAuthStore } from '../../store/authStore';
 import { useAccountingStandardStore } from '../../store/accountingStandardStore';
-import { Users, Building, FileSpreadsheet, Save, CheckCircle, Edit2, X, Plus, Trash2 } from 'lucide-react';
+import { Users, Building, FileSpreadsheet, Save, CheckCircle, Edit2, X, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import EngagementFormModal from '../../components/EngagementFormModal';
 import { getSynchronizedKAPUsersSync } from '../../utils/userManagement';
 
@@ -169,12 +169,29 @@ const SectionCard = ({
 // ─── Main Component ──────────────────────────────────────────────────
 const WorkspaceBeranda = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
-  const { engagements, updateEngagement } = useEngagementStore();
+  const { engagements, updateEngagement, deleteEngagement } = useEngagementStore();
   const navigate = useNavigate();
-  const { hasPermission } = useAuthStore();
+  const { hasPermission, user } = useAuthStore();
   const canEdit = hasPermission('fill_worksheet');
+  const canDelete = hasPermission('delete_engagement') || !user || ['admin', 'partner', 'partner/akuntan publik', 'manager', 'supervisor', 'ketua tim', 'auditor'].includes((user?.role || '').toLowerCase());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { standards, getStandardName } = useAccountingStandardStore();
+
+  const handleDeleteEngagement = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await deleteEngagement(engagement.id);
+      setIsDeleteModalOpen(false);
+      navigate('/engagements', { replace: true });
+    } catch (err) {
+      console.error('Gagal menghapus perikatan:', err);
+      alert('Gagal menghapus perikatan. Silakan periksa koneksi atau coba kembali.');
+      setIsDeleting(false);
+    }
+  };
 
   // ── Section 1: Dynamic Audit Team Management ──
   const [editAuditor, setEditAuditor] = useState(false);
@@ -939,6 +956,28 @@ const WorkspaceBeranda = () => {
         </SectionCard>
       </div>
 
+      {/* ── Zona Pengelolaan & Hapus Perikatan ── */}
+      {canDelete && (
+        <div className="mb-6 p-4 rounded-xl border border-red-200 bg-red-50/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-xs font-bold text-red-900 uppercase tracking-wider flex items-center gap-1.5">
+              <AlertTriangle size={15} className="text-red-600" /> Hapus Perikatan Ini
+            </h3>
+            <p className="text-xs text-red-700/80 mt-1 max-w-xl leading-relaxed">
+              Menghapus perikatan <strong>{engagement.id}</strong> ({engagement.clientName}) secara permanen dari basis data lokal dan Supabase Cloud. Seluruh kertas kerja dan data audit terkait akan dibersihkan.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="shrink-0 px-4 py-2.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer min-h-[44px]"
+          >
+            <Trash2 size={15} />
+            <span>Hapus Perikatan</span>
+          </button>
+        </div>
+      )}
+
       {/* ── Progress Perjalanan Audit (Stepper) ── */}
       <div className="mb-10 mt-4">
         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-6">Progress Perjalanan Audit</p>
@@ -1020,6 +1059,83 @@ const WorkspaceBeranda = () => {
           onClose={() => setIsModalOpen(false)}
           initialData={null}
         />
+      )}
+
+      {/* Modal Konfirmasi Hapus Perikatan dari Workspace */}
+      {isDeleteModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-200 max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-5 sm:p-6 space-y-4">
+              <div className="flex items-start space-x-3.5">
+                <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                  <AlertTriangle size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-bold text-gray-900">
+                    Konfirmasi Hapus Perikatan
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Tindakan ini permanen dan akan menghapus data di Supabase Cloud.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-3.5 border border-gray-200 text-xs space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">ID Perikatan:</span>
+                  <span className="font-semibold text-gray-800">{engagement.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Nama Klien:</span>
+                  <span className="font-semibold text-gray-800 truncate max-w-[200px]" title={engagement.clientName}>
+                    {engagement.clientName}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Periode:</span>
+                  <span className="text-gray-700">{engagement.auditPeriod || engagement.fiscalYear}</span>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Apakah Anda yakin ingin menghapus perikatan ini? Anda akan dialihkan kembali ke halaman Manajemen Engagement setelah proses selesai.
+              </p>
+
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors min-h-[44px] flex items-center justify-center"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleDeleteEngagement}
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm min-h-[44px] flex items-center justify-center space-x-1.5"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={15} />
+                      <span>Ya, Hapus Perikatan</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

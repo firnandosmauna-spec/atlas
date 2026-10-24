@@ -47,6 +47,7 @@ export const fetchCloudEngagements = async (): Promise<Engagement[] | null> => {
  */
 export const upsertCloudEngagement = async (engagement: Engagement): Promise<boolean> => {
   if (!engagement || !engagement.id) return false;
+  unmarkEngagementAsDeleted(engagement.id);
 
   try {
     const payload = {
@@ -77,11 +78,46 @@ export const upsertCloudEngagement = async (engagement: Engagement): Promise<boo
   }
 };
 
+const DELETED_ENGAGEMENTS_KEY = 'atlas_deleted_engagements';
+
+export const getDeletedEngagementIds = (): string[] => {
+  try {
+    const raw = localStorage.getItem(DELETED_ENGAGEMENTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const markEngagementAsDeleted = (id: string): void => {
+  if (!id) return;
+  try {
+    const ids = getDeletedEngagementIds();
+    if (!ids.includes(id)) {
+      ids.push(id);
+      localStorage.setItem(DELETED_ENGAGEMENTS_KEY, JSON.stringify(ids));
+    }
+  } catch (err) {
+    console.warn('[CloudSync] Failed to mark engagement as deleted in storage:', err);
+  }
+};
+
+export const unmarkEngagementAsDeleted = (id: string): void => {
+  if (!id) return;
+  try {
+    const ids = getDeletedEngagementIds().filter(i => i !== id);
+    localStorage.setItem(DELETED_ENGAGEMENTS_KEY, JSON.stringify(ids));
+  } catch (err) {
+    console.warn('[CloudSync] Failed to unmark engagement from deleted in storage:', err);
+  }
+};
+
 /**
  * Delete an engagement from Supabase atlas_engagements.
  */
 export const deleteCloudEngagement = async (id: string): Promise<boolean> => {
   if (!id) return false;
+  markEngagementAsDeleted(id);
 
   try {
     const { error } = await supabase
@@ -112,8 +148,10 @@ export const deleteCloudEngagement = async (id: string): Promise<boolean> => {
 export const syncEngagementsBidirectional = async (
   localEngagements: Engagement[]
 ): Promise<CloudSyncResult> => {
-  // 1. Gather all local engagements from memory and localStorage fallback
-  const localList: Engagement[] = [...(localEngagements || [])];
+  const deletedIds = getDeletedEngagementIds();
+
+  // 1. Gather all local engagements from memory and localStorage fallback (excluding tombstoned items)
+  const localList: Engagement[] = [...(localEngagements || [])].filter(e => !deletedIds.includes(e.id));
   
   try {
     const rawLocal = localStorage.getItem('atlas_engagements_store');
@@ -122,7 +160,7 @@ export const syncEngagementsBidirectional = async (
       const storedList = parsed?.state?.engagements;
       if (Array.isArray(storedList)) {
         for (const item of storedList) {
-          if (item && item.id && !localList.some(l => l.id === item.id)) {
+          if (item && item.id && !deletedIds.includes(item.id) && !localList.some(l => l.id === item.id)) {
             localList.push(item);
           }
         }
@@ -144,10 +182,21 @@ export const syncEngagementsBidirectional = async (
     };
   }
 
-  // 3. Map cloud engagements by ID
+  // 3. Map cloud engagements by ID (filtering out any deleted ones and triggering cleanup)
   const map = new Map<string, Engagement>();
+  const lingeringDeletes: Promise<boolean>[] = [];
+
   for (const eng of cloudEngs) {
-    if (eng.id) map.set(eng.id, eng);
+    if (!eng.id) continue;
+    if (deletedIds.includes(eng.id)) {
+      lingeringDeletes.push(deleteCloudEngagement(eng.id));
+      continue;
+    }
+    map.set(eng.id, eng);
+  }
+
+  if (lingeringDeletes.length > 0) {
+    Promise.allSettled(lingeringDeletes).catch(() => {});
   }
 
   // 4. Push any local engagement not yet present in cloud

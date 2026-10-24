@@ -64,6 +64,7 @@ const rolePermissions: Record<Role, string[]> = {
   ],
   'Manager': [
     'create_engagement',
+    'delete_engagement',
     'view_assigned_engagements',
     'review_auditor_work',
     'give_review_notes',
@@ -73,6 +74,7 @@ const rolePermissions: Record<Role, string[]> = {
   ],
   'Supervisor': [
     'create_engagement',
+    'delete_engagement',
     'view_assigned_engagements',
     'review_auditor_work',
     'give_review_notes',
@@ -151,8 +153,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return true;
     }
 
-    // Role-specific whitelist for create_engagement
-    if (permission === 'create_engagement') {
+    // Role-specific whitelist for create_engagement and delete_engagement
+    if (permission === 'create_engagement' || permission === 'delete_engagement') {
       const allowedRoles = ['admin', 'partner', 'partner/akuntan publik', 'manager', 'supervisor', 'ketua tim', 'auditor'];
       if (allowedRoles.includes(roleNormalized)) return true;
     }

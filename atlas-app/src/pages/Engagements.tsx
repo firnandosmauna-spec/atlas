@@ -16,6 +16,7 @@ const Engagements = () => {
   const [editingEngagement, setEditingEngagement] = useState<Engagement | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const [engagementToDelete, setEngagementToDelete] = useState<Engagement | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
   // Close menus & modals on Escape key
@@ -30,16 +31,24 @@ const Engagements = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [engagementToDelete, openDropdownId]);
 
-  const confirmDelete = () => {
-    if (!engagementToDelete) return;
+  const confirmDelete = async () => {
+    if (!engagementToDelete || isDeleting) return;
     const clientName = engagementToDelete.clientName;
     const engId = engagementToDelete.id;
-    deleteEngagement(engId);
-    setEngagementToDelete(null);
-    setSuccessToast(`Perikatan ${engId} (${clientName}) berhasil dihapus.`);
-    setTimeout(() => {
-      setSuccessToast(null);
-    }, 3500);
+    setIsDeleting(true);
+    try {
+      await deleteEngagement(engId);
+      setEngagementToDelete(null);
+      setSuccessToast(`Perikatan ${engId} (${clientName}) berhasil dihapus.`);
+      setTimeout(() => {
+        setSuccessToast(null);
+      }, 3500);
+    } catch (err) {
+      console.error('Gagal menghapus perikatan:', err);
+      alert('Gagal menghapus perikatan. Silakan periksa koneksi atau coba lagi.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const filteredEngagements = engagements.filter(eng => 
@@ -205,7 +214,7 @@ const Engagements = () => {
                           >
                             <Archive size={16} className="shrink-0" /> <span>Arsipkan</span>
                           </button>
-                          {(hasPermission('delete_engagement') || !user || user?.role === 'Admin' || user?.role === 'Auditor') && (
+                          {(hasPermission('delete_engagement') || !user || ['admin', 'partner', 'partner/akuntan publik', 'manager', 'supervisor', 'ketua tim', 'auditor'].includes((user?.role || '').toLowerCase())) && (
                             <button 
                               onClick={() => { setEngagementToDelete(eng); setOpenDropdownId(null); }}
                               className="w-full px-4 py-3 flex items-center space-x-2.5 hover:bg-red-50 text-sm text-red-600 border-t border-gray-100 min-h-[44px] transition-colors"
@@ -316,11 +325,21 @@ const Engagements = () => {
                 </button>
                 <button
                   type="button"
+                  disabled={isDeleting}
                   onClick={confirmDelete}
-                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors shadow-sm min-h-[44px] flex items-center justify-center space-x-1.5"
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm min-h-[44px] flex items-center justify-center space-x-1.5"
                 >
-                  <Trash2 size={15} />
-                  <span>Ya, Hapus Perikatan</span>
+                  {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 size={15} />
+                      <span>Ya, Hapus Perikatan</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
