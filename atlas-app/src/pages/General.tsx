@@ -10,6 +10,7 @@ const General = () => {
     { id: '1', code: 'D.100', name: 'INPUT LAPORAN KEUANGAN', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
     { id: '2', code: 'D.200', name: 'LAMPIRAN', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
     { id: '3', code: 'D.300', name: 'SINGKATAN', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
+    { id: '4', code: 'D.400', name: 'PETUNJUK PENGISIAN SINGKAT', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
   ];
 
   return (
