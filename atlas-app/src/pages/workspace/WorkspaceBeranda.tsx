@@ -89,19 +89,19 @@ export const getDefaultResponsibility = (role: string): string => {
 export const getRoleBadgeStyle = (role: string): string => {
   switch (role) {
     case 'Partner':
-      return 'bg-purple-100 text-purple-800 border-purple-200 font-bold';
+      return 'bg-purple-50 text-purple-700 border-purple-200 font-semibold';
     case 'Manager':
-      return 'bg-indigo-100 text-indigo-800 border-indigo-200 font-bold';
+      return 'bg-indigo-50 text-indigo-700 border-indigo-200 font-semibold';
     case 'Supervisor':
-      return 'bg-cyan-100 text-cyan-800 border-cyan-200 font-bold';
+      return 'bg-cyan-50 text-cyan-800 border-cyan-200 font-semibold';
     case 'Ketua Tim':
-      return 'bg-blue-100 text-blue-800 border-blue-200 font-bold';
+      return 'bg-blue-50 text-blue-800 border-blue-200 font-semibold';
     case 'Auditor':
-      return 'bg-slate-100 text-slate-700 border-slate-200 font-medium';
+      return 'bg-slate-50 text-slate-700 border-slate-200 font-medium';
     case 'Tenaga Ahli / Spesialis':
-      return 'bg-amber-100 text-amber-800 border-amber-200 font-bold';
+      return 'bg-amber-50 text-amber-800 border-amber-200 font-semibold';
     default:
-      return 'bg-gray-100 text-gray-700 border-gray-200';
+      return 'bg-gray-50 text-gray-700 border-gray-200';
   }
 };
 
@@ -486,18 +486,13 @@ const WorkspaceBeranda = () => {
       <div className="mb-6">
         <div className="border border-gray-200 bg-white rounded-xl shadow-xs overflow-hidden">
           {/* Section Header */}
-          <div className="bg-slate-50/80 px-5 py-3.5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
+          <div className="bg-slate-50/80 px-5 py-3 border-b border-gray-200 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
               <span className="text-xs font-bold text-gray-400">1.</span>
-              <Users size={16} className="text-atlas-blue" />
-              <div>
-                <h2 className="text-sm font-bold tracking-tight text-gray-900 uppercase">
-                  Identitas Auditor & Susunan Tim Perikatan
-                </h2>
-                <p className="text-[11px] text-gray-500">
-                  Peran personil bersifat dinamis (dapat ditugaskan sebagai Ketua Tim, Supervisor, atau Auditor sesuai perikatan)
-                </p>
-              </div>
+              <Users size={16} className="text-atlas-blue shrink-0" />
+              <h2 className="text-sm font-bold tracking-tight text-gray-900 uppercase truncate">
+                Identitas Auditor & Susunan Tim Perikatan
+              </h2>
             </div>
 
             <div className="flex items-center gap-2 self-end sm:self-auto">
@@ -538,14 +533,9 @@ const WorkspaceBeranda = () => {
               /* ── Mode Edit Tim Dinamis ── */
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-gray-100">
-                  <div>
-                    <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
-                      Daftar Anggota & Penugasan Peran Dinamis
-                    </h3>
-                    <p className="text-[11px] text-gray-500 mt-0.5">
-                      Ganti peran kapan saja dengan memilih opsi peran pada dropdown di setiap baris personil.
-                    </p>
-                  </div>
+                  <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                    Daftar Anggota & Penugasan Peran
+                  </h3>
 
                   <div className="flex items-center gap-1.5">
                     <button
@@ -708,73 +698,63 @@ const WorkspaceBeranda = () => {
                 </div>
               </div>
             ) : (
-              /* ── Mode Tampilan Normal (Card & Grid Dinamis) ── */
-              <div className="space-y-4">
-                {/* Summary Chips */}
-                <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-gray-100">
-                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mr-1">
-                    Komposisi Tim ({teamList.length} Personil):
+              /* ── Mode Tampilan Normal (Ramping & Modern) ── */
+              <div className="space-y-3">
+                {/* Summary Chips Minimalis */}
+                <div className="flex flex-wrap items-center gap-1.5 pb-2.5 border-b border-gray-100">
+                  <span className="text-[11px] font-semibold text-gray-500 mr-1">
+                    Komposisi Tim ({teamList.length}):
                   </span>
                   {ROLE_OPTIONS.map(role => {
                     const count = teamList.filter(m => m.role === role).length;
                     if (count === 0) return null;
                     return (
-                      <span key={role} className={`text-xs px-2.5 py-0.5 rounded-full border ${getRoleBadgeStyle(role)}`}>
+                      <span key={role} className={`text-[11px] px-2.5 py-0.5 rounded-md border font-medium ${getRoleBadgeStyle(role)}`}>
                         {count} {role}
                       </span>
                     );
                   })}
                 </div>
 
-                {/* Team Members Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                  {teamList.map((member) => (
-                    <div 
-                      key={member.id} 
-                      className="p-3.5 rounded-xl border border-gray-200 bg-slate-50/40 hover:bg-white hover:border-blue-200 hover:shadow-xs transition-all flex flex-col justify-between space-y-3"
-                    >
-                      <div>
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="w-8 h-8 rounded-lg bg-blue-900 text-cyan-300 font-bold text-xs flex items-center justify-center shrink-0 shadow-inner">
-                              {member.name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'AU'}
-                            </div>
-                            <div className="min-w-0">
-                              <h4 className="text-xs font-bold text-gray-900 truncate" title={member.name}>
+                {/* Modern Ramping Table */}
+                <div className="overflow-x-auto border border-gray-200/80 rounded-lg shadow-2xs">
+                  <table className="w-full text-left text-xs min-w-[620px]">
+                    <thead>
+                      <tr className="bg-slate-50/90 text-gray-500 font-semibold uppercase text-[10px] tracking-wider border-b border-gray-200/80">
+                        <th className="py-2.5 px-3.5 w-[28%]">Personil</th>
+                        <th className="py-2.5 px-3 w-[20%]">Peran Perikatan</th>
+                        <th className="py-2.5 px-3.5 w-[37%]">Tanggung Jawab Utama</th>
+                        <th className="py-2.5 px-3.5 w-[15%] text-right">Kontak</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {teamList.map((member) => (
+                        <tr key={member.id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="py-2.5 px-3.5">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px] flex items-center justify-center shrink-0 border border-slate-200">
+                                {member.name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'AU'}
+                              </div>
+                              <span className="font-semibold text-gray-900 truncate" title={member.name}>
                                 {member.name || 'Nama Belum Ditentukan'}
-                              </h4>
-                              <p className="text-[10px] text-gray-400 truncate">
-                                {member.email || 'Email belum tercatat'}
-                              </p>
+                              </span>
                             </div>
-                          </div>
-                        </div>
-
-                        <div className="mb-2">
-                          <span className={`inline-block text-[10px] px-2 py-0.5 rounded-md border ${getRoleBadgeStyle(member.role)}`}>
-                            {member.role}
-                          </span>
-                        </div>
-
-                        <div>
-                          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">
-                            Tanggung Jawab:
-                          </p>
-                          <p className="text-[11px] text-gray-600 line-clamp-2 leading-relaxed">
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <span className={`inline-block text-[11px] px-2.5 py-0.5 rounded-md border ${getRoleBadgeStyle(member.role)}`}>
+                              {member.role}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3.5 text-gray-600 line-clamp-1 leading-relaxed text-[11px]">
                             {member.responsibility || getDefaultResponsibility(member.role)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Notice callout */}
-                <div className="mt-3 p-3 rounded-lg bg-blue-50/70 border border-blue-100 flex items-start gap-2 text-xs text-blue-900">
-                  <Users size={16} className="text-atlas-blue shrink-0 mt-0.5" />
-                  <p className="leading-relaxed text-[11px]">
-                    <span className="font-bold">Fungsi Penugasan Fleksibel:</span> Personil KAP yang sama dapat ditugaskan dengan fungsi yang berbeda pada setiap perikatan audit — sewaktu-waktu dapat bertindak sebagai <strong>Ketua Tim</strong>, menjadi <strong>Supervisor</strong>, maupun berperan sebagai <strong>Auditor</strong> pelaksana substantif sesuai alokasi jam jasa dan kompetensi teknis perikatan.
-                  </p>
+                          </td>
+                          <td className="py-2.5 px-3.5 text-right text-gray-400 text-[11px] font-mono truncate">
+                            {member.email || '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
