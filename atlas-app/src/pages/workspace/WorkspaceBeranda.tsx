@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useNavigate } from 'react-router-dom';
 import type { Engagement } from '../../store/engagementStore';
 import { useEngagementStore } from '../../store/engagementStore';
 import { useAuthStore } from '../../store/authStore';
@@ -169,7 +169,8 @@ const SectionCard = ({
 // ─── Main Component ──────────────────────────────────────────────────
 const WorkspaceBeranda = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
-  const updateEngagement = useEngagementStore(state => state.updateEngagement);
+  const { engagements, updateEngagement } = useEngagementStore();
+  const navigate = useNavigate();
   const { hasPermission } = useAuthStore();
   const canEdit = hasPermission('fill_worksheet');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -384,6 +385,7 @@ const WorkspaceBeranda = () => {
   // ── Section 3: Informasi Perikatan ──
   const [editPerikatan, setEditPerikatan] = useState(false);
   const [perikatanForm, setPerikatanForm] = useState({
+    id: engagement.id || '',
     engagementType: engagement.engagementType || 'Recurring',
     accountingStandard: engagement.accountingStandard || 'SAK_UMUM',
     fiscalYear: engagement.fiscalYear || '',
@@ -395,10 +397,32 @@ const WorkspaceBeranda = () => {
   const [savedPerikatan, setSavedPerikatan] = useState(false);
 
   const handleSavePerikatan = () => {
-    updateEngagement(engagement.id, perikatanForm as any);
+    const cleanId = (perikatanForm.id || '').trim();
+    if (!cleanId) {
+      alert('Nomor Perikatan tidak boleh kosong.');
+      return;
+    }
+
+    if (cleanId.toLowerCase() !== engagement.id.toLowerCase()) {
+      const isDuplicate = engagements.some(e => e.id.toLowerCase() === cleanId.toLowerCase());
+      if (isDuplicate) {
+        alert(`Nomor perikatan "${cleanId}" sudah digunakan oleh perikatan lain. Mohon gunakan nomor unik.`);
+        return;
+      }
+    }
+
+    updateEngagement(engagement.id, {
+      ...perikatanForm,
+      id: cleanId
+    } as any);
+
     setEditPerikatan(false);
     setSavedPerikatan(true);
     setTimeout(() => setSavedPerikatan(false), 2000);
+
+    if (cleanId !== engagement.id) {
+      navigate(`/workspace/${cleanId}`, { replace: true });
+    }
   };
 
   return (
@@ -808,7 +832,27 @@ const WorkspaceBeranda = () => {
           onSave={handleSavePerikatan}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-            <FieldRow label="Nomor Perikatan" value={engagement.id} editing={false} />
+            <FieldRow
+              label="Nomor Perikatan (ID Engagement)"
+              value={
+                <span className="font-mono font-bold text-gray-900 bg-slate-100 px-2.5 py-1 rounded border border-slate-200">
+                  {perikatanForm.id || engagement.id}
+                </span>
+              }
+              editing={editPerikatan}
+              editNode={
+                <div>
+                  <input
+                    type="text"
+                    className={inputCls + " font-mono font-bold text-slate-900"}
+                    value={perikatanForm.id}
+                    onChange={e => setPerikatanForm(f => ({ ...f, id: e.target.value }))}
+                    placeholder="Contoh: ENG-2025-001 atau 001/KAP-FP/2025"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-1">Dapat disunting manual sesuai format penomoran internal KAP.</p>
+                </div>
+              }
+            />
             <FieldRow
               label="Jenis Perikatan"
               value={ENGAGEMENT_TYPE_LABELS[perikatanForm.engagementType] || perikatanForm.engagementType}

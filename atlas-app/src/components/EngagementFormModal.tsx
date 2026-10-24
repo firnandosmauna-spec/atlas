@@ -41,8 +41,13 @@ interface EngagementFormModalProps {
 }
 
 const EngagementFormModal = ({ isOpen, onClose, initialData = null }: EngagementFormModalProps) => {
-  const { addEngagement, updateEngagement, addAuditLog } = useEngagementStore();
+  const { engagements, addEngagement, updateEngagement, addAuditLog } = useEngagementStore();
   const navigate = useNavigate();
+
+  const generateDefaultEngagementId = () => {
+    const year = new Date().getFullYear();
+    return `ENG-${year}-${Math.floor(100 + Math.random() * 900)}`;
+  };
 
   const [isExpanded, setIsExpanded] = useState(false);
   const [allUsers, setAllUsers] = useState<UserData[]>([]);
@@ -102,8 +107,9 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
   const leadAuditorOptions = useMemo(() => getLeadAuditors(allUsers), [allUsers]);
   const additionalStaffOptions = useMemo(() => getAdditionalTeamMembers(allUsers), [allUsers]);
 
-  const { register, handleSubmit, reset } = useForm<Engagement>({
+  const { register, handleSubmit, reset, setValue, watch } = useForm<Engagement>({
     defaultValues: initialData || {
+      id: generateDefaultEngagementId(),
       status: 'Draft',
       progress: 0,
       engagementType: 'First Year',
@@ -117,6 +123,13 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
     }
   });
 
+  const watchedId = watch('id');
+  const isDuplicateId = useMemo(() => {
+    if (!watchedId) return false;
+    const clean = watchedId.trim().toLowerCase();
+    return engagements.some(e => e.id.toLowerCase() === clean && e.id !== initialData?.id);
+  }, [watchedId, engagements, initialData]);
+
   // Reset form values if initialData changes
   useEffect(() => {
     if (isOpen) {
@@ -124,6 +137,7 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
         reset(initialData);
       } else {
         reset({
+          id: generateDefaultEngagementId(),
           status: 'Draft',
           progress: 0,
           engagementType: 'First Year',
@@ -163,6 +177,19 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
   const onSubmit = async (data: Engagement) => {
     setIsSubmitting(true);
     try {
+      const cleanId = (data.id || '').trim();
+      if (!cleanId) {
+        alert('Nomor Engagement / ID Perikatan wajib diisi.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (isDuplicateId) {
+        alert(`Nomor Engagement "${cleanId}" sudah digunakan oleh perikatan lain. Mohon masukkan nomor unik.`);
+        setIsSubmitting(false);
+        return;
+      }
+
       const selectedPartner = allUsers.find(u => u.full_name === data.partnerName);
       const selectedManager = allUsers.find(u => u.full_name === data.managerName);
       const selectedSupervisor = allUsers.find(u => u.full_name === data.supervisorName);
@@ -170,6 +197,7 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
 
       const payload: Engagement = {
         ...data,
+        id: cleanId,
         partnerId: selectedPartner?.id || data.partnerId || '',
         managerId: selectedManager?.id || data.managerId || '',
         supervisorId: selectedSupervisor?.id || data.supervisorId || '',
@@ -180,17 +208,16 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
       if (initialData) {
         await updateEngagement(initialData.id, payload);
         addAuditLog({
-          engagementId: initialData.id,
+          engagementId: cleanId,
           user: payload.partnerName || 'User',
           action: 'Memperbarui Perikatan',
           module: 'Engagement',
           record: payload.clientName,
         });
       } else {
-        const year = data.fiscalYear ? new Date(data.fiscalYear).getFullYear() : new Date().getFullYear();
         const newEng: Engagement = {
           ...payload,
-          id: data.id || `ENG-${year}-${Math.floor(100 + Math.random() * 900)}`,
+          id: cleanId,
           status: 'Draft',
           progress: 0,
         };
@@ -275,6 +302,58 @@ const EngagementFormModal = ({ isOpen, onClose, initialData = null }: Engagement
         
         <form onSubmit={handleSubmit(onSubmit)} className="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1 bg-slate-100/30">
           
+          {/* ── 0. Nomor Engagement / ID Perikatan (Input Manual / Auto) ── */}
+          <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-blue-50 text-atlas-blue flex items-center justify-center shrink-0 shadow-2xs">
+                <FileCheck2 size={18} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <label className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    Nomor Engagement / ID Perikatan <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-[10px] font-bold text-atlas-blue bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                    Bisa Dibuat Manual
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Ketik nomor format perikatan internal KAP secara manual atau gunakan nomor format otomatis standar.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-72">
+                <input
+                  {...register('id', { required: true })}
+                  placeholder="Misal: ENG-2025-001 atau 001/KAP-FP/2025"
+                  className={`w-full border rounded-lg px-3 py-2 text-xs sm:text-sm font-mono font-bold text-slate-900 bg-white outline-none transition-all shadow-2xs ${
+                    isDuplicateId
+                      ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-300 bg-red-50/20'
+                      : 'border-slate-300 focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue'
+                  }`}
+                  required
+                />
+                {isDuplicateId && (
+                  <p className="text-[10px] font-bold text-red-600 mt-1">
+                    ⚠️ Nomor perikatan ini sudah digunakan oleh perikatan lain!
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setValue('id', generateDefaultEngagementId(), { shouldValidate: true })}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-colors shrink-0 shadow-2xs cursor-pointer min-h-[38px]"
+                title="Generate format nomor otomatis"
+              >
+                <Sparkles size={14} className="text-amber-500" />
+                <span className="hidden sm:inline">Generate</span> Otomatis
+              </button>
+            </div>
+          </div>
+
           {/* Top Section: 2 Balanced Cards Side by Side (5 cols vs 7 cols) */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
             
