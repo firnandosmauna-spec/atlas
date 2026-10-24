@@ -270,45 +270,35 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ── MATRIKS INDEKS KERTAS KERJA AUDIT (ATLAS) ── */}
-      <div className="mb-10 bg-[#0e1f3b] rounded-xl border border-[#1e3a66] shadow-xl overflow-hidden">
-        {/* Top Control Bar */}
-        <div className="px-5 py-4 border-b border-[#1c3861] bg-[#0a182e] flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-yellow-400/10 border border-yellow-400/30 flex items-center justify-center text-yellow-400 shrink-0">
-              <FolderKanban size={18} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-white tracking-wide uppercase">
-                  Matriks Kertas Kerja Audit (ATLAS)
-                </h2>
-                <span className="text-[10px] font-bold text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 px-2 py-0.5 rounded">
-                  36 Modul Lengkap
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Indeks kertas kerja audit standar IAPI. Pilih perikatan dan klik pada modul untuk langsung membuka kertas kerja.
-              </p>
-            </div>
+      {/* ── MATRIKS INDEKS KERTAS KERJA AUDIT (ATLAS) - RAMPING, SEDERHANA, DOMINASI PUTIH FONT HITAM ── */}
+      <div className="mb-8 bg-white border border-gray-300 shadow-xs">
+        {/* Top Control Bar - Ramping & Sederhana */}
+        <div className="px-5 py-3 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+              Matriks Kertas Kerja Audit (ATLAS)
+              <span className="text-[10px] font-semibold text-gray-600 bg-white border border-gray-300 px-2 py-0.5">
+                36 Modul
+              </span>
+            </h2>
           </div>
 
           {/* Right Controls: Engagement Picker & Search */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5">
             {/* Search Input */}
-            <div className="relative min-w-[210px] flex-1 sm:flex-initial">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div className="relative min-w-[200px] flex-1 sm:flex-initial">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari (A210, Materialitas, B100)..."
-                className="w-full bg-[#0d2242] border border-[#204170] text-xs text-white placeholder-slate-400 pl-8 pr-3 py-2 rounded focus:outline-none focus:border-yellow-400 transition-colors"
+                placeholder="Cari modul (A210, B100)..."
+                className="w-full bg-white border border-gray-300 text-xs text-gray-900 placeholder-gray-400 pl-7 pr-6 py-1.5 focus:outline-none focus:border-gray-900 transition-colors"
               />
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 hover:text-white"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-400 hover:text-gray-700"
                   title="Hapus pencarian"
                 >
                   ✕
@@ -318,34 +308,32 @@ const Dashboard = () => {
 
             {/* Engagement Selector */}
             {engagements.length > 0 ? (
-              <div className="flex items-center gap-2">
-                <div className="flex flex-col">
-                  <label className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Perikatan Tujuan</label>
-                  <select
-                    value={selectedEngagementId}
-                    onChange={(e) => handleSelectEngagement(e.target.value)}
-                    className="bg-[#0d2242] border border-[#204170] text-xs font-semibold text-yellow-300 px-3 py-1.5 rounded focus:outline-none focus:border-yellow-400 cursor-pointer max-w-[250px] truncate"
-                  >
-                    {engagements.map((eng) => (
-                      <option key={eng.id} value={eng.id} className="bg-[#0e1f3b] text-white">
-                        [{eng.id}] {eng.clientName} ({eng.progress}%)
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap">Perikatan:</span>
+                <select
+                  value={selectedEngagementId}
+                  onChange={(e) => handleSelectEngagement(e.target.value)}
+                  className="bg-white border border-gray-300 text-xs font-semibold text-gray-900 px-2.5 py-1.5 focus:outline-none focus:border-gray-900 cursor-pointer max-w-[220px] truncate"
+                >
+                  {engagements.map((eng) => (
+                    <option key={eng.id} value={eng.id}>
+                      [{eng.id}] {eng.clientName} ({eng.progress}%)
+                    </option>
+                  ))}
+                </select>
                 {selectedEngagement && (
                   <button
                     onClick={() => navigate(`/workspace/${selectedEngagement.id}`)}
-                    className="self-end px-3 py-2 bg-yellow-400 hover:bg-yellow-300 text-gray-950 font-bold text-xs rounded transition-colors flex items-center gap-1.5 whitespace-nowrap shadow-xs cursor-pointer"
-                    title="Buka Beranda Workspace Perikatan Ini"
+                    className="px-2.5 py-1.5 bg-gray-900 hover:bg-gray-800 text-white font-bold text-xs transition-colors flex items-center gap-1 whitespace-nowrap cursor-pointer"
+                    title="Buka Workspace Perikatan Ini"
                   >
-                    <span>Workspace</span>
-                    <ExternalLink size={12} />
+                    <span>Buka</span>
+                    <ExternalLink size={11} />
                   </button>
                 )}
               </div>
             ) : (
-              <div className="text-xs text-slate-400 italic bg-[#0d2242] px-3 py-2 rounded border border-[#204170]">
+              <div className="text-xs text-gray-500 italic">
                 Belum ada perikatan aktif
               </div>
             )}
@@ -354,23 +342,23 @@ const Dashboard = () => {
 
         {/* Active Phase Filter Notice (if any) */}
         {activeFilter && (
-          <div className="px-5 py-2 bg-yellow-400/10 border-b border-yellow-400/20 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-yellow-300">
-              <Filter size={13} />
-              <span>Filter tabel perikatan aktif: <strong>Fase {activeFilter}</strong></span>
+          <div className="px-5 py-1.5 bg-blue-50/70 border-b border-blue-200 flex items-center justify-between text-xs text-blue-900">
+            <div className="flex items-center gap-2">
+              <Filter size={12} className="text-blue-700" />
+              <span>Memfilter perikatan di bawah: <strong>Fase {activeFilter}</strong></span>
             </div>
             <button
               onClick={() => setActiveFilter(null)}
-              className="text-[11px] font-bold text-yellow-400 hover:text-yellow-200 underline cursor-pointer"
+              className="text-[11px] font-bold text-blue-700 hover:text-blue-950 underline cursor-pointer"
             >
-              Tampilkan Semua Perikatan
+              Reset Filter
             </button>
           </div>
         )}
 
-        {/* 5-Column Matrix Grid */}
-        <div className="p-4 sm:p-5 overflow-x-auto">
-          <div className="min-w-[980px] grid grid-cols-5 gap-4">
+        {/* 5-Column Matrix Grid - Ramping, Putih, Font Hitam */}
+        <div className="p-3 sm:p-4 overflow-x-auto bg-white">
+          <div className="min-w-[960px] grid grid-cols-5 gap-3.5">
             {ATLAS_AUDIT_INDEX.map((col) => {
               const isColumnActive = activeFilter === col.phaseKey;
               return (
@@ -378,24 +366,24 @@ const Dashboard = () => {
                   {/* Column Header */}
                   <div 
                     onClick={() => setActiveFilter(isColumnActive ? null : col.phaseKey)}
-                    className={`pb-1.5 mb-2.5 border-b-2 flex items-baseline justify-between cursor-pointer group transition-colors ${
+                    className={`pb-1.5 mb-2 border-b-2 flex items-baseline justify-between cursor-pointer group transition-colors ${
                       isColumnActive 
-                        ? 'border-yellow-300 text-yellow-300' 
-                        : 'border-[#f5c242] text-[#f5c242] hover:text-yellow-300'
+                        ? 'border-blue-600 text-blue-700' 
+                        : 'border-gray-900 text-gray-900 hover:text-blue-700'
                     }`}
-                    title={`Klik untuk memfilter perikatan di tahap ${col.code}`}
+                    title={`Klik untuk memfilter daftar perikatan pada tahap ${col.code}`}
                   >
-                    <div className="flex items-baseline gap-2 font-bold tracking-wider">
-                      <span className="text-sm font-extrabold">{col.code}</span>
-                      <span className="italic text-xs uppercase tracking-tight">{col.title}</span>
+                    <div className="flex items-baseline gap-1.5 font-bold tracking-tight">
+                      <span className="text-xs font-black">{col.code}</span>
+                      <span className="text-[11px] uppercase tracking-wider">{col.title}</span>
                     </div>
-                    <span className="text-[10px] text-yellow-400/60 group-hover:text-yellow-300 transition-colors">
+                    <span className="text-[10px] text-gray-400 group-hover:text-gray-700 font-semibold">
                       {col.items.length}
                     </span>
                   </div>
 
                   {/* Column Items */}
-                  <div className="space-y-0.5">
+                  <div className="divide-y divide-gray-100">
                     {col.items.map((item) => {
                       const isMatch = matchesItem(item);
                       const hasSearch = searchQuery.trim().length > 0;
@@ -404,27 +392,27 @@ const Dashboard = () => {
                         <div
                           key={item.code}
                           onClick={() => handleItemClick(item)}
-                          className={`flex items-start gap-2.5 py-1.5 px-2 rounded border-b border-[#1b3558]/70 hover:bg-[#16335d] transition-all cursor-pointer group relative ${
-                            hasSearch && isMatch ? 'bg-[#183968] ring-1 ring-yellow-400/60' : ''
-                          } ${hasSearch && !isMatch ? 'opacity-25' : 'opacity-100'}`}
+                          className={`flex items-start gap-2 py-1.5 px-1 hover:bg-gray-50 transition-colors cursor-pointer group text-left ${
+                            hasSearch && isMatch ? 'bg-blue-50/80 ring-1 ring-blue-300' : ''
+                          } ${hasSearch && !isMatch ? 'opacity-30' : 'opacity-100'}`}
                           title={`Buka ${item.code} - ${item.title}`}
                         >
-                          {/* Code */}
-                          <span className="font-bold text-[#f5c242] group-hover:text-yellow-300 text-xs shrink-0 w-11 tracking-wider transition-colors pt-0.5">
+                          {/* Code: bold black / dark */}
+                          <span className="font-bold text-gray-900 group-hover:text-blue-700 text-[11px] shrink-0 w-10 tracking-tight transition-colors pt-0.5">
                             {item.code}
                           </span>
 
-                          {/* Title */}
-                          <span className={`text-slate-100 group-hover:text-white text-xs leading-snug transition-colors flex-1 ${
+                          {/* Title: crisp dark text */}
+                          <span className={`text-gray-700 group-hover:text-gray-950 text-[11px] leading-snug transition-colors flex-1 ${
                             item.isItalic ? 'italic' : ''
                           }`}>
                             {item.title}
                           </span>
 
-                          {/* Hover Arrow */}
+                          {/* Hover indicator */}
                           <ChevronRight 
                             size={12} 
-                            className="text-yellow-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" 
+                            className="text-gray-400 group-hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" 
                           />
                         </div>
                       );
@@ -436,16 +424,13 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Footer Bar */}
-        <div className="px-5 py-2.5 bg-[#0a182e] border-t border-[#1c3861] flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>
-              Perikatan aktif: <strong className="text-white">{selectedEngagement ? `${selectedEngagement.clientName} (${selectedEngagement.id})` : 'Belum Dipilih'}</strong>
-            </span>
+        {/* Footer Bar - Ramping & Sederhana */}
+        <div className="px-5 py-2 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between text-[11px] text-gray-500 gap-2">
+          <div>
+            Perikatan aktif: <strong className="text-gray-900 font-semibold">{selectedEngagement ? `${selectedEngagement.clientName} (${selectedEngagement.id})` : 'Belum Dipilih'}</strong>
           </div>
-          <div className="text-slate-400 text-right">
-            <span>Klik modul kertas kerja untuk membuka lembar kerja secara instan</span>
+          <div className="text-gray-400 text-right">
+            Klik kode atau nama modul untuk langsung membuka kertas kerja
           </div>
         </div>
       </div>
