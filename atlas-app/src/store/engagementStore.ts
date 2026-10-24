@@ -327,8 +327,8 @@ interface EngagementState {
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
 }
-
-export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [
+export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [];
+export const DEMO_SAMPLE_ENGAGEMENTS: Engagement[] = [
   {
     id: 'ENG-2025-548',
     clientId: 'CLI-001',
@@ -700,17 +700,21 @@ export const useEngagementStore = create<EngagementState>()(
       },
 
       addEngagement: async (engagement) => {
-        set((state) => ({ 
-          engagements: [engagement, ...state.engagements] 
-        }));
+        let toSave = engagement;
         try {
           const ok = await upsertCloudEngagement(engagement);
           if (ok) {
             set({ syncStatus: 'synced', lastSyncedAt: new Date().toISOString() });
+          } else {
+            toSave = { ...engagement, _isOfflinePending: true } as any;
           }
         } catch (e) {
           console.error('[CloudSync] addEngagement sync error:', e);
+          toSave = { ...engagement, _isOfflinePending: true } as any;
         }
+        set((state) => ({ 
+          engagements: [toSave, ...state.engagements] 
+        }));
       },
 
       updateEngagement: async (id, updatedData) => {

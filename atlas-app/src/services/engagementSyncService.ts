@@ -15,7 +15,7 @@ export const fetchCloudEngagements = async (): Promise<Engagement[] | null> => {
   try {
     const { data, error } = await supabase
       .from('atlas_engagements')
-      .select('id, data, updated_at')
+      .select('id, status, data, updated_at')
       .order('updated_at', { ascending: false });
 
     if (error) {
@@ -28,14 +28,16 @@ export const fetchCloudEngagements = async (): Promise<Engagement[] | null> => {
     return data
       .map((row: any) => {
         if (row.data) {
+          const rowStatus = row.status || row.data.status;
           return {
             ...row.data,
             id: row.id || row.data.id,
+            status: rowStatus,
           } as Engagement;
         }
         return null;
       })
-      .filter((e): e is Engagement => Boolean(e));
+      .filter((e): e is Engagement => Boolean(e) && (e as any).status !== 'Deleted');
   } catch (err: any) {
     console.warn('Cloud engagement fetch error (offline / fallback to local):', err?.message || err);
     return null;
@@ -199,22 +201,38 @@ export const syncEngagementsBidirectional = async (
     Promise.allSettled(lingeringDeletes).catch(() => {});
   }
 
-  // 4. Push any local engagement not yet present in cloud
+  // 4. Only push local engagements if they were explicitly created offline (_isOfflinePending)
   const pushPromises: Promise<boolean>[] = [];
   for (const localEng of localList) {
     if (!localEng.id) continue;
-    if (!map.has(localEng.id)) {
+    if ((localEng as any)._isOfflinePending && !map.has(localEng.id)) {
+      delete (localEng as any)._isOfflinePending;
       map.set(localEng.id, localEng);
       pushPromises.push(upsertCloudEngagement(localEng));
     }
   }
 
   if (pushPromises.length > 0) {
-    console.log(`[CloudSync] Mengunggah ${pushPromises.length} perikatan lokal ke Supabase...`);
+    console.log(`[CloudSync] Mengunggah ${pushPromises.length} perikatan offline ke Supabase...`);
     await Promise.allSettled(pushPromises);
   }
 
   const merged = Array.from(map.values());
+
+  // 5. Update local storage so that Vercel or any client purges deleted items from browser cache
+  try {
+    const rawLocal = localStorage.getItem('atlas_engagements_store');
+    if (rawLocal) {
+      const parsed = JSON.parse(rawLocal);
+      if (parsed?.state) {
+        parsed.state.engagements = merged;
+        localStorage.setItem('atlas_engagements_store', JSON.stringify(parsed));
+      }
+    }
+  } catch (err) {
+    console.warn('[CloudSync] LocalStorage purge error:', err);
+  }
+
   return {
     success: true,
     engagements: merged,
