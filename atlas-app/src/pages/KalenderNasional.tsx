@@ -22,11 +22,6 @@ import {
   Building2,
   X
 } from 'lucide-react';
-import type { 
-  HolidayItem, 
-  HolidayType, 
-  WorkingDaysCalculationResult 
-} from '../constants/holidaysData';
 import { 
   OFFICIAL_HOLIDAYS, 
   MONTH_NAMES_ID, 
@@ -34,6 +29,38 @@ import {
   getAllHolidays, 
   calculateAuditWorkingDays 
 } from '../constants/holidaysData';
+
+export type HolidayType = 'national' | 'joint_leave' | 'kap_custom';
+
+export interface HolidayItem {
+  id: string;
+  date: string;
+  name: string;
+  type: HolidayType;
+  description?: string;
+  isCustom?: boolean;
+}
+
+export interface WorkingDaysCalculationResult {
+  startDate: string;
+  endDate: string;
+  workDaysPerWeek: 5 | 6;
+  hoursPerDay: number;
+  totalCalendarDays: number;
+  weekendDays: number;
+  nationalHolidaysCount: number;
+  jointLeaveCount: number;
+  kapCustomCount: number;
+  effectiveWorkingDays: number;
+  effectiveWorkingHours: number;
+  holidayDetails: {
+    date: string;
+    dayName: string;
+    name: string;
+    type: HolidayType;
+    isWeekend: boolean;
+  }[];
+}
 
 const STORAGE_KEY = 'kap_custom_holidays_v1';
 
