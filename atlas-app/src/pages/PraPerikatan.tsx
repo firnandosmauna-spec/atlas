@@ -3,50 +3,86 @@ import type { WorksheetInfo } from '../components/WorksheetList';
 import { useOutletContext, Link } from 'react-router-dom';
 import type { Engagement } from '../store/engagementStore';
 import { Users, ArrowRight } from 'lucide-react';
+import { getWorksheetProgress } from '../services/worksheetProgressService';
 
 const PraPerikatan = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
 
-  const isA110Done = Boolean(engagement.worksheetA110?.decision);
-  const wsA130 = (engagement as any)?.worksheetA130;
-  const isA130Done = wsA130 !== undefined ? wsA130.isCompleted === true : true;
-  const statusA130: WorksheetStatus = isA130Done ? 'Completed' : 'Uncompleted';
-
-  const wsA140 = (engagement as any)?.worksheetA140;
-  const isA140Done = wsA140 !== undefined ? wsA140.isCompleted === true : true;
-  const statusA140: WorksheetStatus = isA140Done ? 'Completed' : 'Uncompleted';
-
-  const wsA150 = (engagement as any)?.worksheetA150;
-  const isA150Done = wsA150 !== undefined ? wsA150.isCompleted === true : true;
-  const statusA150: WorksheetStatus = isA150Done ? 'Completed' : 'Uncompleted';
-
-  const wsA160 = (engagement as any)?.worksheetA160;
-  const isA160Done = wsA160 !== undefined ? wsA160.isCompleted === true : true;
-  const statusA160: WorksheetStatus = isA160Done ? 'Completed' : 'Uncompleted';
-
-  const wsA170 = (engagement as any)?.worksheetA170;
-  const isA170Done = wsA170 !== undefined ? wsA170.isCompleted === true : true;
-  const statusA170: WorksheetStatus = isA170Done ? 'Completed' : 'Uncompleted';
+  const progA110 = getWorksheetProgress(engagement, 'A.110');
+  const progA120 = getWorksheetProgress(engagement, 'A.120');
+  const progA130 = getWorksheetProgress(engagement, 'A.130');
+  const progA140 = getWorksheetProgress(engagement, 'A.140');
+  const progA150 = getWorksheetProgress(engagement, 'A.150');
+  const progA160 = getWorksheetProgress(engagement, 'A.160');
+  const progA170 = getWorksheetProgress(engagement, 'A.170');
 
   let worksheets: WorksheetInfo[] = [
     { 
       id: '1', 
       code: 'A.110', 
       name: 'Analisis Penerimaan dan Keberlanjutan Hubungan dengan Klien', 
-      status: isA110Done ? 'Completed' : 'Not Started', 
-      progress: isA110Done ? 100 : 0, 
-      reviewer: isA110Done ? (engagement.managerName || 'Manager') : null, 
-      lastUpdated: isA110Done ? 'Tersimpan' : '-' 
+      status: progA110.status, 
+      progress: progA110.progress, 
+      reviewer: progA110.reviewer, 
+      lastUpdated: progA110.lastUpdated 
     },
-    { id: '2', code: 'A.120', name: 'Alokasi Jam Jasa dan Biaya', status: 'Not Started', progress: 0, reviewer: null, lastUpdated: '-' },
-    { id: '3', code: 'A.130', name: 'Surat Perikatan', status: statusA130, progress: isA130Done ? 100 : (wsA130 ? 50 : 0), reviewer: isA130Done ? (engagement.managerName || 'Manager') : null, lastUpdated: wsA130 ? 'Tersimpan' : '-' },
-    { id: '4', code: 'A.140', name: 'Surat Tugas', status: statusA140, progress: isA140Done ? 100 : (wsA140 ? 50 : 0), reviewer: isA140Done ? (engagement.managerName || 'Manager') : null, lastUpdated: wsA140 ? 'Tersimpan' : '-' },
-    { id: '5', code: 'A.150', name: 'Pernyataan Independensi', status: statusA150, progress: isA150Done ? 100 : (wsA150 ? 50 : 0), reviewer: isA150Done ? (engagement.managerName || 'Manager') : null, lastUpdated: wsA150 ? 'Tersimpan' : '-' },
-    { id: '6', code: 'A.160', name: 'Komunikasi Tim Perikatan', status: statusA160, progress: isA160Done ? 100 : (wsA160 ? 50 : 0), reviewer: isA160Done ? (engagement.managerName || 'Manager') : null, lastUpdated: wsA160 ? 'Tersimpan' : '-' },
+    { 
+      id: '2', 
+      code: 'A.120', 
+      name: 'Alokasi Jam Jasa dan Biaya', 
+      status: progA120.status, 
+      progress: progA120.progress, 
+      reviewer: progA120.reviewer, 
+      lastUpdated: progA120.lastUpdated 
+    },
+    { 
+      id: '3', 
+      code: 'A.130', 
+      name: 'Surat Perikatan', 
+      status: progA130.status, 
+      progress: progA130.progress, 
+      reviewer: progA130.reviewer, 
+      lastUpdated: progA130.lastUpdated 
+    },
+    { 
+      id: '4', 
+      code: 'A.140', 
+      name: 'Surat Tugas', 
+      status: progA140.status, 
+      progress: progA140.progress, 
+      reviewer: progA140.reviewer, 
+      lastUpdated: progA140.lastUpdated 
+    },
+    { 
+      id: '5', 
+      code: 'A.150', 
+      name: 'Pernyataan Independensi', 
+      status: progA150.status, 
+      progress: progA150.progress, 
+      reviewer: progA150.reviewer, 
+      lastUpdated: progA150.lastUpdated 
+    },
+    { 
+      id: '6', 
+      code: 'A.160', 
+      name: 'Komunikasi Tim Perikatan', 
+      status: progA160.status, 
+      progress: progA160.progress, 
+      reviewer: progA160.reviewer, 
+      lastUpdated: progA160.lastUpdated 
+    },
   ];
 
   if (engagement.engagementType === 'First Year') {
-    worksheets.push({ id: '7', code: 'A.170', name: 'Perikatan Tahun Pertama', status: statusA170, progress: isA170Done ? 100 : (wsA170 ? 50 : 0), reviewer: isA170Done ? (engagement.managerName || 'Manager') : null, lastUpdated: wsA170 ? 'Tersimpan' : '-' });
+    worksheets.push({ 
+      id: '7', 
+      code: 'A.170', 
+      name: 'Perikatan Tahun Pertama', 
+      status: progA170.status, 
+      progress: progA170.progress, 
+      reviewer: progA170.reviewer, 
+      lastUpdated: progA170.lastUpdated 
+    });
   }
 
   return (

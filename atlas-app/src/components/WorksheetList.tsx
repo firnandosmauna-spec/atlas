@@ -1,7 +1,7 @@
 import { FileText, Clock, CheckCircle, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export type WorksheetStatus = 'Not Started' | 'In Progress' | 'Completed' | 'Needs Revision' | 'Reviewed' | 'Approved' | 'Uncompleted';
+export type WorksheetStatus = 'Not Started' | 'In Progress' | 'Completed' | 'Needs Revision' | 'Reviewed' | 'Approved' | 'Uncompleted' | 'Full' | 'Belum Full';
 
 export interface WorksheetInfo {
   id: string;
@@ -23,12 +23,14 @@ interface WorksheetListProps {
 
 const STATUS_CONFIG: Record<WorksheetStatus, { label: string; dot: string; text: string; bg: string; border: string }> = {
   'Not Started':   { label: 'Belum Dimulai', dot: 'bg-gray-300',    text: 'text-gray-500',   bg: 'bg-gray-50',    border: 'border-gray-200' },
-  'In Progress':   { label: 'Sedang Dikerjakan', dot: 'bg-blue-500', text: 'text-blue-700',   bg: 'bg-blue-50',    border: 'border-blue-200' },
+  'In Progress':   { label: 'Belum Full (Berjalan)', dot: 'bg-amber-500 animate-pulse', text: 'text-amber-700',   bg: 'bg-amber-50',    border: 'border-amber-200' },
   'Needs Revision':{ label: 'Perlu Revisi',  dot: 'bg-red-500',     text: 'text-red-700',    bg: 'bg-red-50',     border: 'border-red-200'  },
   'Reviewed':      { label: 'Direview',      dot: 'bg-purple-500',  text: 'text-purple-700', bg: 'bg-purple-50',  border: 'border-purple-200'},
   'Approved':      { label: 'Disetujui',     dot: 'bg-green-500',   text: 'text-green-700',  bg: 'bg-green-50',   border: 'border-green-200' },
-  'Completed':     { label: 'Completed',     dot: 'bg-teal-500',    text: 'text-teal-700',   bg: 'bg-teal-50',    border: 'border-teal-200'  },
-  'Uncompleted':   { label: 'Uncompleted',   dot: 'bg-rose-500',    text: 'text-rose-700',   bg: 'bg-rose-50',    border: 'border-rose-200'  },
+  'Completed':     { label: 'Full (Selesai)', dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+  'Full':          { label: 'Full (Selesai)', dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+  'Uncompleted':   { label: 'Belum Full',   dot: 'bg-amber-500 animate-pulse',    text: 'text-amber-700',   bg: 'bg-amber-50',    border: 'border-amber-200'  },
+  'Belum Full':    { label: 'Belum Full',   dot: 'bg-amber-500 animate-pulse',    text: 'text-amber-700',   bg: 'bg-amber-50',    border: 'border-amber-200'  },
 };
 
 const WorksheetList = ({ stageName, description, worksheets, stageCode }: WorksheetListProps) => {

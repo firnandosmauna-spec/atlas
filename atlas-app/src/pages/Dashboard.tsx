@@ -1,9 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useEngagementStore } from '../store/engagementStore';
 import type { Engagement, ReviewNote } from '../store/engagementStore';
 import EngagementFormModal from '../components/EngagementFormModal';
+import { 
+  getWorksheetProgress, 
+  getMatrixProgressSummary 
+} from '../services/worksheetProgressService';
 import { 
   Activity,
   ListTodo,
@@ -174,6 +178,14 @@ const Dashboard = () => {
     return item.code.toLowerCase().includes(q) || item.title.toLowerCase().includes(q);
   };
 
+  const allModuleCodes = useMemo(() => {
+    return ATLAS_AUDIT_INDEX.flatMap(col => col.items.map(item => item.code));
+  }, []);
+
+  const matrixSummary = useMemo(() => {
+    return getMatrixProgressSummary(selectedEngagement, allModuleCodes);
+  }, [selectedEngagement, allModuleCodes]);
+
   const openReviewNotes = (reviewNotes || []).filter(
     (note: ReviewNote) => note.status === 'Open' || note.status === 'Reopened'
   );
@@ -270,7 +282,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ── MATRIKS INDEKS KERTAS KERJA AUDIT (ATLAS) - RAMPING, SEDERHANA, DOMINASI PUTIH FONT HITAM ── */}
+      {/* ── MATRIKS INDEKS KERTAS KERJA AUDIT (ATLAS) - DENGAN INDIKATOR BERJALAN DINAMIS PER PERIKATAN ── */}
       <div className="mb-8 bg-white border border-gray-300 shadow-xs">
         {/* Top Control Bar - Ramping & Sederhana */}
         <div className="px-5 py-3 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -292,7 +304,7 @@ const Dashboard = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari modul (A210, B100)..."
+                placeholder="Cari modul (A110, B100)..."
                 className="w-full bg-white border border-gray-300 text-xs text-gray-900 placeholder-gray-400 pl-7 pr-6 py-1.5 focus:outline-none focus:border-gray-900 transition-colors"
               />
               {searchQuery && (
@@ -340,6 +352,44 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Live Indicator Progress Overview Strip for Selected Engagement */}
+        {selectedEngagement && (
+          <div className="px-5 py-2.5 bg-slate-50/80 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+                <Activity size={13} className="text-blue-600" />
+                Indikator Berjalan:
+              </span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span>Full: {matrixSummary.fullCount} KKP</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-50 border border-amber-200 text-amber-800 text-[11px] font-bold">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span>Belum Full: {matrixSummary.inProgressCount} KKP</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-medium">
+                <span className="w-2 h-2 rounded-full bg-slate-400" />
+                <span>Belum Dimulai: {matrixSummary.notStartedCount} KKP</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-gray-600 font-semibold">
+                Keterisian: <strong className="text-gray-900 font-bold">{matrixSummary.averageProgress}%</strong>
+              </span>
+              <div className="w-28 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full rounded-full transition-all duration-700 ease-out ${
+                    matrixSummary.averageProgress >= 80 ? 'bg-emerald-500' : 'bg-blue-600'
+                  }`}
+                  style={{ width: `${matrixSummary.averageProgress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Active Phase Filter Notice (if any) */}
         {activeFilter && (
           <div className="px-5 py-1.5 bg-blue-50/70 border-b border-blue-200 flex items-center justify-between text-xs text-blue-900">
@@ -356,7 +406,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* 5-Column Matrix Grid - Ramping, Putih, Font Hitam */}
+        {/* 5-Column Matrix Grid - Ramping, Putih, Font Hitam dengan Indikator Berjalan */}
         <div className="p-3 sm:p-4 overflow-x-auto bg-white">
           <div className="min-w-[960px] grid grid-cols-5 gap-3.5">
             {ATLAS_AUDIT_INDEX.map((col) => {
@@ -387,33 +437,59 @@ const Dashboard = () => {
                     {col.items.map((item) => {
                       const isMatch = matchesItem(item);
                       const hasSearch = searchQuery.trim().length > 0;
+                      const prog = getWorksheetProgress(selectedEngagement, item.code);
                       
                       return (
                         <div
                           key={item.code}
                           onClick={() => handleItemClick(item)}
-                          className={`flex items-start gap-2 py-1.5 px-1 hover:bg-gray-50 transition-colors cursor-pointer group text-left ${
+                          className={`flex flex-col py-2 px-1.5 hover:bg-slate-50 transition-all cursor-pointer group text-left rounded border border-transparent hover:border-slate-200 ${
                             hasSearch && isMatch ? 'bg-blue-50/80 ring-1 ring-blue-300' : ''
                           } ${hasSearch && !isMatch ? 'opacity-30' : 'opacity-100'}`}
-                          title={`Buka ${item.code} - ${item.title}`}
+                          title={`${item.code} - ${item.title}\nStatus: ${prog.summary}`}
                         >
-                          {/* Code: bold black / dark */}
-                          <span className="font-bold text-gray-900 group-hover:text-blue-700 text-[11px] shrink-0 w-10 tracking-tight transition-colors pt-0.5">
-                            {item.code}
-                          </span>
+                          {/* Row 1: Code and Status Indicator Badge */}
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="font-bold text-gray-900 group-hover:text-blue-700 text-[11px] shrink-0 tracking-tight transition-colors">
+                              {item.code}
+                            </span>
 
-                          {/* Title: crisp dark text */}
-                          <span className={`text-gray-700 group-hover:text-gray-950 text-[11px] leading-snug transition-colors flex-1 ${
-                            item.isItalic ? 'italic' : ''
-                          }`}>
-                            {item.title}
-                          </span>
+                            {/* Status Indicator Badge */}
+                            <span 
+                              className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded border transition-colors shrink-0 ${prog.statusBadge.bgColor} ${prog.statusBadge.textColor} ${prog.statusBadge.borderColor}`}
+                              title={prog.summary}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${prog.statusBadge.dotColor}`} />
+                              <span>{prog.isFull ? 'Full' : prog.progress > 0 ? `${prog.progress}%` : '0%'}</span>
+                            </span>
+                          </div>
 
-                          {/* Hover indicator */}
-                          <ChevronRight 
-                            size={12} 
-                            className="text-gray-400 group-hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-0.5" 
-                          />
+                          {/* Row 2: Title and Chevron */}
+                          <div className="flex items-center justify-between gap-1 mt-1">
+                            <span className={`text-gray-700 group-hover:text-gray-950 text-[10px] leading-snug line-clamp-2 transition-colors flex-1 ${
+                              item.isItalic ? 'italic' : ''
+                            }`}>
+                              {item.title}
+                            </span>
+                            <ChevronRight 
+                              size={12} 
+                              className="text-gray-400 group-hover:text-gray-900 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-0.5" 
+                            />
+                          </div>
+
+                          {/* Row 3: Running Progress Bar Line */}
+                          <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mt-1.5">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ease-out ${
+                                prog.isFull 
+                                  ? 'bg-emerald-500' 
+                                  : prog.progress > 0 
+                                  ? 'bg-amber-500' 
+                                  : 'bg-transparent'
+                              }`}
+                              style={{ width: `${prog.progress}%` }}
+                            />
+                          </div>
                         </div>
                       );
                     })}
@@ -424,12 +500,24 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Footer Bar - Ramping & Sederhana */}
-        <div className="px-5 py-2 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between text-[11px] text-gray-500 gap-2">
-          <div>
-            Perikatan aktif: <strong className="text-gray-900 font-semibold">{selectedEngagement ? `${selectedEngagement.clientName} (${selectedEngagement.id})` : 'Belum Dipilih'}</strong>
+        {/* Footer Bar - Ramping & Sederhana dengan Legend Indikator */}
+        <div className="px-5 py-2.5 bg-gray-50 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between text-[11px] text-gray-600 gap-2.5">
+          <div className="flex flex-wrap items-center gap-3">
+            <span>Perikatan aktif: <strong className="text-gray-900 font-semibold">{selectedEngagement ? `${selectedEngagement.clientName} (${selectedEngagement.id})` : 'Belum Dipilih'}</strong></span>
+            <span className="hidden sm:inline text-gray-300">|</span>
+            <div className="flex items-center gap-3 text-[10px]">
+              <span className="flex items-center gap-1 font-semibold text-emerald-700">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" /> Full (100% Selesai)
+              </span>
+              <span className="flex items-center gap-1 font-semibold text-amber-700">
+                <span className="w-2 h-2 rounded-full bg-amber-500" /> Belum Full (Proses Berjalan)
+              </span>
+              <span className="flex items-center gap-1 font-medium text-slate-500">
+                <span className="w-2 h-2 rounded-full bg-slate-300" /> Belum Dimulai (0%)
+              </span>
+            </div>
           </div>
-          <div className="text-gray-400 text-right">
+          <div className="text-gray-500 text-right text-[11px]">
             Klik kode atau nama modul untuk langsung membuka kertas kerja
           </div>
         </div>

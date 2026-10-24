@@ -327,7 +327,6 @@ interface EngagementState {
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
 }
-export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = [];
 export const DEMO_SAMPLE_ENGAGEMENTS: Engagement[] = [
   {
     id: 'ENG-2025-548',
@@ -349,11 +348,15 @@ export const DEMO_SAMPLE_ENGAGEMENTS: Engagement[] = [
     startDate: '2025-01-01',
     targetDate: '2025-04-30',
     status: 'Active',
-    progress: 35,
+    progress: 75,
     worksheetA110: {
       industry: 'Industri Pengolahan / Manufaktur',
       boardOfDirectors: 'Direktur Utama: Ir. Budi Santoso\nKomisaris Utama: Dr. Hendrawan',
       usagePurpose: 'Pertanggungjawaban RUPS dan Fasilitas Kredit Bank Mandiri',
+      clientOwnershipStatus: 'Perusahaan Swasta Non-Go Public',
+      ownershipRisk: 'low',
+      industryRisk: 'low',
+      accountingStandardRisk: 'low',
       evaluations: {
         'A.1101': 'low',
         'A.1102': 'low',
@@ -364,7 +367,14 @@ export const DEMO_SAMPLE_ENGAGEMENTS: Engagement[] = [
       anomalyExplanation: '',
       decision: 'Accept',
       decisionReason: 'Klien beritikad baik, independensi dan kompetensi tim audit mencukupi standar SPM 1 dan SA 220.',
-      status: 'In Progress'
+      status: 'Completed',
+      isCompleted: true,
+      saChecklist: {
+        spm1: true,
+        sa210: true,
+        sa220: true,
+        sa300: true
+      }
     },
     worksheetA1101: {
       answers: {
@@ -653,8 +663,81 @@ export const DEMO_SAMPLE_ENGAGEMENTS: Engagement[] = [
       isCompleted: true,
       status: 'Completed'
     }
+  },
+  {
+    id: 'ENG-2025-201',
+    clientId: 'CLI-002',
+    clientName: 'PT Samudera Maritim Sentosa',
+    clientIndustry: 'Pengangkutan dan Pergudangan / Logistik',
+    auditPeriod: '2025',
+    fiscalYear: '2025',
+    engagementType: 'First Year',
+    accountingStandard: 'SAK_UMUM',
+    currency: 'IDR',
+    presentationUnit: 'Million',
+    partnerId: 'usr-partner',
+    partnerName: 'Fridolinus Peno, CPA',
+    managerId: 'usr-mgr',
+    managerName: 'Dwi Safitriana, M.Ak',
+    auditorId: 'usr-auditor',
+    auditorName: 'Senior Auditor ATLAS',
+    startDate: '2025-02-01',
+    targetDate: '2025-05-31',
+    status: 'Active',
+    progress: 30,
+    worksheetA110: {
+      industry: 'Pengangkutan dan Pergudangan / Logistik',
+      boardOfDirectors: 'Direktur: H. Rachmat Hidayat',
+      usagePurpose: 'Audit Kepatuhan Perbankan',
+      clientOwnershipStatus: 'Perusahaan Swasta Non-Go Public',
+      ownershipRisk: 'low',
+      industryRisk: 'high',
+      accountingStandardRisk: 'high',
+      evaluations: {
+        'A.1101': 'high',
+        'A.1102': 'low',
+        'A.1103': '',
+        'A.1104': ''
+      },
+      overallRisk: 'high',
+      anomalyExplanation: 'Sedang dalam konfirmasi dengan auditor pendahulu terkait saldo awal kapal kargo',
+      decision: null,
+      decisionReason: '',
+      status: 'In Progress',
+      isCompleted: false,
+      saChecklist: {
+        spm1: true,
+        sa210: false,
+        sa220: false,
+        sa300: false
+      }
+    }
+  },
+  {
+    id: 'ENG-2025-102',
+    clientId: 'CLI-003',
+    clientName: 'CV Mitra Niaga Sentosa',
+    clientIndustry: 'Perdagangan Besar dan Eceran',
+    auditPeriod: '2025',
+    fiscalYear: '2025',
+    engagementType: 'Recurring',
+    accountingStandard: 'SAK_EMKM',
+    currency: 'IDR',
+    presentationUnit: 'Full',
+    partnerId: 'usr-partner',
+    partnerName: 'Fridolinus Peno, CPA',
+    managerId: 'usr-mgr',
+    managerName: 'Dwi Safitriana, M.Ak',
+    auditorId: 'usr-auditor',
+    auditorName: 'Junior Auditor',
+    startDate: '2025-03-01',
+    targetDate: '2025-06-30',
+    status: 'Draft',
+    progress: 0
   }
 ];
+
+export const DEFAULT_MASTER_ENGAGEMENTS: Engagement[] = DEMO_SAMPLE_ENGAGEMENTS;
 
 export const useEngagementStore = create<EngagementState>()(
   persist(
