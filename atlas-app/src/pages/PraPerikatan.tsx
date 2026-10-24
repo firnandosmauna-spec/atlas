@@ -1,7 +1,8 @@
 import WorksheetList from '../components/WorksheetList';
 import type { WorksheetInfo } from '../components/WorksheetList';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, Link } from 'react-router-dom';
 import type { Engagement } from '../store/engagementStore';
+import { Users, ArrowRight } from 'lucide-react';
 
 const PraPerikatan = () => {
   const { engagement } = useOutletContext<{ engagement: Engagement }>();
@@ -49,12 +50,41 @@ const PraPerikatan = () => {
   }
 
   return (
-    <WorksheetList
-      stageCode="FASE A.1"
-      stageName="Pra Perikatan"
-      description="Evaluasi awal sebelum perikatan dimulai. Mencakup penerimaan klien, alokasi tim, surat perikatan, dan pemenuhan persyaratan independensi. Seluruh worksheet pada fase ini wajib diselesaikan sebelum memulai Risk Assessment."
-      worksheets={worksheets}
-    />
+    <div className="space-y-6">
+      {/* Quick Access Card: Data Master Perikatan & Susunan Tim Audit */}
+      <div className="p-4 bg-gradient-to-r from-blue-50/80 via-white to-slate-50 border border-blue-200/80 rounded-xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-atlas-blue text-white flex items-center justify-center shrink-0 shadow-xs">
+            <Users size={20} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-gray-900">Data Master Perikatan & Susunan Tim Audit</h3>
+              <span className="text-[10px] font-bold bg-blue-100 text-atlas-blue px-2 py-0.5 rounded-full">
+                Modul Inti
+              </span>
+            </div>
+            <p className="text-xs text-gray-600 mt-0.5">
+              Atur identitas perikatan, entitas klien, dan penugasan peran dinamis personil tim (Ketua Tim, Supervisor, Auditor).
+            </p>
+          </div>
+        </div>
+        <Link
+          to={`/workspace/${engagement.id}`}
+          className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 rounded-lg transition-colors shrink-0 shadow-2xs"
+        >
+          <span>Buka Data Master Perikatan</span>
+          <ArrowRight size={14} />
+        </Link>
+      </div>
+
+      <WorksheetList
+        stageCode="FASE A.1"
+        stageName="Pra Perikatan"
+        description="Evaluasi awal sebelum perikatan dimulai. Mencakup penerimaan klien, alokasi tim, surat perikatan, dan pemenuhan persyaratan independensi. Seluruh worksheet pada fase ini wajib diselesaikan sebelum memulai Risk Assessment."
+        worksheets={worksheets}
+      />
+    </div>
   );
 };
 

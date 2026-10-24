@@ -240,6 +240,12 @@ export const WorkspaceTopBar: React.FC<WorkspaceTopBarProps> = ({
             <span className="hidden sm:inline-flex px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 text-slate-700 border border-slate-200 shrink-0 ml-1">
               {engagement.id}
             </span>
+
+            <span className="text-gray-300 shrink-0">/</span>
+
+            <span className="text-atlas-blue font-bold text-xs sm:text-sm truncate">
+              Data Master Perikatan
+            </span>
           </div>
         )}
       </div>

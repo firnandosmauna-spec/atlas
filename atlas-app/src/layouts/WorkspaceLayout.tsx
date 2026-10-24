@@ -49,7 +49,7 @@ const WorkspaceLayout = () => {
   }
 
   const topNavItems = [
-    { to: `/workspace/${id}`, icon: <Home size={16} />, label: 'Beranda Perikatan', end: true },
+    { to: `/workspace/${id}`, icon: <Home size={16} />, label: 'Data Master Perikatan', end: true },
     { to: `/workspace/${id}/trial-balance`, icon: <Database size={16} />, label: 'Data Keuangan (TB)' },
   ];
 

@@ -185,7 +185,7 @@ const Engagements = () => {
                             onClick={() => { handleOpenWorkspace(eng.id); setOpenDropdownId(null); }}
                             className="w-full px-4 py-3 flex items-center space-x-2.5 hover:bg-gray-50 text-sm text-gray-700 min-h-[44px]"
                           >
-                            <FolderOpen size={16} className="text-blue-500 shrink-0" /> <span>Buka Workspace</span>
+                            <FolderOpen size={16} className="text-blue-500 shrink-0" /> <span>Data Master Perikatan</span>
                           </button>
                           <button 
                             onClick={() => { setEditingEngagement(eng); setIsModalOpen(true); setOpenDropdownId(null); }}
