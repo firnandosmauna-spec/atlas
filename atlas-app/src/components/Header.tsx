@@ -94,6 +94,7 @@ const Header = ({ onToggleSidebar }: HeaderProps = {}) => {
         <button 
           onClick={onToggleSidebar}
           aria-label="Menu navigasi"
+          title="Buka / Tutup Sidebar"
           className="text-gray-500 hover:text-gray-900 focus:outline-none bg-gray-50 p-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
         >
           <Menu size={20} />

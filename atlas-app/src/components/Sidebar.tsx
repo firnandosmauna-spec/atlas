@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Home, Briefcase, AlertTriangle, CheckSquare, FileText, Settings, ShieldAlert, ShieldCheck, FolderOpen, LogOut, X, Calculator, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
@@ -13,7 +14,28 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
   const { appName, appShortName } = useAppConfigStore();
   const navigate = useNavigate();
 
+  // Floating tooltip state positioned via getBoundingClientRect (avoids all overflow clipping)
+  const [tooltip, setTooltip] = useState<{
+    label: string;
+    top: number;
+    left: number;
+  } | null>(null);
+
+  const handleMouseEnter = (label: string, e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltip({
+      label,
+      top: rect.top + rect.height / 2,
+      left: rect.right + 12,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setTooltip(null);
+  };
+
   const handleLogout = async () => {
+    handleMouseLeave();
     onClose?.();
     await logout();
     navigate('/login');
@@ -76,7 +98,13 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
           <NavLink
             key={item.to}
             to={item.to}
-            onClick={() => onClose?.()}
+            title={item.label}
+            onClick={() => {
+              handleMouseLeave();
+              onClose?.();
+            }}
+            onMouseEnter={(e) => handleMouseEnter(item.label, e)}
+            onMouseLeave={handleMouseLeave}
             className={({ isActive }) =>
               `relative group flex items-center px-3.5 py-3 rounded-xl transition-all duration-200 ease-out ${
                 isActive 
@@ -93,7 +121,9 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
                 )}
 
                 {/* Icon with smooth micro-animation */}
-                <div className={`shrink-0 transition-transform duration-200 ${isActive ? 'text-cyan-300 scale-105' : 'group-hover:scale-110 group-hover:text-cyan-200'}`}>
+                <div 
+                  className={`shrink-0 transition-transform duration-200 ${isActive ? 'text-cyan-300 scale-105' : 'group-hover:scale-110 group-hover:text-cyan-200'}`}
+                >
                   {item.icon}
                 </div>
 
@@ -101,14 +131,6 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
                 <span className={`transition-all duration-300 whitespace-nowrap text-sm ${isOpen ? 'opacity-100 max-w-full' : 'opacity-0 max-w-0 overflow-hidden'}`}>
                   {item.label}
                 </span>
-
-                {/* Collapsed Mode Floating Tooltip */}
-                {!isOpen && (
-                  <div className="hidden lg:flex items-center absolute left-full ml-3 px-3 py-1.5 bg-slate-900/95 backdrop-blur-md text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700/80 whitespace-nowrap z-50 pointer-events-none opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ease-out">
-                    {item.label}
-                    <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-y-4 border-y-transparent border-r-4 border-r-slate-900/95" />
-                  </div>
-                )}
               </>
             )}
           </NavLink>
@@ -121,7 +143,13 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
           </p>
           <NavLink
             to="/admin"
-            onClick={() => onClose?.()}
+            title="Manajemen Sistem"
+            onClick={() => {
+              handleMouseLeave();
+              onClose?.();
+            }}
+            onMouseEnter={(e) => handleMouseEnter('Manajemen Sistem', e)}
+            onMouseLeave={handleMouseLeave}
             className={({ isActive }) =>
               `relative group flex items-center px-3.5 py-3 rounded-xl transition-all duration-200 ease-out ${
                 isActive 
@@ -141,12 +169,6 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
                 <span className={`transition-all duration-300 whitespace-nowrap text-sm ${isOpen ? 'opacity-100 max-w-full' : 'opacity-0 max-w-0 overflow-hidden'}`}>
                   Manajemen Sistem
                 </span>
-                {!isOpen && (
-                  <div className="hidden lg:flex items-center absolute left-full ml-3 px-3 py-1.5 bg-slate-900/95 backdrop-blur-md text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700/80 whitespace-nowrap z-50 pointer-events-none opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ease-out">
-                    Manajemen Sistem
-                    <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-y-4 border-y-transparent border-r-4 border-r-slate-900/95" />
-                  </div>
-                )}
               </>
             )}
           </NavLink>
@@ -157,7 +179,13 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
       <div className="p-3 border-t border-blue-800/80 space-y-1 bg-blue-950/20">
         <NavLink 
           to="/settings"
-          onClick={() => onClose?.()}
+          title="Pengaturan"
+          onClick={() => {
+            handleMouseLeave();
+            onClose?.();
+          }}
+          onMouseEnter={(e) => handleMouseEnter('Pengaturan', e)}
+          onMouseLeave={handleMouseLeave}
           className={({ isActive }) =>
             `relative group flex items-center w-full px-3 py-2.5 rounded-xl transition-all duration-200 ease-out min-h-[44px] ${
               isActive 
@@ -177,12 +205,6 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
               <span className={`transition-all duration-300 whitespace-nowrap text-sm ${isOpen ? 'opacity-100 max-w-full' : 'opacity-0 max-w-0 overflow-hidden'}`}>
                 Pengaturan
               </span>
-              {!isOpen && (
-                <div className="hidden lg:flex items-center absolute left-full ml-3 px-3 py-1.5 bg-slate-900/95 backdrop-blur-md text-white text-xs font-semibold rounded-lg shadow-xl border border-slate-700/80 whitespace-nowrap z-50 pointer-events-none opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ease-out">
-                  Pengaturan
-                  <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-y-4 border-y-transparent border-r-4 border-r-slate-900/95" />
-                </div>
-              )}
             </>
           )}
         </NavLink>
@@ -192,6 +214,8 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
           onClick={handleLogout}
           title="Keluar"
           aria-label="Keluar dari akun"
+          onMouseEnter={(e) => handleMouseEnter('Keluar', e)}
+          onMouseLeave={handleMouseLeave}
           className={`relative group flex items-center w-full px-3 py-2.5 rounded-xl transition-all duration-200 ease-out text-red-200 hover:text-white hover:bg-red-600/30 hover:border-red-500/40 border border-transparent hover:translate-x-1 active:scale-[0.98] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 min-h-[44px] ${!isOpen ? 'justify-center lg:px-0' : 'space-x-3'}`}
         >
           <div className="shrink-0 group-hover:-translate-x-0.5 transition-transform duration-200">
@@ -200,14 +224,24 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
           <span className={`transition-all duration-300 whitespace-nowrap text-sm ${isOpen ? 'opacity-100 max-w-full' : 'opacity-0 max-w-0 overflow-hidden'}`}>
             Keluar
           </span>
-          {!isOpen && (
-            <div className="hidden lg:flex items-center absolute left-full ml-3 px-3 py-1.5 bg-red-950/95 backdrop-blur-md text-white text-xs font-semibold rounded-lg shadow-xl border border-red-800/80 whitespace-nowrap z-50 pointer-events-none opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200 ease-out">
-              Keluar
-              <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-y-4 border-y-transparent border-r-4 border-r-red-950/95" />
-            </div>
-          )}
         </button>
       </div>
+
+      {/* Global Fixed Floating Tooltip on Icon/Menu Hover */}
+      {tooltip && (
+        <div 
+          style={{ 
+            top: `${tooltip.top}px`, 
+            left: `${tooltip.left}px` 
+          }}
+          className="fixed -translate-y-1/2 z-[9999] pointer-events-none flex items-center"
+        >
+          <div className="relative px-3 py-1.5 bg-slate-900/95 backdrop-blur-md text-white text-xs font-semibold rounded-lg shadow-2xl border border-slate-700/80 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150 flex items-center gap-1.5">
+            <span>{tooltip.label}</span>
+            <div className="absolute top-1/2 -left-1 -translate-y-1/2 border-y-4 border-y-transparent border-r-4 border-r-slate-900/95" />
+          </div>
+        </div>
+      )}
     </aside>
   );
 };
