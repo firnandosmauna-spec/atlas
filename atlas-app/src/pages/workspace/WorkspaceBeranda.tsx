@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import type { Engagement } from '../../store/engagementStore';
 import { useEngagementStore } from '../../store/engagementStore';
 import { useAuthStore } from '../../store/authStore';
 import { useAccountingStandardStore } from '../../store/accountingStandardStore';
-import { Users, Building, FileSpreadsheet, Save, CheckCircle, Edit2, X, Plus } from 'lucide-react';
+import { Users, Building, FileSpreadsheet, Save, CheckCircle, Edit2, X, Plus, Trash2 } from 'lucide-react';
 import EngagementFormModal from '../../components/EngagementFormModal';
+import { getSynchronizedKAPUsersSync } from '../../utils/userManagement';
 
 // ─── Field renderers ────────────────────────────────────────────────
 const FieldRow = ({
@@ -46,6 +47,62 @@ const UNIT_LABELS: Record<string, string> = {
   Full: 'Penuh (Full)',
   Thousands: 'Ribuan (Rp 000)',
   Millions: 'Jutaan (Rp 000.000)',
+};
+
+// ─── Dynamic Audit Team Types & Helpers ──────────────────────────────
+export interface DynamicAuditTeamMember {
+  id: string;
+  name: string;
+  role: string;
+  responsibility: string;
+  email?: string;
+}
+
+export const ROLE_OPTIONS = [
+  'Ketua Tim',
+  'Supervisor',
+  'Auditor',
+  'Partner',
+  'Manager',
+  'Tenaga Ahli / Spesialis'
+] as const;
+
+export const getDefaultResponsibility = (role: string): string => {
+  switch (role) {
+    case 'Partner':
+      return 'Penanggung jawab akhir atas perikatan audit, perumusan opini audit, dan penandatanganan Laporan Auditor Independen.';
+    case 'Manager':
+      return 'Manajemen operasional perikatan, review menyeluruh kertas kerja, alokasi anggaran jam jasa, dan koordinasi dengan entitas.';
+    case 'Supervisor':
+      return 'Supervisi teknis metodologi SPAP, review kualitas pengujian substantif dan kepatuhan prosedur di lapangan.';
+    case 'Ketua Tim':
+      return 'Memimpin pelaksanaan audit lapangan harian, mengarahkan anggota tim, dan mengkoordinasikan konfirmasi serta temuan.';
+    case 'Auditor':
+      return 'Pelaksanaan pengujian substantif saldo akun, uji pengendalian internal, pengumpulan bukti audit, dan dokumentasi KKP.';
+    case 'Tenaga Ahli / Spesialis':
+      return 'Pemberian evaluasi teknis spesifik (aktuaria, penilaian aset/properti, forensik IT, atau perpajakan kompleks).';
+    default:
+      return 'Pelaksanaan prosedur audit perikatan sesuai penugasan.';
+  }
+};
+
+export const getRoleBadgeStyle = (role: string): string => {
+  switch (role) {
+    case 'Partner':
+      return 'bg-purple-100 text-purple-800 border-purple-200 font-bold';
+    case 'Manager':
+      return 'bg-indigo-100 text-indigo-800 border-indigo-200 font-bold';
+    case 'Supervisor':
+      return 'bg-cyan-100 text-cyan-800 border-cyan-200 font-bold';
+    case 'Ketua Tim':
+      return 'bg-blue-100 text-blue-800 border-blue-200 font-bold';
+    case 'Auditor':
+      return 'bg-slate-100 text-slate-700 border-slate-200 font-medium';
+    case 'Tenaga Ahli / Spesialis':
+      return 'bg-amber-100 text-amber-800 border-amber-200 font-bold';
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-200';
+  }
 };
 
 // ─── Section Card ────────────────────────────────────────────────────
@@ -118,20 +175,190 @@ const WorkspaceBeranda = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { standards, getStandardName } = useAccountingStandardStore();
 
-  // ── Section 1: Auditor & Tim ──
+  // ── Section 1: Dynamic Audit Team Management ──
   const [editAuditor, setEditAuditor] = useState(false);
-  const [auditorForm, setAuditorForm] = useState({
-    partnerName: engagement.partnerName || '',
-    managerName: engagement.managerName || '',
-    auditorName: engagement.auditorName || '',
-  });
   const [savedAuditor, setSavedAuditor] = useState(false);
+  const kapUsers = useMemo(() => getSynchronizedKAPUsersSync(), []);
+
+  const getInitialTeam = (): DynamicAuditTeamMember[] => {
+    if (engagement.teamMembers && engagement.teamMembers.length > 0) {
+      return engagement.teamMembers.map(tm => ({
+        id: tm.id || String(Date.now() + Math.random()),
+        name: tm.name || '',
+        role: tm.role || 'Auditor',
+        responsibility: (tm as any).responsibility || getDefaultResponsibility(tm.role || 'Auditor'),
+        email: tm.email || '',
+      }));
+    }
+
+    const defaultList: DynamicAuditTeamMember[] = [];
+    if (engagement.partnerName) {
+      defaultList.push({
+        id: 'p-1',
+        name: engagement.partnerName,
+        role: 'Partner',
+        responsibility: getDefaultResponsibility('Partner'),
+        email: 'partner@kap.com'
+      });
+    } else {
+      defaultList.push({
+        id: 'p-1',
+        name: 'Drs. Fridolinus Peno, Ak., M.M., CA., CPA.',
+        role: 'Partner',
+        responsibility: getDefaultResponsibility('Partner'),
+        email: 'partner@kap.com'
+      });
+    }
+
+    if (engagement.managerName) {
+      defaultList.push({
+        id: 'm-1',
+        name: engagement.managerName,
+        role: 'Manager',
+        responsibility: getDefaultResponsibility('Manager'),
+        email: 'manager@kap.com'
+      });
+    }
+
+    if (engagement.supervisorName) {
+      defaultList.push({
+        id: 's-1',
+        name: engagement.supervisorName,
+        role: 'Supervisor',
+        responsibility: getDefaultResponsibility('Supervisor'),
+        email: 'supervisor@kap.com'
+      });
+    }
+
+    if (engagement.auditorName) {
+      defaultList.push({
+        id: 'k-1',
+        name: engagement.auditorName,
+        role: 'Ketua Tim',
+        responsibility: getDefaultResponsibility('Ketua Tim'),
+        email: 'auditor@kap.com'
+      });
+    } else {
+      defaultList.push({
+        id: 'k-1',
+        name: 'Dwi Safitriana, S.E., M.Ak.',
+        role: 'Ketua Tim',
+        responsibility: getDefaultResponsibility('Ketua Tim'),
+        email: 'dwisafitriana@kap.com'
+      });
+    }
+
+    defaultList.push({
+      id: 'a-1',
+      name: 'Rudi Substantif, S.Ak.',
+      role: 'Auditor',
+      responsibility: getDefaultResponsibility('Auditor'),
+      email: 'rudi.substantif@kap.com'
+    });
+
+    return defaultList;
+  };
+
+  const [teamList, setTeamList] = useState<DynamicAuditTeamMember[]>(getInitialTeam);
+  const [draftTeamList, setDraftTeamList] = useState<DynamicAuditTeamMember[]>(getInitialTeam);
+
+  const handleStartEdit = () => {
+    setDraftTeamList(JSON.parse(JSON.stringify(teamList)));
+    setEditAuditor(true);
+  };
+
+  const handleCancelEdit = () => {
+    setDraftTeamList(JSON.parse(JSON.stringify(teamList)));
+    setEditAuditor(false);
+  };
+
+  const handleRoleChange = (index: number, newRole: string) => {
+    setDraftTeamList(prev => {
+      const updated = [...prev];
+      const prevRole = updated[index].role;
+      updated[index].role = newRole;
+      if (!updated[index].responsibility || updated[index].responsibility === getDefaultResponsibility(prevRole)) {
+        updated[index].responsibility = getDefaultResponsibility(newRole);
+      }
+      return updated;
+    });
+  };
+
+  const handleNameChange = (index: number, newName: string) => {
+    setDraftTeamList(prev => {
+      const updated = [...prev];
+      updated[index].name = newName;
+      const matchedUser = kapUsers.find(u => u.full_name === newName);
+      if (matchedUser && matchedUser.email) {
+        updated[index].email = matchedUser.email;
+      }
+      return updated;
+    });
+  };
+
+  const handleResponsibilityChange = (index: number, newResp: string) => {
+    setDraftTeamList(prev => {
+      const updated = [...prev];
+      updated[index].responsibility = newResp;
+      return updated;
+    });
+  };
+
+  const handleAddMember = (defaultRole: string = 'Auditor') => {
+    const newMember: DynamicAuditTeamMember = {
+      id: `tm-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      name: '',
+      role: defaultRole,
+      responsibility: getDefaultResponsibility(defaultRole),
+      email: ''
+    };
+    setDraftTeamList(prev => [...prev, newMember]);
+  };
+
+  const handleDeleteMember = (index: number) => {
+    if (draftTeamList.length <= 1) {
+      alert('Minimal harus ada 1 personil dalam tim perikatan.');
+      return;
+    }
+    const member = draftTeamList[index];
+    if (window.confirm(`Hapus "${member.name || 'personil ini'}" dari tim audit perikatan ini?`)) {
+      setDraftTeamList(prev => prev.filter((_, i) => i !== index));
+    }
+  };
 
   const handleSaveAuditor = () => {
-    updateEngagement(engagement.id, auditorForm);
+    const invalid = draftTeamList.some(m => !m.name.trim());
+    if (invalid) {
+      alert('Mohon lengkapi nama seluruh personil tim audit sebelum menyimpan.');
+      return;
+    }
+
+    setTeamList(draftTeamList);
+
+    const partner = draftTeamList.find(m => m.role === 'Partner')?.name || engagement.partnerName;
+    const manager = draftTeamList.find(m => m.role === 'Manager')?.name || engagement.managerName;
+    const supervisor = draftTeamList.find(m => m.role === 'Supervisor')?.name || '';
+    const ketuaOrAuditor = draftTeamList.find(m => m.role === 'Ketua Tim')?.name || 
+                           draftTeamList.find(m => m.role === 'Auditor')?.name || 
+                           engagement.auditorName;
+
+    updateEngagement(engagement.id, {
+      partnerName: partner,
+      managerName: manager,
+      supervisorName: supervisor,
+      auditorName: ketuaOrAuditor,
+      teamMembers: draftTeamList.map(m => ({
+        id: m.id,
+        name: m.name,
+        role: m.role,
+        email: m.email,
+        responsibility: m.responsibility
+      }))
+    });
+
     setEditAuditor(false);
     setSavedAuditor(true);
-    setTimeout(() => setSavedAuditor(false), 2000);
+    setTimeout(() => setSavedAuditor(false), 2500);
   };
 
   // ── Section 2: Identitas Klien ──
@@ -214,104 +441,311 @@ const WorkspaceBeranda = () => {
         </div>
       </div>
 
-
-      {/* ── 1. Identitas Auditor dan Tim Perikatan ── */}
+      {/* ── 1. Modul Identitas Auditor & Susunan Tim Perikatan Dinamis ── */}
       <div className="mb-6">
-        <SectionCard
-          number="1."
-          icon={<Users size={15} className="text-gray-600" />}
-          title="Identitas Auditor dan Tim Perikatan"
-          editing={editAuditor}
-          canEdit={canEdit}
-          onEdit={() => setEditAuditor(true)}
-          onCancel={() => { setEditAuditor(false); setAuditorForm({ partnerName: engagement.partnerName, managerName: engagement.managerName, auditorName: engagement.auditorName }); }}
-          onSave={handleSaveAuditor}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-100">
-            {/* Partner */}
-            <div className="py-4 md:pr-6">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Partner (Signing Partner)</p>
-              <FieldRow
-                label="Nama Lengkap"
-                value={auditorForm.partnerName}
-                editing={editAuditor}
-                editNode={
-                  <input
-                    className={inputCls}
-                    value={auditorForm.partnerName}
-                    onChange={e => setAuditorForm(f => ({ ...f, partnerName: e.target.value }))}
-                    placeholder="Nama Partner"
-                  />
-                }
-              />
-              <FieldRow label="Jabatan" value="Partner / Signing Partner" editing={false} />
-              <FieldRow label="Tanggung Jawab" value="Penandatangan laporan, persetujuan akhir" editing={false} />
+        <div className="border border-gray-200 bg-white rounded-xl shadow-xs overflow-hidden">
+          {/* Section Header */}
+          <div className="bg-slate-50/80 px-5 py-3.5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs font-bold text-gray-400">1.</span>
+              <Users size={16} className="text-atlas-blue" />
+              <div>
+                <h2 className="text-sm font-bold tracking-tight text-gray-900 uppercase">
+                  Identitas Auditor & Susunan Tim Perikatan
+                </h2>
+                <p className="text-[11px] text-gray-500">
+                  Peran personil bersifat dinamis (dapat ditugaskan sebagai Ketua Tim, Supervisor, atau Auditor sesuai perikatan)
+                </p>
+              </div>
             </div>
 
-            {/* Manager */}
-            <div className="py-4 md:px-6">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Manager (Reviewer)</p>
-              <FieldRow
-                label="Nama Lengkap"
-                value={auditorForm.managerName}
-                editing={editAuditor}
-                editNode={
-                  <input
-                    className={inputCls}
-                    value={auditorForm.managerName}
-                    onChange={e => setAuditorForm(f => ({ ...f, managerName: e.target.value }))}
-                    placeholder="Nama Manager"
-                  />
-                }
-              />
-              <FieldRow label="Jabatan" value="Audit Manager / Reviewer" editing={false} />
-              <FieldRow label="Tanggung Jawab" value="Review kertas kerja, koordinasi tim" editing={false} />
-            </div>
-
-            {/* Auditor */}
-            <div className="py-4 md:pl-6">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">Auditor (In-Charge)</p>
-              <FieldRow
-                label="Nama Lengkap"
-                value={auditorForm.auditorName}
-                editing={editAuditor}
-                editNode={
-                  <input
-                    className={inputCls}
-                    value={auditorForm.auditorName}
-                    onChange={e => setAuditorForm(f => ({ ...f, auditorName: e.target.value }))}
-                    placeholder="Nama Auditor"
-                  />
-                }
-              />
-              <FieldRow label="Jabatan" value="Auditor In-Charge / Team Member" editing={false} />
-              <FieldRow label="Tanggung Jawab" value="Pelaksanaan prosedur audit lapangan" editing={false} />
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              {editAuditor ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                  >
+                    <X size={13} /> Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveAuditor}
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 rounded transition-colors shadow-2xs"
+                  >
+                    <Save size={13} /> Simpan Susunan Tim
+                  </button>
+                </>
+              ) : (
+                canEdit && (
+                  <button
+                    type="button"
+                    onClick={handleStartEdit}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-atlas-blue bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded transition-colors"
+                  >
+                    <Edit2 size={13} /> Kelola Susunan Tim
+                  </button>
+                )
+              )}
             </div>
           </div>
 
-          {/* Assigned Team Members & Supervisor strip if present */}
-          {(engagement.supervisorName || (engagement.teamMembers && engagement.teamMembers.length > 0)) && (
-            <div className="mt-4 pt-3 border-t border-gray-100 flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mr-1">Staf Tim Tambahan:</span>
-              {engagement.supervisorName && (
-                <span className="inline-flex items-center text-xs px-2.5 py-1 rounded-md bg-cyan-50 text-cyan-800 border border-cyan-200">
-                  <span className="font-semibold mr-1">Supervisor:</span> {engagement.supervisorName}
-                </span>
-              )}
-              {engagement.teamMembers?.map(tm => (
-                <span key={tm.id} className="inline-flex items-center text-xs px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 border border-slate-200">
-                  <span className="font-semibold mr-1">{tm.role}:</span> {tm.name}
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Section Body */}
+          <div className="p-5">
+            {editAuditor ? (
+              /* ── Mode Edit Tim Dinamis ── */
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-gray-100">
+                  <div>
+                    <h3 className="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                      Daftar Anggota & Penugasan Peran Dinamis
+                    </h3>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      Ganti peran kapan saja dengan memilih opsi peran pada dropdown di setiap baris personil.
+                    </p>
+                  </div>
 
-          {savedAuditor && (
-            <div className="flex items-center gap-2 py-2 text-sm text-green-700">
-              <CheckCircle size={14} /> Data tim tersimpan
-            </div>
-          )}
-        </SectionCard>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleAddMember('Auditor')}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded border border-slate-200 transition-colors"
+                      title="Tambah anggota auditor pelaksana"
+                    >
+                      <Plus size={12} /> + Auditor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddMember('Supervisor')}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-cyan-800 bg-cyan-50 hover:bg-cyan-100 rounded border border-cyan-200 transition-colors"
+                      title="Tambah pengawas teknis"
+                    >
+                      <Plus size={12} /> + Supervisor
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleAddMember('Ketua Tim')}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-blue-800 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-colors"
+                      title="Tambah ketua tim lapangan"
+                    >
+                      <Plus size={12} /> + Ketua Tim
+                    </button>
+                  </div>
+                </div>
+
+                {/* Table of Members being edited */}
+                <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                  <table className="w-full text-left text-xs divide-y divide-gray-200">
+                    <thead className="bg-gray-50 text-gray-600 font-semibold uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="py-2.5 px-3 w-10 text-center">No</th>
+                        <th className="py-2.5 px-3 w-64">Personil KAP</th>
+                        <th className="py-2.5 px-3 w-48">Peran / Fungsi Dinamis</th>
+                        <th className="py-2.5 px-3">Tanggung Jawab & Uraian Tugas</th>
+                        <th className="py-2.5 px-3 w-16 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {draftTeamList.map((member, idx) => (
+                        <tr key={member.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-3 px-3 text-center font-mono text-gray-400 font-medium">
+                            {idx + 1}
+                          </td>
+
+                          {/* Personil Name Selection / Manual input */}
+                          <td className="py-3 px-3 space-y-1.5">
+                            <select
+                              value={kapUsers.some(u => u.full_name === member.name) ? member.name : 'CUSTOM'}
+                              onChange={(e) => {
+                                if (e.target.value !== 'CUSTOM') {
+                                  handleNameChange(idx, e.target.value);
+                                }
+                              }}
+                              className="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs text-gray-900 bg-white focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none"
+                            >
+                              <option value="">-- Pilih dari Master Staf KAP --</option>
+                              {kapUsers.map(u => (
+                                <option key={u.id} value={u.full_name}>
+                                  {u.full_name} ({u.roles?.name || 'Staf'})
+                                </option>
+                              ))}
+                              <option value="CUSTOM">-- Ketik Nama Manual / Kustom --</option>
+                            </select>
+
+                            {/* Manual Text input if not in standard list or custom */}
+                            <input
+                              type="text"
+                              value={member.name}
+                              onChange={(e) => handleNameChange(idx, e.target.value)}
+                              placeholder="Nama lengkap personil..."
+                              className="w-full border border-gray-200 rounded px-2.5 py-1 text-xs text-gray-900 bg-slate-50 focus:bg-white focus:border-atlas-blue outline-none"
+                            />
+                          </td>
+
+                          {/* Dynamic Role Dropdown */}
+                          <td className="py-3 px-3 align-top">
+                            <select
+                              value={member.role}
+                              onChange={(e) => handleRoleChange(idx, e.target.value)}
+                              className={`w-full border rounded px-2.5 py-1.5 text-xs outline-none focus:ring-1 transition-all ${getRoleBadgeStyle(member.role)}`}
+                            >
+                              {ROLE_OPTIONS.map(role => (
+                                <option key={role} value={role} className="bg-white text-gray-900 font-normal">
+                                  {role}
+                                </option>
+                              ))}
+                            </select>
+                            <span className="block text-[10px] text-gray-400 mt-1 italic">
+                              *Dapat diubah kapan saja
+                            </span>
+                          </td>
+
+                          {/* Responsibility input */}
+                          <td className="py-3 px-3 align-top space-y-1">
+                            <input
+                              type="text"
+                              value={member.responsibility}
+                              onChange={(e) => handleResponsibilityChange(idx, e.target.value)}
+                              placeholder="Uraian tanggung jawab perikatan..."
+                              className="w-full border border-gray-300 rounded px-2.5 py-1.5 text-xs text-gray-900 bg-white focus:border-atlas-blue focus:ring-1 focus:ring-atlas-blue outline-none"
+                            />
+                            <div className="flex items-center justify-between text-[10px] text-gray-400">
+                              <span>Email: {member.email || '—'}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleResponsibilityChange(idx, getDefaultResponsibility(member.role))}
+                                className="text-atlas-blue hover:underline"
+                              >
+                                Reset Deskripsi Standar
+                              </button>
+                            </div>
+                          </td>
+
+                          {/* Delete button */}
+                          <td className="py-3 px-3 text-center align-top pt-3">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMember(idx)}
+                              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                              title="Hapus personil ini dari tim"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAddMember('Auditor')}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-atlas-blue bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-colors"
+                  >
+                    <Plus size={14} /> Tambah Personil Tim Lainnya
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="px-4 py-2 text-xs font-semibold text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSaveAuditor}
+                      className="px-5 py-2 text-xs font-bold text-white bg-atlas-blue hover:bg-blue-800 rounded transition-colors shadow-2xs flex items-center gap-1.5"
+                    >
+                      <Save size={14} /> Simpan Susunan Tim
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* ── Mode Tampilan Normal (Card & Grid Dinamis) ── */
+              <div className="space-y-4">
+                {/* Summary Chips */}
+                <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-gray-100">
+                  <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mr-1">
+                    Komposisi Tim ({teamList.length} Personil):
+                  </span>
+                  {ROLE_OPTIONS.map(role => {
+                    const count = teamList.filter(m => m.role === role).length;
+                    if (count === 0) return null;
+                    return (
+                      <span key={role} className={`text-xs px-2.5 py-0.5 rounded-full border ${getRoleBadgeStyle(role)}`}>
+                        {count} {role}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                {/* Team Members Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {teamList.map((member) => (
+                    <div 
+                      key={member.id} 
+                      className="p-3.5 rounded-xl border border-gray-200 bg-slate-50/40 hover:bg-white hover:border-blue-200 hover:shadow-xs transition-all flex flex-col justify-between space-y-3"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-lg bg-blue-900 text-cyan-300 font-bold text-xs flex items-center justify-center shrink-0 shadow-inner">
+                              {member.name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || 'AU'}
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-bold text-gray-900 truncate" title={member.name}>
+                                {member.name || 'Nama Belum Ditentukan'}
+                              </h4>
+                              <p className="text-[10px] text-gray-400 truncate">
+                                {member.email || 'Email belum tercatat'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mb-2">
+                          <span className={`inline-block text-[10px] px-2 py-0.5 rounded-md border ${getRoleBadgeStyle(member.role)}`}>
+                            {member.role}
+                          </span>
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mb-0.5">
+                            Tanggung Jawab:
+                          </p>
+                          <p className="text-[11px] text-gray-600 line-clamp-2 leading-relaxed">
+                            {member.responsibility || getDefaultResponsibility(member.role)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Notice callout */}
+                <div className="mt-3 p-3 rounded-lg bg-blue-50/70 border border-blue-100 flex items-start gap-2 text-xs text-blue-900">
+                  <Users size={16} className="text-atlas-blue shrink-0 mt-0.5" />
+                  <p className="leading-relaxed text-[11px]">
+                    <span className="font-bold">Fungsi Penugasan Fleksibel:</span> Personil KAP yang sama dapat ditugaskan dengan fungsi yang berbeda pada setiap perikatan audit — sewaktu-waktu dapat bertindak sebagai <strong>Ketua Tim</strong>, menjadi <strong>Supervisor</strong>, maupun berperan sebagai <strong>Auditor</strong> pelaksana substantif sesuai alokasi jam jasa dan kompetensi teknis perikatan.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {savedAuditor && (
+              <div className="mt-4 flex items-center gap-2 py-2 px-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold animate-in fade-in duration-200">
+                <CheckCircle size={14} className="text-emerald-600" /> 
+                <span>Susunan tim audit perikatan berhasil disimpan dan disinkronkan ke seluruh kertas kerja.</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ── 2. Identitas Klien ── */}
