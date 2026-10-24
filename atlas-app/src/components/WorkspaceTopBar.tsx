@@ -23,7 +23,8 @@ import {
   LogOut, 
   Info,
   Clock,
-  Printer
+  Printer,
+  Calendar
 } from 'lucide-react';
 import { useWorksheetHeaderStore } from '../store/worksheetHeaderStore';
 import { useEngagementStore } from '../store/engagementStore';
@@ -557,6 +558,19 @@ export const WorkspaceTopBar: React.FC<WorkspaceTopBarProps> = ({
                   >
                     <Calculator size={15} className="mr-2.5 text-emerald-600" />
                     <span>Kalkulator Fee</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      navigate('/kalender');
+                    }}
+                    className="flex items-center w-full px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors text-left"
+                  >
+                    <Calendar size={15} className="mr-2.5 text-blue-600" />
+                    <span>Kalender Libur Nasional</span>
                   </button>
 
                   <button

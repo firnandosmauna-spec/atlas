@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Briefcase, AlertTriangle, CheckSquare, FileText, Settings, ShieldAlert, ShieldCheck, FolderOpen, LogOut, X, Calculator, Sparkles } from 'lucide-react';
+import { Home, Briefcase, AlertTriangle, CheckSquare, FileText, Settings, ShieldAlert, ShieldCheck, FolderOpen, LogOut, X, Calculator, Sparkles, Calendar } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useAppConfigStore } from '../store/appConfigStore';
 
@@ -47,6 +47,7 @@ const Sidebar = ({ isOpen = true, onClose }: SidebarProps = {}) => {
     { to: '/engagements', icon: <FolderOpen size={20} />, label: 'Manajemen Engagement' },
     { to: '/fee-calculator', icon: <Calculator size={20} />, label: 'Kalkulator Fee Audit' },
     { to: '/pmpj', icon: <ShieldCheck size={20} />, label: 'Modul PMPJ (AML/KYC)' },
+    { to: '/kalender', icon: <Calendar size={20} />, label: 'Kalender Libur Nasional' },
   ];
 
   return (

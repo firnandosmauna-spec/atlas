@@ -21,6 +21,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import Settings from './pages/Settings';
 import FeeCalculator from './pages/FeeCalculator';
 import Pmpj from './pages/Pmpj';
+import KalenderNasional from './pages/KalenderNasional';
 import SquareSnake from './components/ui/square-snake';
 import SquareSnakeDemo from './components/ui/demo';
 
@@ -76,6 +77,7 @@ function App() {
             <Route path="portofolio" element={<Portofolio />} />
             <Route path="fee-calculator" element={<FeeCalculator />} />
             <Route path="pmpj" element={<Pmpj />} />
+            <Route path="kalender" element={<KalenderNasional />} />
             
             {/* Admin Routes */}
             <Route path="admin" element={<AdminDashboard />} />
